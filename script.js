@@ -1,21 +1,40 @@
-document.addEventListener("DOMContentLoaded", () => {
+(() => {
+  const page = document.querySelector("#prelaunch");
+  const replayButton = document.querySelector("#replayReveal");
+  if (!page) return;
 
-    document.body.style.opacity = "0";
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    setTimeout(() => {
-        document.body.style.transition = "opacity 1.2s ease";
-        document.body.style.opacity = "1";
-    }, 100);
+  function startReveal() {
+    page.classList.remove("is-revealed", "is-replaying");
+    // Force a reflow so the CSS animations can be replayed reliably.
+    void page.offsetWidth;
+    page.classList.add("is-revealed");
+  }
 
-    const hero = document.querySelector(".hero");
+  if (reduceMotion) {
+    page.classList.add("is-revealed");
+  } else {
+    window.addEventListener("load", () => {
+      window.setTimeout(startReveal, 350);
+    }, { once: true });
+  }
 
-    document.addEventListener("mousemove", (e) => {
+  if (replayButton) {
+    replayButton.addEventListener("click", () => {
+      if (reduceMotion) {
+        startReveal();
+        return;
+      }
 
-        const x = (e.clientX / window.innerWidth - 0.5) * 8;
-        const y = (e.clientY / window.innerHeight - 0.5) * 8;
+      page.classList.add("is-replaying");
+      page.classList.remove("is-revealed");
 
-        hero.style.transform = `translate(${x}px, ${y}px)`;
-
+      window.setTimeout(() => {
+        page.classList.remove("is-replaying");
+        void page.offsetWidth;
+        page.classList.add("is-revealed");
+      }, 100);
     });
-
-});
+  }
+})();
