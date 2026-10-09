@@ -1,69 +1,31 @@
 (() => {
-  const page = document.querySelector("#prelaunch");
-  const replayButton = document.querySelector("#replayReveal");
-  const particleLayer = document.querySelector("#particles");
-  if (!page) return;
-
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const isSmallScreen = window.matchMedia("(max-width: 700px)").matches;
-
-  function seedParticles() {
-    if (!particleLayer || reduceMotion) return;
-    const count = isSmallScreen ? 12 : 22;
+  const artwork = document.querySelector("#artwork");
+  const replay = document.querySelector("#replay");
+  const particles = document.querySelector("#particles");
+  if (!artwork) return;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function makeParticles() {
+    if (!particles || reducedMotion || particles.childElementCount) return;
+    const count = window.matchMedia("(max-width: 700px)").matches ? 13 : 24;
     const fragment = document.createDocumentFragment();
     for (let i = 0; i < count; i += 1) {
-      const particle = document.createElement("span");
-      particle.className = "particle";
-      particle.style.left = (3 + Math.random() * 94) + "%";
-      particle.style.setProperty("--duration", (8 + Math.random() * 9) + "s");
-      particle.style.setProperty("--delay", (-Math.random() * 15) + "s");
-      particle.style.setProperty("--drift", ((Math.random() - 0.5) * 100) + "px");
-      fragment.appendChild(particle);
+      const dot = document.createElement("span");
+      dot.className = "particle";
+      dot.style.left = (2 + Math.random() * 96) + "%";
+      dot.style.setProperty("--duration", (9 + Math.random() * 11) + "s");
+      dot.style.setProperty("--delay", (-Math.random() * 16) + "s");
+      dot.style.setProperty("--drift", ((Math.random() - .5) * 90) + "px");
+      fragment.appendChild(dot);
     }
-    particleLayer.appendChild(fragment);
+    particles.appendChild(fragment);
   }
-
-  function startReveal() {
-    page.classList.remove("is-revealed", "is-replaying");
-    void page.offsetWidth;
-    page.classList.add("is-revealed");
+  function replayReveal() {
+    if (reducedMotion) return;
+    artwork.classList.remove("is-revealing");
+    void artwork.offsetWidth;
+    artwork.classList.add("is-revealing");
   }
-
-  seedParticles();
-
-  if (reduceMotion) {
-    page.classList.add("is-revealed");
-  } else {
-    window.addEventListener("load", () => window.setTimeout(startReveal, 220), { once: true });
-  }
-
-  if (replayButton) {
-    replayButton.addEventListener("click", () => {
-      if (reduceMotion) {
-        startReveal();
-        return;
-      }
-      page.classList.add("is-replaying");
-      page.classList.remove("is-revealed");
-      window.setTimeout(() => {
-        page.classList.remove("is-replaying");
-        void page.offsetWidth;
-        page.classList.add("is-revealed");
-      }, 80);
-    });
-  }
-
-  // Restrained pointer parallax adds depth on desktop without moving the logo artwork itself.
-  if (!reduceMotion && !isSmallScreen) {
-    const stage = document.querySelector(".stage");
-    window.addEventListener("pointermove", (event) => {
-      if (!stage || event.pointerType !== "mouse") return;
-      const x = (event.clientX / window.innerWidth - 0.5) * 7;
-      const y = (event.clientY / window.innerHeight - 0.5) * 5;
-      stage.style.translate = x + "px " + y + "px";
-    }, { passive: true });
-    window.addEventListener("pointerleave", () => {
-      if (stage) stage.style.translate = "0 0";
-    });
-  }
+  artwork.classList.add("is-revealing");
+  if (replay) replay.addEventListener("click", replayReveal);
+  makeParticles();
 })();
