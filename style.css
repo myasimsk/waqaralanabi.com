@@ -1511,3 +1511,42 @@ body{background:#FBF8F2;color:#111}
  mix-blend-mode:normal!important;
 }
 .site-header .brand-emblem img{object-fit:contain}
+
+
+/* Refined hero CTA: simple Shop now, integrated with the campaign */
+.hero-copy .button-light{
+ display:inline-flex!important;
+ align-items:center;
+ justify-content:center;
+ gap:22px;
+ min-width:0!important;
+ padding:13px 0!important;
+ border:0!important;
+ border-bottom:1px solid rgba(245,240,230,.72)!important;
+ border-radius:0!important;
+ background:transparent!important;
+ color:#F5F0E6!important;
+ box-shadow:none!important;
+ font-size:10px!important;
+ font-weight:600!important;
+ letter-spacing:.16em!important;
+ text-transform:uppercase;
+ transition:color .2s,border-color .2s,transform .2s;
+}
+.hero-copy .button-light span{
+ display:inline-block;
+ color:#C5A46D!important;
+ font-size:17px;
+ transition:transform .2s;
+}
+.hero-copy .button-light:hover{
+ background:transparent!important;
+ color:#C5A46D!important;
+ border-bottom-color:#C5A46D!important;
+ transform:translateY(-1px)!important;
+ box-shadow:none!important;
+}
+.hero-copy .button-light:hover span{transform:translate(3px,-2px)}
+@media(max-width:600px){
+ .hero-copy .button-light{padding:12px 0!important;font-size:9px!important}
+}
