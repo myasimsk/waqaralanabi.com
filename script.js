@@ -29,7 +29,30 @@ function openCountryGate(){$("#countryGate").classList.remove("is-hidden");docum
 function closeCountryGate(){if(selectedCountry!=="PK")return;$("#countryGate").classList.add("is-hidden");document.body.classList.remove("country-gate-open");}
 function syncCountryUI(){$("#countrySwitch").innerHTML=countries[selectedCountry].flag+" <span>"+countries[selectedCountry].currency+"</span>⌄";$("#countryContinue").innerHTML="Enter "+countries[selectedCountry].name+" store <span>↗</span>";$$(".country-option").forEach(b=>{const chosen=b.dataset.country===selectedCountry;b.classList.toggle("selected",chosen);b.setAttribute("aria-pressed",String(chosen));});}
 $$(".country-option").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.country!=="PK"){toast("This market is coming soon. Pakistan is currently available.");return;}selectedCountry=b.dataset.country;localStorage.setItem("wa-country",selectedCountry);syncCountryUI();}));
-$("#countryContinue").addEventListener("click",()=>{if(!countries[selectedCountry].available){toast("This market is coming soon.");return;}localStorage.setItem("wa-country",selectedCountry);syncCountryUI();renderProducts();renderBag();$("#countryGate").classList.add("is-hidden");document.body.classList.remove("country-gate-open");window.scrollTo({top:0,behavior:"instant"});});
+$("#countryContinue").addEventListener("click",()=>{if(!countries[selectedCountry].available){toast("This market is coming soon.");return;}localStorage.setItem("wa-country",selectedCountry);syncCountryUI();
+/* WA Frequency: turn the brand attitude into a real product-discovery interaction */
+const frequencyChoices={
+ quiet:{query:"sweatshirt",title:"LOWKEY MODE: ON.",copy:"Easy layers. Relaxed energy. Start with the pieces that do the most without saying too much.",link:"SHOW ME THE OFF-DUTY FITS"},
+ bold:{query:"tee",title:"NO BLENDING IN.",copy:"A statement without trying too hard. Find the pieces that let your presence do the talking.",link:"FIND MY STATEMENT PIECE"},
+ form:{query:"trouser",title:"CLEAN. CONSIDERED. YOU.",copy:"Strong silhouettes, clean lines, no unnecessary noise. Build your rotation around the fit.",link:"BUILD MY ROTATION"}
+};
+const frequencyResult=$("#frequencyResult");
+$("[data-frequency]").forEach(card=>card.addEventListener("click",()=>{
+ const choice=frequencyChoices[card.dataset.frequency];
+ $("[data-frequency]").forEach(other=>other.setAttribute("aria-pressed",String(other===card)));
+ frequencyResult.querySelector("span").textContent=choice.title;
+ frequencyResult.querySelector("p").textContent=choice.copy;
+ const link=frequencyResult.querySelector("a");link.textContent=choice.link+" ↓";
+ query=choice.query;$("#searchInput").value="";
+ activeFilter="All";$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));
+ renderProducts();
+ $("#shop").scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+}));
+/* Tiny progress line gives the long editorial page a tactile, app-like feel */
+const progress=document.createElement("div");progress.className="wa-scroll-progress";progress.setAttribute("aria-hidden","true");document.body.appendChild(progress);
+const updateProgress=()=>{const max=document.documentElement.scrollHeight-window.innerHeight;progress.style.transform="scaleX("+ (max>0?window.scrollY/max:0) +")"};
+window.addEventListener("scroll",updateProgress,{passive:true});window.addEventListener("resize",updateProgress);updateProgress();
+renderProducts();renderBag();$("#countryGate").classList.add("is-hidden");document.body.classList.remove("country-gate-open");window.scrollTo({top:0,behavior:"instant"});});
 $("#countrySwitch").addEventListener("click",openCountryGate);
 function renderProducts(){let list=products.filter(p=>(activeFilter==="All"||p.category===activeFilter)&&p.name.toLowerCase().includes(query.toLowerCase()));const sort=$("#sortSelect").value;if(sort==="low")list.sort((a,b)=>a.price-b.price);if(sort==="high")list.sort((a,b)=>b.price-a.price);if(sort==="name")list.sort((a,b)=>a.name.localeCompare(b.name));$("#productTotal").textContent=String(list.length).padStart(2,"0")+" pieces";$("#productGrid").innerHTML=list.map(p=>`<article class="product-card"><div class="product-image-wrap"><img class="product-image" src="${p.image}" alt="${p.name}" loading="lazy"><span class="product-badge">${p.badge}</span><button class="quick-add" data-add="${p.id}">Quick add <span>＋</span></button></div><div class="product-meta"><div class="product-category">${p.category} / WA EDIT</div><div class="product-title-row"><h3 class="product-title">${p.name}</h3><span class="product-price">${money(p.price)}</span></div><div class="product-colors" aria-label="Available colors">${p.colors.map(c=>`<span class="swatch" title="${c[0]}" style="background:${c[1]}"></span>`).join("")}</div><div class="product-sizes">S · M · L · XL</div></div></article>`).join("")||'<p>No pieces found. Try another search.</p>';$$("[data-add]").forEach(b=>b.addEventListener("click",()=>quickAdd(Number(b.dataset.add))))}
 function saveBag(){localStorage.setItem("wa-preview-bag",JSON.stringify(bag));renderBag()}
