@@ -231,3 +231,44 @@ body{background:var(--paper)}
 body.country-gate-open{overflow:hidden}
 @media(max-width:800px){.country-gate{grid-template-columns:1fr;grid-template-rows:30svh auto}.country-visual{min-height:30svh;background-position:center 34%}.country-visual:after{inset:10px}.country-visual-mark{font-size:66px}.country-visual>span{font-size:7px;margin-top:12px}.country-panel{padding:30px 24px 35px;justify-content:flex-start}.country-brand{margin-bottom:30px}.country-brand img{width:115px;max-height:48px}.country-panel h1{font-size:42px}.country-intro{margin:13px 0 19px}.country-option{min-height:57px;padding:10px 2px}.country-switch{padding:7px 6px;font-size:9px}}
 @media(max-width:420px){.country-panel{padding:24px 18px 28px}.country-panel h1{font-size:37px}.country-option{grid-template-columns:26px 1fr auto 15px;gap:9px}.country-name{font-size:11px}}
+
+
+/* One-click light / dark appearance */
+.theme-toggle{width:32px;height:32px;display:inline-grid;place-items:center;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--ink);font-size:18px;line-height:1;padding:0;flex:0 0 auto;transition:background .2s,color .2s,border-color .2s}
+.theme-toggle:hover{background:var(--wine);border-color:var(--wine);color:#fff}
+[data-theme="dark"]{color-scheme:dark;--cream:#211d1c;--paper:#171414;--ink:#f3ece5;--muted:#b2a49a;--line:#403633;--gold:#d1b18b}
+[data-theme="dark"] body{background:var(--paper);color:var(--ink)}
+[data-theme="dark"] .site-header,[data-theme="dark"] .site-footer{background:#171414;color:var(--ink);border-color:#39302e}
+[data-theme="dark"] .desktop-nav a,[data-theme="dark"] .mobile-menu a,[data-theme="dark"] .footer-links a{color:#e4d9d1}
+[data-theme="dark"] .icon-button,[data-theme="dark"] .bag-button,[data-theme="dark"] .country-switch{color:var(--ink)}
+[data-theme="dark"] .country-switch{border-color:var(--line)}
+[data-theme="dark"] .intro,[data-theme="dark"] .service-strip{background:var(--paper);color:var(--ink)}
+[data-theme="dark"] .shop-section{background:#211d1c;color:var(--ink)}
+[data-theme="dark"] .section-heading{border-color:#493d39}
+[data-theme="dark"] .filter{color:#d2c5bc}
+[data-theme="dark"] .filter.active,[data-theme="dark"] .filter:hover{border-color:#d3a6b2;color:#f0c7d2}
+[data-theme="dark"] .sort-label,[data-theme="dark"] .sort-label select{color:var(--ink)}
+[data-theme="dark"] .product-image-wrap{background:#302927}
+[data-theme="dark"] .product-badge,[data-theme="dark"] .quick-add{background:rgba(31,26,25,.94);color:#f7eee6;border-color:#51433e}
+[data-theme="dark"] .newsletter{background:#28211f;color:var(--ink)}
+[data-theme="dark"] .newsletter input{color:var(--ink)}
+[data-theme="dark"] .newsletter input::placeholder{color:#b2a49a}
+[data-theme="dark"] .newsletter form{border-color:#65544d}
+[data-theme="dark"] .newsletter form button,[data-theme="dark"] .text-link{color:#e4c2ad}
+[data-theme="dark"] .site-footer{background:#100e0e;color:#f8f1e9}
+[data-theme="dark"] .site-footer p,[data-theme="dark"] .site-footer small{color:#cbbdb5}
+[data-theme="dark"] .site-footer .brand-name{color:#fff}
+[data-theme="dark"] .site-footer .brand-name i{color:#d8b39c}
+[data-theme="dark"] .site-footer .brand-name small{color:#cbbdb5}
+[data-theme="dark"] .site-footer .footer-links a,[data-theme="dark"] .site-footer .footer-legal a{color:#f4e9e0}
+[data-theme="dark"] .country-gate{background:#211d1c;color:#f3ece5}
+[data-theme="dark"] .country-panel h1 em{color:#d9a7b5}
+[data-theme="dark"] .country-intro,[data-theme="dark"] .country-name small,[data-theme="dark"] .country-footnote{color:#b2a49a}
+[data-theme="dark"] .country-options,[data-theme="dark"] .country-option{border-color:#493d39}
+[data-theme="dark"] .country-option{color:#f3ece5}
+[data-theme="dark"] .country-option.selected{background:rgba(220,160,180,.08)}
+[data-theme="dark"] .search-bar{background:var(--paper);border-color:var(--line)}
+[data-theme="dark"] .search-bar input{color:var(--ink)}
+[data-theme="dark"] .bag-drawer{background:var(--paper);color:var(--ink)}
+[data-theme="dark"] .drawer-head{border-color:var(--line)}
+@media(max-width:700px){.theme-toggle{width:29px;height:29px;font-size:16px}}
