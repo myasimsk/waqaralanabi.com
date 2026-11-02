@@ -17,7 +17,7 @@ let activeFilter="All",query="",bag=JSON.parse(localStorage.getItem("wa-preview-
 const countries={PK:{name:"Pakistan",currency:"PKR",flag:"🇵🇰",available:true},US:{name:"United States",currency:"USD",flag:"🇺🇸",available:false},AU:{name:"Australia",currency:"AUD",flag:"🇦🇺",available:false},GB:{name:"United Kingdom",currency:"GBP",flag:"🇬🇧",available:false},AE:{name:"United Arab Emirates",currency:"AED",flag:"🇦🇪",available:false}};
 let selectedCountry=localStorage.getItem("wa-country")||"PK";
 
-const $=s=>document.querySelector(s),$=s=>[...document.querySelectorAll(s)];
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const themeToggle=$("#themeToggle");
 const savedTheme=localStorage.getItem("wa-theme")==="dark"?"dark":"light";
 function applyTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem("wa-theme",theme);themeToggle.innerHTML='<span class="theme-icon" aria-hidden="true">'+(theme==="dark"?"☀":"☾")+'</span>';themeToggle.setAttribute("aria-label",theme==="dark"?"Switch to light mode":"Switch to dark mode");themeToggle.setAttribute("title",theme==="dark"?"Switch to light mode":"Switch to dark mode");}
