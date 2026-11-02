@@ -48,6 +48,17 @@ $("[data-frequency]").forEach(card=>card.addEventListener("click",()=>{
  renderProducts();
  $("#shop").scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
 }));
+
+/* Lookbook frames act like a campaign navigation, not static decoration */
+const lookbookSearch={quiet:"sweatshirt",bold:"tee",form:"trouser"};
+$("[data-look]").forEach(frame=>frame.addEventListener("click",()=>{
+ const look=frame.dataset.look;
+ query=lookbookSearch[look]||"";$("#searchInput").value="";
+ activeFilter="All";$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));
+ renderProducts();
+ $("#shop").scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+ toast("LOOKBOOK / "+look.toUpperCase()+" — pieces selected");
+}));
 /* Tiny progress line gives the long editorial page a tactile, app-like feel */
 const progress=document.createElement("div");progress.className="wa-scroll-progress";progress.setAttribute("aria-hidden","true");document.body.appendChild(progress);
 const updateProgress=()=>{const max=document.documentElement.scrollHeight-window.innerHeight;progress.style.transform="scaleX("+ (max>0?window.scrollY/max:0) +")"};
