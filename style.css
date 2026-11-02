@@ -314,3 +314,19 @@ body.country-gate-open{overflow:hidden}
  .site-header .header-actions{gap:5px}
 }
 [data-theme="dark"] .site-header .brand-emblem img{filter:drop-shadow(0 3px 10px rgba(230,183,195,.2))}
+
+
+/* Refined header proportions: slightly larger monogram, restrained readable wordmark */
+.site-header .brand-lockup{width:76px;height:76px}
+.site-header .brand-name{font-size:10px;letter-spacing:.16em;line-height:1.2}
+.site-header .brand-name i{font-size:8.5px;letter-spacing:.19em;margin-top:3px}
+.site-header .brand-name small{font-size:5.5px;letter-spacing:.18em;margin-top:5px}
+@media(max-width:800px){
+ .site-header .brand-lockup{width:54px;height:54px}
+ .site-header .brand-name{font-size:9px;letter-spacing:.12em}
+ .site-header .brand-name i{font-size:7.5px;letter-spacing:.15em}
+ .site-header .brand-name small{font-size:5px;letter-spacing:.13em}
+}
+@media(max-width:470px){
+ .site-header .brand-lockup{width:47px;height:47px}
+}
