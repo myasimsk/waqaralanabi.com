@@ -1467,3 +1467,38 @@ body{background:#FBF8F2;color:#111}
  .product-price{font-size:9px!important}
  .product-badge{font-size:5px!important}
 }
+
+
+/* Burgundy navigation with a clean white WA monogram */
+.site-header{
+ background:#7A1E3A!important;
+}
+.site-header .brand-lockup,
+.site-header .brand-lockup .brand-name{
+ background:transparent!important;
+ color:#F5F0E6!important;
+}
+.site-header .brand-emblem{
+ background:transparent!important;
+}
+.site-header .brand-emblem img{
+ display:block;
+ background:transparent!important;
+ filter:brightness(0) invert(1)!important;
+ mix-blend-mode:normal!important;
+}
+.site-header .brand-name i{color:#F5F0E6!important}
+.site-header .brand-name small{color:rgba(245,240,230,.78)!important}
+.site-header .desktop-nav a,
+.site-header .icon-button,
+.site-header .country-switch,
+.site-header .bag-button,
+.site-header .theme-toggle{
+ color:#F5F0E6!important;
+}
+.site-header .bag-button span{
+ background:#C5A46D!important;color:#7A1E3A!important;
+}
+.site-header .theme-toggle:hover,
+.site-header .icon-button:hover{border-color:#C5A46D!important;color:#C5A46D!important}
+[ data-theme="dark"] .site-header{background:#7A1E3A!important}
