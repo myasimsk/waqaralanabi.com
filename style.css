@@ -2397,3 +2397,111 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{
 [data-theme="dark"] .theme-toggle { color: var(--ink); border-color: var(--line); }
 [data-theme="dark"] .site-header .theme-toggle { color: #F5F0E6; border-color: rgba(245,240,230,.45); }
 [data-theme="dark"] .newsletter input { background: transparent; }
+
+
+/* Dark mode correction — keep WA burgundy/gold branding; darken surfaces, not brand identity */
+[data-theme="dark"] {
+  --paper: #171414;
+  --cream: #211c1b;
+  --ink: #f5f0e9;
+  --muted: #b7aaa2;
+  --line: #403533;
+  --wine: #7A1E3A;
+  --wine-dark: #100d0e;
+  --gold: #C5A46D;
+  --electric: #C5A46D;
+  color-scheme: dark;
+}
+[data-theme="dark"] body,
+[data-theme="dark"] .intro,
+[data-theme="dark"] .category-editorial,
+[data-theme="dark"] .service-strip,
+[data-theme="dark"] .site-footer,
+[data-theme="dark"] .mobile-app-nav {
+  background: #171414 !important;
+  color: #f5f0e9 !important;
+}
+[data-theme="dark"] .shop-section,
+[data-theme="dark"] .newsletter {
+  background: #211c1b !important;
+  color: #f5f0e9 !important;
+}
+[data-theme="dark"] .site-header,
+[data-theme="dark"] .mobile-menu.open {
+  background: #7A1E3A !important;
+  color: #f5f0e9 !important;
+}
+[data-theme="dark"] .attitude-ticker {
+  background: #7A1E3A !important;
+  color: #f5f0e9 !important;
+  border-color: #C5A46D !important;
+}
+[data-theme="dark"] .manifesto {
+  background: #100d0e !important;
+  color: #f5f0e9 !important;
+}
+[data-theme="dark"] .manifesto h2 em,
+[data-theme="dark"] .hero h1 em,
+[data-theme="dark"] .eyebrow,
+[data-theme="dark"] .wordmark span,
+[data-theme="dark"] .intro-title em,
+[data-theme="dark"] .service-strip b,
+[data-theme="dark"] .brand-name i {
+  color: #C5A46D !important;
+}
+[data-theme="dark"] .section-heading,
+[data-theme="dark"] .newsletter form,
+[data-theme="dark"] .footer-column,
+[data-theme="dark"] .footer-bottom {
+  border-color: #403533 !important;
+}
+[data-theme="dark"] .section-heading h2,
+[data-theme="dark"] .intro-title,
+[data-theme="dark"] .product-title,
+[data-theme="dark"] .product-price,
+[data-theme="dark"] .newsletter h2,
+[data-theme="dark"] .footer-column h4,
+[data-theme="dark"] .footer-links a,
+[data-theme="dark"] .footer-legal a,
+[data-theme="dark"] .site-footer p,
+[data-theme="dark"] .site-footer small,
+[data-theme="dark"] .service-strip span {
+  color: #f5f0e9 !important;
+}
+[data-theme="dark"] .intro-copy,
+[data-theme="dark"] .product-category,
+[data-theme="dark"] .product-sizes,
+[data-theme="dark"] .demo-note,
+[data-theme="dark"] .service-strip p {
+  color: #b7aaa2 !important;
+}
+[data-theme="dark"] .filter { color: #d7cbc4; }
+[data-theme="dark"] .filter.active,
+[data-theme="dark"] .filter:hover {
+  border-color: #C5A46D !important;
+  color: #C5A46D !important;
+}
+[data-theme="dark"] .product-image-wrap { background: #292322; }
+[data-theme="dark"] .product-badge,
+[data-theme="dark"] .quick-add {
+  background: rgba(23,20,20,.94) !important;
+  color: #f5f0e9 !important;
+  border-color: #403533 !important;
+}
+[data-theme="dark"] .quick-add span { color: #C5A46D !important; }
+[data-theme="dark"] .newsletter input { color: #f5f0e9 !important; }
+[data-theme="dark"] .newsletter input::placeholder { color: #b7aaa2 !important; }
+[data-theme="dark"] .mobile-app-nav {
+  background: rgba(23,20,20,.97) !important;
+  border-top-color: #403533 !important;
+}
+[data-theme="dark"] .app-nav-item { color: #b7aaa2 !important; }
+[data-theme="dark"] .app-nav-item.is-active { color: #C5A46D !important; }
+[data-theme="dark"] .bag-drawer,
+[data-theme="dark"] .search-bar {
+  background: #171414 !important;
+  color: #f5f0e9 !important;
+  border-color: #403533 !important;
+}
+[data-theme="dark"] .bag-drawer input,
+[data-theme="dark"] .search-bar input { color: #f5f0e9 !important; }
