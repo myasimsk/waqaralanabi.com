@@ -1929,8 +1929,9 @@ button:disabled{cursor:not-allowed;opacity:.55}
  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
 
-/* One larger official logo in the top navigation */
-.brand-lockup{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);min-width:0;justify-content:center;z-index:2;}
-.brand-emblem{width:92px;height:92px;flex:0 0 92px;}
-.brand-name{display:none;}
-@media(max-width:600px){.brand-emblem{width:76px;height:76px;flex-basis:76px;}.site-header{padding-left:16px;padding-right:16px;}}
+/* Large centered white logo in the top navigation */
+.site-header .brand-lockup{position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;width:112px!important;height:112px!important;max-width:none!important;min-width:0!important;display:grid!important;place-items:center!important;gap:0!important;padding:0!important;background:transparent!important;z-index:5!important;}
+.site-header .brand-emblem{width:100%!important;height:100%!important;flex:0 0 100%!important;overflow:visible!important;}
+.site-header .brand-emblem img{width:100%!important;height:100%!important;max-width:none!important;object-fit:contain!important;filter:none!important;}
+@media(max-width:800px){.site-header .brand-lockup{width:94px!important;height:94px!important;}}
+@media(max-width:470px){.site-header .brand-lockup{width:82px!important;height:82px!important;}}
