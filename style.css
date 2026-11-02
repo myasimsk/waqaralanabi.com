@@ -1502,3 +1502,12 @@ body{background:#FBF8F2;color:#111}
 .site-header .theme-toggle:hover,
 .site-header .icon-button:hover{border-color:#C5A46D!important;color:#C5A46D!important}
 [ data-theme="dark"] .site-header{background:#7A1E3A!important}
+
+/* Dedicated white SVG asset: no CSS inversion, no white tile */
+.site-header .brand-emblem,
+.site-header .brand-emblem img{
+ background:transparent!important;
+ filter:none!important;
+ mix-blend-mode:normal!important;
+}
+.site-header .brand-emblem img{object-fit:contain}
