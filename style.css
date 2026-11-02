@@ -272,3 +272,23 @@ body.country-gate-open{overflow:hidden}
 [data-theme="dark"] .bag-drawer{background:var(--paper);color:var(--ink)}
 [data-theme="dark"] .drawer-head{border-color:var(--line)}
 @media(max-width:700px){.theme-toggle{width:29px;height:29px;font-size:16px}}
+
+
+/* Dark-mode contrast: lift small burgundy accents so they remain readable */
+[data-theme="dark"] .eyebrow,
+[data-theme="dark"] .wordmark span,
+[data-theme="dark"] .intro-title em,
+[data-theme="dark"] .service-strip b,
+[data-theme="dark"] .country-currency,
+[data-theme="dark"] .country-check,
+[data-theme="dark"] .search-bar button,
+[data-theme="dark"] .site-footer > p,
+[data-theme="dark"] .brand-name i {
+  color: #e6b7c3;
+}
+[data-theme="dark"] .filter.active,
+[data-theme="dark"] .filter:hover {
+  color: #f0c7d2;
+  border-color: #d9a7b5;
+}
+[data-theme="dark"] .country-panel h1 em { color: #e6b7c3; }
