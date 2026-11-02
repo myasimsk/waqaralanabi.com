@@ -49,6 +49,16 @@ $("[data-frequency]").forEach(card=>card.addEventListener("click",()=>{
  $("#shop").scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
 }));
 
+
+/* Reliable landing campaign CTA navigation */
+const campaignLink=document.querySelector(".drop-intro-link");
+if(campaignLink){
+ campaignLink.addEventListener("click",function(event){
+  event.preventDefault();
+  const destination=document.getElementById("lookbook");
+  if(destination) destination.scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+ });
+}
 /* Lookbook frames act like a campaign navigation, not static decoration */
 const lookbookSearch={quiet:"sweatshirt",bold:"tee",form:"trouser"};
 $("[data-look]").forEach(frame=>frame.addEventListener("click",()=>{
