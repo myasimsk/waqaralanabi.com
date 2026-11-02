@@ -2255,3 +2255,34 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{
   .section-heading h2{font-size:34px}
   .product-title{font-size:10.5px!important}
 }
+
+
+/* WA footer redesign — clear navigation, support and expandable policy tabs */
+.site-footer{display:block;padding:0 clamp(22px,6vw,96px) 24px;background:#211518;color:#f8f1e9;border-top:1px solid rgba(185,154,114,.45)}
+.site-footer .footer-main{display:grid;grid-template-columns:minmax(230px,1.7fr) repeat(3,minmax(130px,1fr));gap:clamp(26px,4vw,64px);padding:62px 0 48px}
+.site-footer .footer-brand-lockup{justify-content:flex-start;margin:0 0 20px;gap:12px}
+.site-footer .footer-brand-lockup .brand-emblem{width:48px;height:48px;flex-basis:48px}
+.site-footer .footer-brand-lockup .brand-name{color:#fff;font-size:13px}
+.site-footer .footer-brand-lockup .brand-name i{color:#d8b39c}
+.site-footer .footer-brand-lockup .brand-name small{color:#cbbdb5}
+.site-footer .footer-brand-copy{margin:0 0 23px;color:#cbbdb5;font-size:11px;line-height:1.9}
+.site-footer .footer-social-link{display:inline-flex;align-items:center;gap:18px;padding-bottom:8px;border-bottom:1px solid rgba(216,179,156,.5);font-size:9px;letter-spacing:.13em;color:#f4e9e0}
+.site-footer .footer-social-link span{color:#d8b39c;font-size:14px}
+.site-footer .footer-column{display:flex;flex-direction:column;align-items:flex-start;gap:13px}
+.site-footer .footer-column h2{font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#d8b39c;margin:5px 0 8px}
+.site-footer .footer-column a{font-size:11px;line-height:1.5;color:#e6dcd5;transition:color .2s ease}
+.site-footer .footer-column a:hover,.site-footer .footer-bottom a:hover,.site-footer .footer-policy-notes a:hover{color:#d8b39c}
+.site-footer .footer-policy-notes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;border-top:1px solid rgba(255,255,255,.14);padding:22px 0}
+.site-footer .footer-policy-notes details{min-width:0;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.025)}
+.site-footer .footer-policy-notes summary{list-style:none;cursor:pointer;position:relative;padding:13px 32px 13px 13px;font-size:10px;color:#f4e9e0}
+.site-footer .footer-policy-notes summary::-webkit-details-marker{display:none}
+.site-footer .footer-policy-notes summary:after{content:"+";position:absolute;right:13px;top:10px;color:#d8b39c;font-size:16px}
+.site-footer .footer-policy-notes details[open] summary:after{content:"−"}
+.site-footer .footer-policy-notes details p{margin:0;padding:0 13px 15px;color:#cbbdb5;font-size:10px;line-height:1.8}
+.site-footer .footer-policy-notes a{color:#f4e9e0;text-decoration:underline;text-underline-offset:3px}
+.site-footer .footer-bottom{display:flex;align-items:center;justify-content:space-between;gap:20px;border-top:1px solid rgba(255,255,255,.14);padding-top:20px}
+.site-footer .footer-bottom small,.site-footer .footer-bottom span{margin:0;padding:0;border:0;font-size:8px;letter-spacing:.12em;color:#bfb0a8;line-height:1.6}
+.site-footer .footer-bottom a{font-size:10px;color:#f4e9e0;white-space:nowrap}
+@media(max-width:900px){.site-footer .footer-main{grid-template-columns:1.3fr 1fr 1fr;gap:32px}.site-footer .footer-brand-column{grid-column:1/-1}.site-footer .footer-brand-copy{max-width:360px}.site-footer .footer-policy-notes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.site-footer{padding-left:20px;padding-right:20px;padding-bottom:calc(24px + env(safe-area-inset-bottom))}.site-footer .footer-main{grid-template-columns:repeat(2,minmax(0,1fr));gap:34px 22px;padding:42px 0 30px}.site-footer .footer-brand-column{grid-column:1/-1;padding-bottom:5px}.site-footer .footer-brand-lockup{margin-bottom:16px}.site-footer .footer-policy-notes{grid-template-columns:1fr;gap:8px;padding:18px 0}.site-footer .footer-policy-notes summary{padding:15px 36px 15px 14px}.site-footer .footer-bottom{align-items:flex-start;flex-wrap:wrap;gap:12px}.site-footer .footer-bottom small{width:100%;order:2}.site-footer .footer-bottom span{order:3;width:100%}.site-footer .footer-bottom a{order:1}}
+@media(max-width:360px){.site-footer .footer-main{gap:30px 14px}.site-footer .footer-column a{font-size:10px}.site-footer .footer-policy-notes summary{font-size:9px}}
