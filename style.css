@@ -2095,3 +2095,43 @@ button:disabled{cursor:not-allowed;opacity:.55}
   .filter{font-size:9px}
   .product-grid{gap:18px 8px!important}
 }
+
+
+/* Maintenance pass: consistent desktop rhythm and protected mobile safe area */
+@media (min-width: 701px) {
+  .site-header { min-height: 78px; }
+  .desktop-nav { gap: clamp(20px, 2.7vw, 42px); }
+  .header-actions { gap: clamp(12px, 1.5vw, 20px); }
+  .intro, .shop-section, .wa-frequency, .wa-lookbook { scroll-margin-top: 96px; }
+  .shop-section { padding-left: clamp(28px, 6vw, 100px); padding-right: clamp(28px, 6vw, 100px); }
+  .product-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px 20px; }
+  .product-image-wrap { overflow: hidden; }
+  .product-image { transition: transform .45s ease; }
+  .product-card:hover .product-image { transform: scale(1.035); }
+  .product-title-row { gap: 12px; }
+  .product-title { line-height: 1.45; }
+  .newsletter form { max-width: 520px; margin-left: auto; margin-right: auto; }
+}
+@media (min-width: 701px) and (max-width: 1050px) {
+  .site-header { padding-left: 26px; padding-right: 26px; }
+  .desktop-nav { gap: 16px; margin-left: 8px; }
+  .header-actions { gap: 10px; }
+  .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .mobile-app-nav { display: grid; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; }
+  .site-footer { padding-bottom: 28px !important; }
+  .mobile-menu { z-index: 45; }
+  .search-bar.open { position: sticky; top: 0; z-index: 42; }
+  .country-gate { overflow-y: auto; }
+  .country-panel { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+  .product-card { min-width: 0; }
+  .product-title-row { gap: 4px; }
+  .product-title { overflow-wrap: anywhere; }
+  .app-nav-item { touch-action: manipulation; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
