@@ -1726,3 +1726,51 @@ body{font-family:var(--sans);background:var(--cream);color:var(--ink)}
  .newsletter{padding:68px 18px!important}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+
+/* WA FREQUENCY — an interactive brand signature, not another template section */
+.wa-frequency{position:relative;isolation:isolate;overflow:hidden;background:#111;color:#F5F0E6;padding:clamp(58px,8vw,116px) clamp(14px,3vw,44px) 0}
+.wa-frequency:before{content:"WA";position:absolute;z-index:-1;right:-.04em;top:-.25em;font-family:var(--sans);font-size:clamp(280px,55vw,800px);font-weight:700;line-height:1;letter-spacing:-.13em;color:rgba(245,240,230,.035);pointer-events:none}
+.frequency-top,.frequency-bottom{display:flex;justify-content:space-between;gap:14px;font-size:9px;font-weight:700;letter-spacing:.17em;text-transform:uppercase}
+.frequency-top{padding-bottom:14px;border-bottom:1px solid rgba(245,240,230,.25)}
+.frequency-heading{display:grid;grid-template-columns:1.2fr .8fr;column-gap:32px;align-items:end;padding:clamp(40px,7vw,95px) 0 36px}
+.frequency-heading .eyebrow{grid-column:1/-1;color:var(--gold);font-size:9px;letter-spacing:.2em}
+.frequency-heading h2{margin:0;font-family:var(--sans);font-size:clamp(54px,10vw,140px);font-weight:700;line-height:.78;letter-spacing:-.095em;text-transform:uppercase}
+.frequency-heading h2 em{font-family:var(--serif);font-weight:400;text-transform:none;color:var(--gold);letter-spacing:-.07em}
+.frequency-heading>p:last-child{max-width:300px;margin:0 0 4px auto;color:rgba(245,240,230,.72);font-size:13px;line-height:1.65}
+.frequency-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.frequency-card{position:relative;display:flex;flex-direction:column;align-items:stretch;text-align:left;min-height:clamp(320px,38vw,500px);padding:clamp(18px,2.5vw,32px);border:1px solid rgba(245,240,230,.25);border-radius:0;color:#111;overflow:hidden;cursor:pointer;transition:transform .35s ease,border-color .25s ease,box-shadow .25s ease;background:#d5c7b6}
+.frequency-card:after{content:"";position:absolute;inset:0;background:linear-gradient(155deg,transparent 32%,rgba(0,0,0,.16));pointer-events:none}
+.frequency-quiet{background:linear-gradient(145deg,#d8d0c2,#8c8277)}
+.frequency-bold{background:linear-gradient(145deg,#7A1E3A,#3e0b1d);color:#F5F0E6}
+.frequency-form{background:linear-gradient(145deg,#c5a46d,#8b7555)}
+.frequency-card:hover{transform:translateY(-5px);border-color:var(--gold)}
+.frequency-card[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--gold);border-color:var(--gold);transform:translateY(-5px)}
+.frequency-number,.frequency-symbol,.frequency-card strong,.frequency-foot{position:relative;z-index:1}
+.frequency-number{font-size:9px;font-weight:700;letter-spacing:.14em}
+.frequency-symbol{font-size:clamp(36px,5vw,64px);align-self:flex-end;line-height:1;margin:clamp(25px,5vw,60px) 0 auto}
+.frequency-card strong{font-family:var(--sans);font-size:clamp(33px,4.6vw,67px);font-weight:700;letter-spacing:-.085em;line-height:.86;text-transform:uppercase}
+.frequency-foot{display:flex;justify-content:space-between;align-items:end;gap:10px;margin-top:35px;padding-top:13px;border-top:1px solid currentColor;font-size:10px}
+.frequency-foot b{font-size:9px;letter-spacing:.1em;white-space:nowrap}
+.frequency-result{display:grid;grid-template-columns:.6fr 1.4fr auto;align-items:center;gap:20px;padding:24px 0;border-bottom:1px solid rgba(245,240,230,.25)}
+.frequency-result>span{color:var(--gold);font-size:9px;font-weight:700;letter-spacing:.18em}
+.frequency-result p{margin:0;color:rgba(245,240,230,.78);font-size:13px}
+.frequency-result a{color:var(--cream);font-size:9px;font-weight:700;letter-spacing:.12em;border-bottom:1px solid var(--gold);padding-bottom:7px;white-space:nowrap}
+.frequency-bottom{padding:18px 0;color:rgba(245,240,230,.52);font-size:8px}
+.wa-frequency+.category-editorial{padding-top:12px!important}
+@media(max-width:700px){
+ .wa-frequency{padding:46px 10px 0}
+ .frequency-top,.frequency-bottom{font-size:7px;letter-spacing:.1em}
+ .frequency-heading{grid-template-columns:1fr;padding:48px 0 25px;gap:16px}
+ .frequency-heading h2{font-size:clamp(54px,14vw,86px)}
+ .frequency-heading>p:last-child{margin:4px 0 0;max-width:280px;font-size:12px}
+ .frequency-cards{grid-template-columns:1fr;gap:8px}
+ .frequency-card{min-height:260px;padding:20px}
+ .frequency-symbol{font-size:44px;margin:26px 0 auto}
+ .frequency-card strong{font-size:52px}
+ .frequency-foot{margin-top:26px}
+ .frequency-result{grid-template-columns:1fr;gap:10px;padding:22px 0}
+ .frequency-result a{justify-self:start}
+ .frequency-bottom{flex-direction:column;gap:8px}
+}
+@media(hover:none){.frequency-card:hover{transform:none}}
