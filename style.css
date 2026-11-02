@@ -1910,3 +1910,21 @@ body{font-family:var(--sans);background:var(--cream);color:var(--ink)}
 @media(max-width:600px){
  .hero-cta{min-width:210px!important;min-height:54px!important;padding:11px 15px 11px 17px!important;gap:20px!important}
 }
+
+
+/* Final accessibility and interaction polish */
+.skip-link{
+ position:fixed;z-index:10000;top:12px;left:12px;
+ padding:12px 16px;background:var(--cream);color:var(--wine);
+ border:2px solid var(--wine);font-weight:700;letter-spacing:.04em;
+ transform:translateY(-160%);transition:transform .18s ease;
+}
+.skip-link:focus{transform:translateY(0);outline:3px solid var(--gold);outline-offset:3px}
+:where(a,button,input,select,[tabindex]):focus-visible{
+ outline:2px solid var(--gold);outline-offset:4px;
+}
+button:disabled{cursor:not-allowed;opacity:.55}
+@media(prefers-reduced-motion:reduce){
+ html{scroll-behavior:auto!important}
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
