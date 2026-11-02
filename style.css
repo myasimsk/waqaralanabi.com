@@ -1946,7 +1946,7 @@ button:disabled{cursor:not-allowed;opacity:.55}
   .site-header{height:66px;padding:0 16px;position:sticky;top:0;z-index:40;box-shadow:0 4px 18px rgba(31,17,22,.035)}
   .site-header .brand-lockup{width:68px!important;height:68px!important}
   .header-actions{gap:9px}
-  .header-actions #searchToggle,.header-actions .country-switch,.header-actions .theme-toggle{display:none!important}
+  .header-actions #searchToggle,.header-actions .country-switch{display:none!important}.header-actions .theme-toggle{display:inline-grid!important;position:relative;z-index:12;width:29px;height:29px;border:1px solid rgba(245,240,230,.45);color:#F5F0E6;background:transparent;align-items:center;justify-content:center}
   .header-actions .bag-button{font-size:0;padding:5px}
   .header-actions .bag-button span{font-size:10px;margin:0;width:23px;height:23px}
   .menu-toggle{display:none!important}
@@ -2351,3 +2351,49 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{
  .site-footer .footer-column h2{margin-bottom:5px}
 }
 @media(prefers-reduced-motion:reduce){.product-card:hover{transform:none}}
+
+
+/* Theme fix — make the toggle available on mobile and apply dark colors consistently */
+[data-theme="dark"] body,
+[data-theme="dark"] main,
+[data-theme="dark"] .intro,
+[data-theme="dark"] .category-editorial,
+[data-theme="dark"] .service-strip,
+[data-theme="dark"] .site-footer,
+[data-theme="dark"] .shop-section,
+[data-theme="dark"] .newsletter,
+[data-theme="dark"] .mobile-app-nav {
+  background-color: var(--paper) !important;
+  color: var(--ink) !important;
+}
+[data-theme="dark"] .shop-section,
+[data-theme="dark"] .newsletter { background-color: var(--cream) !important; }
+[data-theme="dark"] .category-tile { border-color: var(--line) !important; }
+[data-theme="dark"] .category-tile strong,
+[data-theme="dark"] .product-title,
+[data-theme="dark"] .product-price,
+[data-theme="dark"] .intro-title,
+[data-theme="dark"] .section-heading h2,
+[data-theme="dark"] .newsletter h2,
+[data-theme="dark"] .service-strip span,
+[data-theme="dark"] .service-strip b { color: var(--ink) !important; }
+[data-theme="dark"] .intro-copy,
+[data-theme="dark"] .product-category,
+[data-theme="dark"] .product-sizes,
+[data-theme="dark"] .demo-note,
+[data-theme="dark"] .service-strip p { color: var(--muted) !important; }
+[data-theme="dark"] .site-footer { border-color: var(--line) !important; }
+[data-theme="dark"] .footer-column h4,
+[data-theme="dark"] .footer-links a,
+[data-theme="dark"] .footer-legal a,
+[data-theme="dark"] .site-footer p,
+[data-theme="dark"] .site-footer small { color: var(--ink) !important; }
+[data-theme="dark"] .mobile-app-nav {
+  background: rgba(23,19,21,.96) !important;
+  border-top-color: var(--line) !important;
+}
+[data-theme="dark"] .app-nav-item { color: var(--muted) !important; }
+[data-theme="dark"] .app-nav-item.is-active { color: var(--gold) !important; }
+[data-theme="dark"] .theme-toggle { color: var(--ink); border-color: var(--line); }
+[data-theme="dark"] .site-header .theme-toggle { color: #F5F0E6; border-color: rgba(245,240,230,.45); }
+[data-theme="dark"] .newsletter input { background: transparent; }
