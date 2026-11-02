@@ -45,7 +45,7 @@ $$("[data-frequency]").forEach(card=>card.addEventListener("click",()=>{
  frequencyResult.querySelector("p").textContent=choice.copy;
  const link=frequencyResult.querySelector("a");link.textContent=choice.link+" ↓";
  query=choice.query;$("#searchInput").value="";
- activeFilter="All";$$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));
+ activeFilter="All";$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));
  renderProducts();
  $("#shop").scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
 }));
@@ -65,7 +65,7 @@ const lookbookSearch={quiet:"sweatshirt",bold:"tee",form:"trouser"};
 $("[data-look]").forEach(frame=>frame.addEventListener("click",()=>{
  const look=frame.dataset.look;
  query=lookbookSearch[look]||"";$("#searchInput").value="";
- activeFilter="All";$$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));
+ activeFilter="All";$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));
  renderProducts();
  $("#shop").scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
  toast("LOOKBOOK / "+look.toUpperCase()+" — pieces selected");
