@@ -39,3 +39,69 @@
 .footer-brand-lockup .brand-name{font-size:13px}
 .footer-brand-lockup .brand-name i{font-size:11px}
 @media(max-width:700px){.brand-lockup{min-width:0;gap:7px}.brand-emblem{width:35px;height:35px;flex-basis:35px}.brand-name{font-size:10px;letter-spacing:.12em}.brand-name i{font-size:8px;letter-spacing:.18em}.brand-name small{font-size:5px;letter-spacing:.16em}.footer-brand-lockup .brand-emblem{width:42px;height:42px;flex-basis:42px}}
+
+/* WA editorial direction — quieter, more intentional, less template-like */
+.announcement{height:27px;font-size:8px;letter-spacing:.2em}
+.site-header{height:82px;padding-inline:clamp(18px,4.2vw,66px)}
+.desktop-nav{gap:clamp(20px,3.2vw,48px)}
+.desktop-nav a{font-size:10px;letter-spacing:.025em}
+.brand-lockup{min-width:205px}
+.brand-emblem{width:39px;height:39px;flex-basis:39px}
+.brand-name{font-size:11px;letter-spacing:.19em}
+.brand-name i{font-size:9px;letter-spacing:.24em}
+.brand-name small{font-size:5.5px;letter-spacing:.24em}
+.hero{height:min(740px,calc(100svh - 109px));min-height:560px}
+.hero-image{background-position:center 30%;transform:none;animation:none}
+.hero-shade{background:linear-gradient(90deg,rgba(22,12,14,.68) 0%,rgba(22,12,14,.34) 43%,rgba(22,12,14,.03) 100%),linear-gradient(0deg,rgba(22,12,14,.2),transparent 36%)}
+.hero-copy{margin-left:clamp(26px,9vw,132px);max-width:650px}
+.hero h1{font-size:clamp(66px,8.5vw,120px);line-height:.91;letter-spacing:-.065em}
+.hero-text{font-size:12px;letter-spacing:.06em}
+.button-light{padding:17px 21px}
+.intro{max-width:760px;padding-block:clamp(78px,9vw,120px)}
+.intro-copy{font-size:12px;line-height:2}
+.category-editorial{gap:10px;padding:0 clamp(12px,2vw,24px)}
+.category-tile{min-height:340px;padding:clamp(26px,4.5vw,58px)}
+.category-tile strong{font-size:clamp(40px,5vw,68px)}
+.shop-section{padding-top:clamp(65px,8vw,105px);padding-bottom:80px}
+.section-heading h2,.newsletter h2{letter-spacing:-.055em}
+.product-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:38px 16px}
+.product-image-wrap{background:#eee8df}
+.quick-add{transform:none;opacity:1;bottom:0;left:0;right:0;padding:13px 14px;background:rgba(255,253,249,.94);border-top:1px solid rgba(32,26,25,.08)}
+.product-meta{padding-top:15px}
+.product-title{font-size:16px}
+.product-price{font-size:10px}
+.product-colors{gap:6px}
+.manifesto{grid-template-columns:1.04fr .96fr}
+.manifesto-image{background-position:center 34%}
+.manifesto-copy{padding:clamp(36px,6vw,84px)}
+.service-strip{padding-block:31px}
+.newsletter{background:#f5efe7}
+.site-footer{padding-top:45px;padding-bottom:26px}
+@media(max-width:900px){.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:32px 14px}.hero{min-height:530px;height:70svh}.category-tile{min-height:280px}}
+@media(max-width:700px){
+ .site-header{height:70px;padding-inline:16px}
+ .brand-lockup{min-width:0;gap:7px}
+ .brand-emblem{width:33px;height:33px;flex-basis:33px}
+ .brand-name{font-size:9px;letter-spacing:.13em}
+ .brand-name i{font-size:8px;letter-spacing:.17em}
+ .brand-name small{font-size:4.8px;letter-spacing:.14em}
+ .header-actions{gap:8px}
+ .hero{height:72svh;min-height:510px;max-height:690px}
+ .hero-image{background-position:58% center}
+ .hero-shade{background:linear-gradient(90deg,rgba(22,12,14,.63),rgba(22,12,14,.12)),linear-gradient(0deg,rgba(22,12,14,.28),transparent 50%)}
+ .hero-copy{margin-left:22px;margin-right:20px;padding:48px 0}
+ .hero h1{font-size:clamp(57px,13vw,83px)}
+ .hero-text{font-size:11px}
+ .hero-caption,.hero-index{bottom:18px;font-size:7px}
+ .category-editorial{grid-template-columns:1fr;gap:8px;padding-inline:10px}
+ .category-tile{min-height:255px}
+ .shop-section{padding-inline:16px}
+ .product-grid{gap:27px 10px}
+ .product-title{font-size:14px}
+ .product-price{font-size:9px}
+ .quick-add{font-size:9px;padding:11px}
+ .manifesto{grid-template-columns:1fr}
+ .manifesto-image{min-height:340px}
+ .manifesto-copy{padding:42px 25px 48px}
+ .service-strip{padding-inline:12px}
+}
