@@ -1928,3 +1928,10 @@ button:disabled{cursor:not-allowed;opacity:.55}
  html{scroll-behavior:auto!important}
  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
+
+/* Centered logo-only header */
+.site-header{position:sticky;}
+.brand-lockup{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);min-width:0;justify-content:center;z-index:2;}
+.brand-emblem{width:58px;height:58px;flex:0 0 58px;}
+.brand-name{display:none;}
+@media(max-width:600px){.brand-emblem{width:50px;height:50px;flex-basis:50px;}.site-header{padding-left:16px;padding-right:16px;}}
