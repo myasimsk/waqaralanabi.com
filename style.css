@@ -196,3 +196,38 @@ body{background:var(--paper)}
 }
 
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* Country selection — Phase 1 */
+.country-gate{position:fixed;inset:0;z-index:1000;display:grid;grid-template-columns:1.02fr .98fr;background:var(--cream);color:var(--ink);overflow:auto;opacity:1;visibility:visible;transition:opacity .45s ease,visibility .45s ease}
+.country-gate.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+.country-visual{position:relative;min-height:100svh;background:linear-gradient(180deg,rgba(27,8,15,.12),rgba(27,8,15,.48)),url('https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1500&q=88') center 34%/cover;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+.country-visual:after{content:"";position:absolute;inset:18px;border:1px solid rgba(255,255,255,.28);pointer-events:none}
+.country-visual-mark{font:italic 110px/.9 var(--serif);letter-spacing:-.1em;text-shadow:0 5px 30px #0004}
+.country-visual>span{font-size:9px;letter-spacing:.36em;margin-top:23px}
+.country-panel{display:flex;flex-direction:column;justify-content:center;padding:clamp(28px,6vw,90px);max-width:760px;width:100%;margin:auto}
+.country-brand{margin-bottom:clamp(38px,6vh,70px);display:flex;align-items:center}
+.country-brand img{width:clamp(110px,12vw,160px);max-height:70px;object-fit:contain;object-position:left center}
+.country-panel .eyebrow{margin-bottom:17px}
+.country-panel h1{font:400 clamp(39px,4.1vw,61px)/1.08 var(--serif);letter-spacing:-.045em;margin:0}
+.country-panel h1 em{font-weight:400;color:var(--wine)}
+.country-intro{font-size:12px;line-height:1.8;color:var(--muted);max-width:370px;margin:17px 0 25px}
+.country-options{border-top:1px solid #ded4ca}
+.country-option{width:100%;display:grid;grid-template-columns:30px 1fr auto 20px;align-items:center;gap:12px;text-align:left;background:transparent;border:0;border-bottom:1px solid #ded4ca;padding:13px 3px;min-height:62px;color:var(--ink)}
+.country-option.selected{background:rgba(100,10,35,.045)}
+.country-flag{font-size:21px}
+.country-name{font-size:12px;letter-spacing:.01em}
+.country-name small{display:block;color:var(--muted);font-size:9px;margin-top:4px}
+.country-currency{font-size:10px;letter-spacing:.08em;color:var(--wine)}
+.country-check{color:var(--wine);font-size:15px;text-align:right}
+.country-option.unavailable{opacity:.56;cursor:not-allowed}
+.country-option.unavailable .country-check{color:#9c9188}
+.country-continue{width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--wine);color:#fff;border:0;padding:17px 19px;margin-top:20px;font-size:11px;letter-spacing:.04em;transition:background .2s}
+.country-continue:hover{background:var(--wine-dark)}
+.country-continue span{font-size:17px}
+.country-footnote{font-size:9px;color:var(--muted);margin:17px 0 0;line-height:1.7}
+.country-footnote span{display:block;color:#9c8b7e;margin-top:2px}
+.country-switch{border:1px solid var(--line);background:transparent;color:var(--ink);padding:8px 9px;font-size:10px;white-space:nowrap}
+.country-switch span{font-size:9px;margin:0 3px}
+body.country-gate-open{overflow:hidden}
+@media(max-width:800px){.country-gate{grid-template-columns:1fr;grid-template-rows:30svh auto}.country-visual{min-height:30svh;background-position:center 34%}.country-visual:after{inset:10px}.country-visual-mark{font-size:66px}.country-visual>span{font-size:7px;margin-top:12px}.country-panel{padding:30px 24px 35px;justify-content:flex-start}.country-brand{margin-bottom:30px}.country-brand img{width:115px;max-height:48px}.country-panel h1{font-size:42px}.country-intro{margin:13px 0 19px}.country-option{min-height:57px;padding:10px 2px}.country-switch{padding:7px 6px;font-size:9px}}
+@media(max-width:420px){.country-panel{padding:24px 18px 28px}.country-panel h1{font-size:37px}.country-option{grid-template-columns:26px 1fr auto 15px;gap:9px}.country-name{font-size:11px}}
