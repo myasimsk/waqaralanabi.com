@@ -45,7 +45,7 @@ $$("[data-frequency]").forEach(card=>card.addEventListener("click",()=>{
  frequencyResult.querySelector("p").textContent=choice.copy;
  const link=frequencyResult.querySelector("a");link.textContent=choice.link+" ↓";
  query=choice.query;$("#searchInput").value="";
- activeFilter="All";$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));
+ activeFilter="All";$$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));
  renderProducts();
  $("#shop").scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
 }));
@@ -65,7 +65,7 @@ const lookbookSearch={quiet:"sweatshirt",bold:"tee",form:"trouser"};
 $("[data-look]").forEach(frame=>frame.addEventListener("click",()=>{
  const look=frame.dataset.look;
  query=lookbookSearch[look]||"";$("#searchInput").value="";
- activeFilter="All";$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));
+ activeFilter="All";$$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));
  renderProducts();
  $("#shop").scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
  toast("LOOKBOOK / "+look.toUpperCase()+" — pieces selected");
@@ -82,7 +82,7 @@ function quickAdd(id){const p=products.find(x=>x.id===id);const found=bag.find(x
 function renderBag(){const count=bag.reduce((n,x)=>n+x.qty,0);$("#bagCount").textContent=count;$("#drawerCount").textContent="("+count+")";$("#subtotal").textContent=money(bag.reduce((n,x)=>n+products.find(p=>p.id===x.id).price*x.qty,0));$("#bagItems").innerHTML=bag.length?bag.map((x,i)=>{const p=products.find(p=>p.id===x.id);return `<div class="bag-line"><img src="${p.image}" alt=""><div><h3>${p.name}</h3><p>${x.color} · Size ${x.size}</p><p>${money(p.price)}</p><div class="qty-controls"><button data-qty="${i}" data-delta="-1" aria-label="Decrease quantity">−</button><span>${x.qty}</span><button data-qty="${i}" data-delta="1" aria-label="Increase quantity">+</button></div></div><button class="remove-item" data-remove="${i}" aria-label="Remove item">×</button></div>`}).join(""):'<div class="empty-bag">Your bag is waiting for something special.</div>';$$("[data-qty]").forEach(b=>b.onclick=()=>{const i=+b.dataset.qty;bag[i].qty+=+b.dataset.delta;if(bag[i].qty<1)bag.splice(i,1);saveBag()});$$("[data-remove]").forEach(b=>b.onclick=()=>{bag.splice(+b.dataset.remove,1);saveBag()})}
 function openBag(){$("#bagDrawer").classList.add("open");$("#drawerBackdrop").classList.add("open");$("#bagDrawer").setAttribute("aria-hidden","false");document.body.style.overflow="hidden"}function closeBag(){$("#bagDrawer").classList.remove("open");$("#drawerBackdrop").classList.remove("open");$("#bagDrawer").setAttribute("aria-hidden","true");document.body.style.overflow=""}
 let toastTimer;function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),2600)}
-$("#filters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;activeFilter=b.dataset.filter;$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts()});$(".desktop-nav [data-filter],.mobile-menu [data-filter],.category-tile[data-filter]").forEach(a=>a.addEventListener("click",()=>{activeFilter=a.dataset.filter;$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts();$("#mobileMenu").classList.remove("open")}));$("#sortSelect").onchange=renderProducts;$("#bagOpen").onclick=openBag;$("#bagClose").onclick=closeBag;$("#drawerBackdrop").onclick=closeBag;$("#checkoutButton").onclick=()=>toast("Online checkout will be available at launch.");$("#menuToggle").onclick=()=>$("#mobileMenu").classList.toggle("open");$("#searchToggle").onclick=()=>{$("#searchBar").classList.toggle("open");if($("#searchBar").classList.contains("open"))$("#searchInput").focus()};$("#searchClose").onclick=()=>{$("#searchBar").classList.remove("open");query="";$("#searchInput").value="";renderProducts()};$("#searchInput").oninput=e=>{query=e.target.value;renderProducts();if(query)$("#shop").scrollIntoView({behavior:"smooth"})};$("#newsletterForm").onsubmit=e=>{e.preventDefault();$("#newsletterMessage").textContent="Thanks — newsletter signup will be connected before launch.";toast("Thank you for your interest.")};$("#backTop").onclick=e=>{e.preventDefault();window.scrollTo({top:0,behavior:"smooth"})};document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBag()});renderProducts();renderBag();
+$("#filters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;activeFilter=b.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts()});$$(".desktop-nav [data-filter],.mobile-menu [data-filter],.category-tile[data-filter]").forEach(a=>a.addEventListener("click",()=>{activeFilter=a.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts();$("#mobileMenu").classList.remove("open")}));$("#sortSelect").onchange=renderProducts;$("#bagOpen").onclick=openBag;$("#bagClose").onclick=closeBag;$("#drawerBackdrop").onclick=closeBag;$("#checkoutButton").onclick=()=>toast("Online checkout will be available at launch.");$("#menuToggle").onclick=()=>$("#mobileMenu").classList.toggle("open");$("#searchToggle").onclick=()=>{$("#searchBar").classList.toggle("open");if($("#searchBar").classList.contains("open"))$("#searchInput").focus()};$("#searchClose").onclick=()=>{$("#searchBar").classList.remove("open");query="";$("#searchInput").value="";renderProducts()};$("#searchInput").oninput=e=>{query=e.target.value;renderProducts();if(query)$("#shop").scrollIntoView({behavior:"smooth"})};$("#newsletterForm").onsubmit=e=>{e.preventDefault();$("#newsletterMessage").textContent="Thanks — newsletter signup will be connected before launch.";toast("Thank you for your interest.")};$("#backTop").onclick=e=>{e.preventDefault();window.scrollTo({top:0,behavior:"smooth"})};document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBag()});renderProducts();renderBag();
 
 /* Mobile app navigation actions and active destination state */
 const mobileSearchAction=$("#mobileSearchAction"),mobileBagAction=$("#mobileBagAction"),mobileBagCount=$("#mobileBagCount");
@@ -92,7 +92,7 @@ const syncMobileBagCount=()=>{if(mobileBagCount)mobileBagCount.textContent=Strin
 const originalRenderBag=renderBag;
 renderBag=function(){originalRenderBag();syncMobileBagCount();};
 syncMobileBagCount();
-const mobileNavItems=$(".mobile-app-nav .app-nav-item");
+const mobileNavItems=$$(".mobile-app-nav .app-nav-item");
 mobileNavItems.forEach(item=>item.addEventListener("click",()=>{
  mobileNavItems.forEach(x=>x.classList.toggle("is-active",x===item));
 }));
