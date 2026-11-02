@@ -1842,3 +1842,22 @@ body{font-family:var(--sans);background:var(--cream);color:var(--ink)}
 }
 @media(max-width:390px){.look-frame{min-height:320px}.look-frame-three{min-height:360px}.look-frame-title{font-size:34px}}
 @media(prefers-reduced-motion:reduce){.drop-intro-photo{animation:none}}
+
+
+/* HERO CTA — distinctive WA campaign action */
+.hero-cta{
+  display:inline-flex!important;align-items:center!important;justify-content:space-between!important;
+  gap:34px!important;min-width:224px!important;padding:17px 18px 17px 21px!important;
+  border:1px solid var(--cream)!important;border-radius:0!important;
+  background:var(--cream)!important;color:#171313!important;
+  font-size:10px!important;font-weight:800!important;letter-spacing:.13em!important;
+  line-height:1!important;text-transform:uppercase!important;text-decoration:none!important;
+  box-shadow:5px 5px 0 rgba(122,30,58,.95)!important;
+  transition:transform .22s ease,box-shadow .22s ease,background .22s ease,color .22s ease!important;
+}
+.hero-cta-label{white-space:nowrap}
+.hero-cta-arrow{display:grid;place-items:center;width:27px;height:27px;background:#7A1E3A;color:#F5F0E6;font-size:17px;transition:transform .22s ease,background .22s ease,color .22s ease}
+.hero-cta:hover,.hero-cta:focus-visible{background:#7A1E3A!important;color:#F5F0E6!important;transform:translate(3px,3px);box-shadow:2px 2px 0 rgba(245,240,230,.9)!important;outline:2px solid #F5F0E6;outline-offset:4px}
+.hero-cta:hover .hero-cta-arrow,.hero-cta:focus-visible .hero-cta-arrow{background:#F5F0E6;color:#7A1E3A;transform:rotate(45deg)}
+@media(max-width:600px){.hero-cta{min-width:210px!important;padding:15px 15px 15px 17px!important;gap:24px!important}}
+@media(prefers-reduced-motion:reduce){.hero-cta,.hero-cta-arrow{transition:none!important}}
