@@ -1597,3 +1597,132 @@ body{background:#FBF8F2;color:#111}
  .hero-caption{bottom:12px!important;left:14px!important;max-width:calc(100% - 28px)!important}
  .hero-index{display:none!important}
 }
+
+
+/* WA / NEXT-GEN EDIT — editorial streetwear direction */
+:root{
+ --wine:#7A1E3A;--wine-dark:#3e0b1d;--cream:#F5F0E6;--paper:#f5f0e6;
+ --ink:#111111;--muted:#6f6865;--line:rgba(17,17,17,.16);--gold:#C5A46D;
+ --sans:"Space Grotesk","DM Sans",Arial,sans-serif;--serif:"Playfair Display",Georgia,serif;
+}
+body{font-family:var(--sans);background:var(--cream);color:var(--ink)}
+.announcement{height:28px;background:#111;color:#f5f0e6;font-size:9px;font-weight:700;letter-spacing:.19em}
+.site-header{background:var(--wine)!important;color:var(--cream)!important;border-bottom:1px solid rgba(245,240,230,.18)!important}
+.site-header a,.site-header button,.site-header .brand-name,.site-header .brand-name i,.site-header .brand-name small{color:var(--cream)!important}
+.site-header .bag-button{border:1px solid rgba(245,240,230,.55);padding:9px 12px}
+.site-header .bag-button span{background:var(--gold);color:#111!important;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;min-width:20px;min-height:20px}
+.brand-name{font-family:var(--sans)!important;font-weight:700!important;letter-spacing:.12em!important}
+.brand-name i{font-style:normal!important}
+.desktop-nav a,.header-actions button{transition:opacity .2s ease}
+.desktop-nav a:hover,.header-actions button:hover{opacity:.68}
+.hero{min-height:min(790px,calc(100svh - 90px))!important;background:#171313;overflow:hidden}
+.hero-image{inset:0!important;background-position:center 42%!important;transform:scale(1.015);filter:saturate(.78) contrast(1.05)}
+.hero-shade{background:linear-gradient(90deg,rgba(13,10,10,.76) 0%,rgba(13,10,10,.28) 53%,rgba(13,10,10,.06) 100%),linear-gradient(0deg,rgba(13,10,10,.45),transparent 34%)!important}
+.hero-topline{font-size:9px!important;letter-spacing:.2em!important;font-weight:700!important}
+.hero-copy{max-width:900px!important;width:78%!important}
+.hero-copy h1{font-family:var(--sans)!important;font-size:clamp(76px,12.2vw,174px)!important;font-weight:700!important;letter-spacing:-.095em!important;line-height:.77!important;text-transform:uppercase!important;max-width:1000px!important}
+.hero-copy h1 em{font-family:var(--serif)!important;font-weight:400!important;text-transform:lowercase!important;letter-spacing:-.075em!important;color:var(--cream)!important}
+.hero-copy .eyebrow{font-size:10px!important;letter-spacing:.22em!important}
+.hero-text{font-size:clamp(13px,1.4vw,17px)!important;max-width:330px!important;line-height:1.55!important}
+.hero-copy .button-light{background:var(--cream)!important;color:#111!important;border:1px solid var(--cream)!important;font-size:10px!important;letter-spacing:.15em!important;padding:15px 19px!important;font-weight:700!important}
+.hero-copy .button-light span{color:var(--wine)!important}
+.hero-copy .button-light:hover{background:var(--wine)!important;color:var(--cream)!important;border-color:var(--wine)!important}
+.hero-copy .button-light:hover span{color:var(--gold)!important}
+.hero-stamp{background:var(--wine)!important;color:var(--cream)!important;transform:rotate(5deg);box-shadow:8px 8px 0 var(--gold)!important}
+.hero-stamp strong{font-family:var(--sans)!important;letter-spacing:-.08em!important;line-height:.82!important}
+.hero-caption,.hero-index{font-size:9px!important;letter-spacing:.16em!important;font-weight:700!important}
+.attitude-ticker{background:var(--wine)!important;color:var(--cream)!important;border:0!important;padding:17px 0!important}
+.attitude-track{font-family:var(--sans)!important;font-size:clamp(18px,2.3vw,29px)!important;font-weight:700!important;letter-spacing:-.045em!important}
+.attitude-track b{color:var(--gold)!important}
+.intro{padding:clamp(76px,10vw,142px) 24px!important;background:var(--cream)!important;text-align:left!important;max-width:none!important}
+.intro .eyebrow{font-size:9px!important;letter-spacing:.2em!important}
+.intro-title{font-family:var(--sans)!important;font-size:clamp(46px,8.7vw,116px)!important;line-height:.91!important;letter-spacing:-.075em!important;font-weight:700!important;text-transform:uppercase!important;max-width:1050px!important}
+.intro-title em{font-family:var(--serif)!important;text-transform:none!important;font-weight:400!important;color:var(--wine)!important}
+.intro-copy{max-width:440px!important;margin-left:auto!important;margin-right:8%!important;font-size:15px!important;line-height:1.7!important}
+.category-editorial{gap:10px!important;padding:0 12px!important;background:var(--cream)!important}
+.category-tile{min-height:clamp(340px,47vw,620px)!important;padding:clamp(20px,4vw,52px)!important;overflow:hidden!important;transition:filter .25s ease,transform .25s ease!important}
+.category-tile:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.62),transparent 62%);pointer-events:none}
+.category-tile:hover{filter:saturate(1.08)!important}
+.category-tile span,.category-tile strong,.category-tile i{position:relative;z-index:1}
+.category-tile span{font-size:9px!important;letter-spacing:.19em!important}
+.category-tile strong{font-family:var(--sans)!important;font-size:clamp(54px,8.5vw,112px)!important;line-height:.82!important;letter-spacing:-.09em!important;font-weight:700!important}
+.category-tile i{font-size:11px!important;font-style:normal!important;letter-spacing:.1em!important;text-transform:uppercase!important}
+.category-men{background-color:#4a3932!important}
+.category-women{background-color:#8b6d67!important}
+.shop-section{padding:clamp(70px,9vw,120px) clamp(14px,3vw,44px)!important;background:var(--cream)!important}
+.section-heading{align-items:end!important;border-bottom:1px solid var(--ink)!important;padding-bottom:20px!important}
+.section-heading h2{font-family:var(--sans)!important;font-size:clamp(44px,7vw,90px)!important;line-height:.9!important;letter-spacing:-.08em!important;text-transform:uppercase!important;font-weight:700!important}
+.section-heading .eyebrow{font-size:9px!important;letter-spacing:.2em!important}
+.product-total{font-size:10px!important;letter-spacing:.12em!important;text-transform:uppercase!important}
+.shop-toolbar{padding:20px 0 28px!important}
+.filter{border:1px solid rgba(17,17,17,.28)!important;border-radius:0!important;text-transform:uppercase!important;font-size:9px!important;font-weight:700!important;letter-spacing:.1em!important;padding:10px 14px!important}
+.filter.active,.filter:hover{background:var(--wine)!important;border-color:var(--wine)!important;color:var(--cream)!important}
+.sort-label{font-size:9px!important;letter-spacing:.1em!important;text-transform:uppercase!important}
+.product-grid{gap:34px 12px!important}
+.product-image-wrap{background:#e8e1d7!important;overflow:hidden!important}
+.product-image{transition:transform .65s cubic-bezier(.2,.7,.2,1),filter .4s ease!important;filter:saturate(.88)!important}
+.product-card:hover .product-image{transform:scale(1.045)!important;filter:saturate(1.04)!important}
+.product-badge{background:var(--wine)!important;color:var(--cream)!important;border-radius:0!important;letter-spacing:.12em!important;font-size:8px!important;font-weight:700!important}
+.quick-add{background:var(--cream)!important;color:#111!important;border:1px solid #111!important;border-radius:0!important;font-size:9px!important;font-weight:700!important;letter-spacing:.1em!important;text-transform:uppercase!important}
+.quick-add:hover{background:var(--wine)!important;color:var(--cream)!important;border-color:var(--wine)!important}
+.product-category{font-size:9px!important;letter-spacing:.16em!important;text-transform:uppercase!important}
+.product-title{font-family:var(--sans)!important;font-size:15px!important;letter-spacing:-.025em!important;font-weight:600!important}
+.product-price{font-size:13px!important;font-weight:700!important}
+.product-colors{gap:7px!important}
+.swatch{border:1px solid rgba(17,17,17,.28)!important}
+.collection-note{font-size:12px!important;letter-spacing:.015em!important}
+.manifesto{margin:0 12px!important;min-height:clamp(420px,55vw,680px)!important;background:#191515!important}
+.manifesto-copy h2{font-family:var(--sans)!important;font-size:clamp(52px,8vw,110px)!important;line-height:.86!important;letter-spacing:-.08em!important;text-transform:uppercase!important}
+.manifesto-copy h2 em{font-family:var(--serif)!important;text-transform:none!important;color:var(--gold)!important}
+.manifesto-copy .eyebrow{font-size:9px!important;letter-spacing:.2em!important}
+.text-link{font-size:10px!important;letter-spacing:.13em!important;text-transform:uppercase!important;border-bottom:1px solid var(--gold)!important;padding-bottom:9px!important}
+.service-strip{margin:0 12px!important;background:var(--wine)!important;color:var(--cream)!important;gap:0!important}
+.service-strip>div{padding:24px 20px!important;border-right:1px solid rgba(245,240,230,.2)!important}
+.service-strip b{font-size:9px!important;letter-spacing:.12em!important}
+.service-strip span{font-size:12px!important;color:rgba(245,240,230,.72)!important}
+.newsletter{background:#111!important;color:var(--cream)!important;padding:clamp(65px,9vw,115px) 20px!important}
+.newsletter h2{font-family:var(--sans)!important;font-size:clamp(42px,7vw,84px)!important;line-height:.92!important;letter-spacing:-.075em!important;text-transform:uppercase!important}
+.newsletter>p:not(.eyebrow){color:rgba(245,240,230,.72)!important}
+.newsletter form{border-bottom:1px solid rgba(245,240,230,.5)!important;max-width:560px!important}
+.newsletter input{color:var(--cream)!important}
+.newsletter button{background:var(--gold)!important;color:#111!important;font-size:10px!important;font-weight:700!important;text-transform:uppercase!important;letter-spacing:.1em!important}
+.site-footer{background:var(--wine-dark)!important;color:var(--cream)!important}
+.site-footer a,.site-footer p,.site-footer small{color:var(--cream)!important}
+.site-footer .brand-name,.site-footer .brand-name i,.site-footer .brand-name small{color:var(--cream)!important}
+.drawer-backdrop{backdrop-filter:blur(4px)}
+.bag-drawer{border-left:3px solid var(--wine)!important}
+.button-burgundy{background:var(--wine)!important;border-radius:0!important}
+::selection{background:var(--gold);color:#111}
+@media(min-width:1000px){
+ .hero-copy{margin-left:7%!important}
+ .hero-copy h1{font-size:clamp(100px,13.2vw,190px)!important}
+ .category-editorial{grid-template-columns:1.08fr .92fr!important}
+ .category-women{margin-top:70px!important}
+ .category-men{margin-bottom:0!important}
+ .product-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+}
+@media(max-width:700px){
+ .hero{min-height:690px!important;min-height:82svh!important}
+ .hero-copy{width:94%!important;margin-left:0!important;padding-top:55px!important;padding-bottom:85px!important}
+ .hero-copy h1{font-size:clamp(66px,16vw,108px)!important;line-height:.8!important}
+ .hero-stamp{right:18px!important;top:92px!important;transform:rotate(6deg) scale(.82)!important;transform-origin:top right}
+ .hero-caption{bottom:15px!important;left:14px!important;max-width:calc(100% - 28px)!important;font-size:8px!important}
+ .intro{padding:74px 18px!important}
+ .intro-title{font-size:clamp(48px,12vw,76px)!important}
+ .intro-copy{margin:24px 0 0!important;font-size:13px!important;max-width:330px!important}
+ .category-editorial{grid-template-columns:1fr!important;padding:0 8px!important;gap:8px!important}
+ .category-tile{min-height:410px!important}
+ .category-women{margin-top:0!important}
+ .category-tile strong{font-size:76px!important}
+ .shop-section{padding:70px 12px!important}
+ .section-heading h2{font-size:clamp(43px,11vw,64px)!important}
+ .product-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:26px 9px!important}
+ .product-title{font-size:13px!important}
+ .product-price{font-size:12px!important}
+ .product-sizes{font-size:10px!important}
+ .manifesto{margin:0 8px!important;min-height:480px!important}
+ .service-strip{margin:0 8px!important;grid-template-columns:1fr!important}
+ .service-strip>div{padding:18px 16px!important;border-right:0!important;border-bottom:1px solid rgba(245,240,230,.2)!important}
+ .newsletter{padding:68px 18px!important}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
