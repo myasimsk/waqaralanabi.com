@@ -1774,3 +1774,5 @@ body{font-family:var(--sans);background:var(--cream);color:var(--ink)}
  .frequency-bottom{flex-direction:column;gap:8px}
 }
 @media(hover:none){.frequency-card:hover{transform:none}}
+
+.wa-scroll-progress{position:fixed;z-index:9999;left:0;top:0;width:100%;height:3px;background:var(--gold);transform:scaleX(0);transform-origin:left center;pointer-events:none;will-change:transform}
