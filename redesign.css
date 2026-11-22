@@ -48,3 +48,72 @@ footer{background:#171515;color:#f3ede4}footer a:hover{color:var(--acid)}
 .hero-copy>*{animation:waReveal .8s both}.hero-copy h1{animation-delay:.12s}.hero-text{animation-delay:.24s}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 @media(max-width:760px){.site-header{height:64px;padding:0 14px}.hero{min-height:calc(100svh - 64px)}.hero-topline{font-size:8px;left:18px;right:18px}.hero-copy{left:20px;right:20px;bottom:115px}.hero-copy h1{font-size:clamp(64px,17vw,100px)}.hero-text{font-size:13px}.hero-caption{left:20px;bottom:60px;font-size:9px;padding:11px 13px}.hero-index{right:20px;bottom:22px}.intro{padding:100px 22px 80px}.intro:before{left:22px;top:28px}.intro-title{font-size:clamp(46px,12vw,74px)}.intro-copy{margin:28px 0 0;font-size:14px}.wa-frequency{padding:65px 20px}.frequency-top{font-size:8px}.frequency-cards{grid-template-columns:1fr!important}.frequency-card{min-height:260px}.frequency-card strong{font-size:42px}#shop{padding:55px 16px}.shop-toolbar{gap:8px}.product-card h3{font-size:11px}}
+
+/* GEN-Z STORE PASS 02 — editorial rhythm, sharper commerce */
+:root{--paper:#f3eee7;--wine:#711b35;--acid:#d8ff62;--ink:#181416}
+.announcement{height:30px;letter-spacing:.16em}
+.site-header{backdrop-filter:blur(16px);background:color-mix(in srgb,var(--paper) 92%,transparent)}
+.brand-lockup{transition:opacity .2s}.brand-lockup:hover{opacity:.72}
+.hero{min-height:clamp(640px,88svh,920px);position:relative}
+.hero-topline{display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
+.hero-copy{max-width:1050px}
+.hero-copy h1{max-width:10ch}
+.hero-copy h1 em{color:var(--acid);text-shadow:0 0 35px rgba(217,255,102,.1)}
+.hero-caption{display:inline-flex;align-items:center;gap:10px}
+.caption-dot{width:7px;height:7px;background:var(--acid);border-radius:50%;display:inline-block}
+.hero-index span{color:var(--acid);font-size:15px}
+.attitude-ticker{overflow:hidden;white-space:nowrap}
+.attitude-track{display:flex;justify-content:center;gap:clamp(22px,4vw,56px);text-transform:uppercase}
+.intro{min-height:480px}
+.intro-title{max-width:12ch}
+.intro-copy{border-left:2px solid var(--wine);padding-left:20px}
+.wa-frequency{position:relative}
+.frequency-top{display:flex;justify-content:space-between;gap:20px}
+.frequency-heading{max-width:850px}
+.frequency-heading h2{max-width:8ch}
+.frequency-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.frequency-card{padding:clamp(24px,4vw,46px);display:flex;flex-direction:column;justify-content:space-between}
+.frequency-card.frequency-bold{transform:translateY(24px)}
+.frequency-card.frequency-form{border-style:dashed}
+.category-editorial{gap:10px;padding:10px clamp(10px,2vw,24px) 0}
+.category-tile{min-height:clamp(350px,43vw,580px);padding:clamp(22px,3vw,48px);transition:filter .25s}
+.category-tile:after{content:"↗";position:absolute;top:24px;right:28px;font-size:26px;transition:transform .25s}
+.category-tile:hover:after{transform:translate(4px,-4px)}
+.category-tile strong{font-family:"Space Grotesk",sans-serif;font-weight:700;letter-spacing:-.07em;text-transform:uppercase}
+.category-tile i{font-family:"Space Grotesk";letter-spacing:.12em;text-transform:uppercase}
+.wa-lookbook{padding-top:clamp(70px,9vw,125px)}
+.lookbook-head h2{font-size:clamp(72px,11vw,150px)}
+.lookbook-grid{gap:clamp(8px,1.4vw,18px)}
+.look-frame{border-radius:2px}
+.look-frame-two{margin-top:clamp(28px,6vw,80px)}
+.look-frame-title{font-family:"Space Grotesk";font-weight:700;letter-spacing:-.08em}
+.look-frame-cta{border:1px solid rgba(255,255,255,.65);padding:10px 12px;font-size:9px;letter-spacing:.13em;backdrop-filter:blur(8px)}
+.lookbook-foot{font-family:"Space Grotesk";font-weight:700;letter-spacing:.12em}
+.shop-section{background:var(--paper)}
+.section-heading h2{font-family:"Space Grotesk";font-size:clamp(54px,8vw,108px);font-weight:700;letter-spacing:-.09em;text-transform:uppercase}
+.shop-toolbar{position:sticky;top:78px;z-index:8;background:var(--paper);padding:14px 0;border-bottom:1px solid rgba(20,20,20,.1)}
+.filter{border:1px solid rgba(20,20,20,.18);border-radius:999px;padding:9px 16px;font-family:"Space Grotesk";text-transform:uppercase;letter-spacing:.08em}
+.filter.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.product-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(12px,2vw,24px)}
+.product-image-wrap{aspect-ratio:3/4.15}
+.product-card h3{font-size:clamp(11px,1vw,13px);letter-spacing:.03em}
+.quick-add{transform:translateY(0);opacity:1;background:var(--wine);color:white;left:0;right:0;bottom:0;min-height:44px}
+.quick-add span{color:var(--acid)}
+.product-meta{display:grid;grid-template-columns:1fr auto;gap:5px}
+.product-meta .product-category{grid-column:1/-1}
+.collection-note{max-width:600px;line-height:1.7;text-transform:uppercase;letter-spacing:.12em}
+.manifesto{min-height:clamp(520px,65vw,760px)}
+.manifesto-copy h2{font-family:"Space Grotesk";font-weight:700;text-transform:uppercase;letter-spacing:-.08em}
+.manifesto-copy h2 em{font-family:"Playfair Display",serif;text-transform:none;color:var(--acid)}
+.service-strip{background:var(--wine);color:#fff;border:0}
+.service-strip b{color:var(--acid);font-family:"Space Grotesk"}
+.service-strip span{color:rgba(255,255,255,.78);font-family:"DM Sans"}
+.newsletter{background:var(--acid);color:#171515}
+.newsletter .eyebrow{color:var(--wine)}
+.newsletter h2{font-family:"Space Grotesk";font-weight:700;letter-spacing:-.07em;text-transform:uppercase}
+.newsletter form button{background:#171515;color:var(--acid);font-family:"Space Grotesk";text-transform:uppercase;letter-spacing:.1em}
+.site-footer{border-top:8px solid var(--wine)}
+.footer-column h2{font-family:"Space Grotesk";text-transform:uppercase;letter-spacing:.12em}
+@media(max-width:1000px){.product-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.frequency-card.frequency-bold{transform:none}}
+@media(max-width:760px){.site-header{height:64px}.hero{min-height:calc(100svh - 64px);min-height:680px}.hero-copy h1{font-size:clamp(60px,16vw,98px);max-width:9ch}.hero-topline{font-size:8px}.intro{min-height:auto}.frequency-top{font-size:8px}.frequency-cards{grid-template-columns:1fr}.frequency-card{min-height:230px}.category-tile{min-height:350px}.lookbook-head{grid-template-columns:1fr;gap:18px}.lookbook-head h2{font-size:clamp(66px,16vw,100px)}.lookbook-head>p{margin:0;max-width:340px}.lookbook-index{position:static}.lookbook-grid{grid-template-columns:1fr 1fr}.look-frame{min-height:440px}.look-frame-two{margin-top:0}.look-frame-three{grid-column:1/-1;min-height:360px}.shop-toolbar{top:64px;flex-direction:column;align-items:flex-start}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 10px}.quick-add{font-size:9px;padding:11px}.service-strip{grid-template-columns:1fr;gap:18px}.service-strip div{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.18)}.manifesto{min-height:560px}}
+@media(max-width:420px){.hero-copy h1{font-size:62px}.lookbook-grid{grid-template-columns:1fr}.look-frame,.look-frame-three{min-height:430px;grid-column:auto}.category-tile{min-height:290px}.shop-toolbar{gap:12px}}
