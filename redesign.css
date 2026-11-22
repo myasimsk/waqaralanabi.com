@@ -1,0 +1,50 @@
+/* WA GEN-Z EDITORIAL REDESIGN — preview branch */
+:root{--wine:#7A1E3A;--cream:#F3EDE4;--ink:#171515;--acid:#D9FF66;--paper:#F7F4EF}
+body{font-family:"Space Grotesk","DM Sans",sans-serif;background:var(--paper);color:var(--ink)}
+body[data-theme="dark"]{--paper:#111;--cream:#1a1717;--ink:#f4f0ea}
+.announcement{background:var(--wine);color:#fff;font-family:"Space Grotesk",sans-serif;font-size:10px;letter-spacing:.2em;font-weight:700}
+.site-header{height:78px;background:var(--paper);border-bottom:1px solid rgba(23,21,21,.12);padding:0 clamp(16px,4vw,58px);position:sticky;top:0;z-index:30}
+.desktop-nav a{font-family:"Space Grotesk";font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:700;position:relative}
+.desktop-nav a:after{content:"";position:absolute;left:0;bottom:-7px;width:0;height:2px;background:var(--wine);transition:width .25s}.desktop-nav a:hover:after{width:100%}
+.hero{min-height:min(790px,calc(100svh - 78px));height:auto;overflow:hidden;background:#21171a}
+.hero-image{transform:scale(1.02);transition:transform 1.5s cubic-bezier(.2,.7,.2,1);filter:saturate(.78)}.hero:hover .hero-image{transform:scale(1.06)}
+.hero-shade{background:linear-gradient(90deg,rgba(13,10,11,.72),rgba(13,10,11,.08) 72%),linear-gradient(0deg,rgba(13,10,11,.3),transparent 55%)}
+.hero-topline{font:700 10px "Space Grotesk";letter-spacing:.18em;border-bottom:1px solid rgba(255,255,255,.25);padding-bottom:14px;left:clamp(20px,5vw,70px);right:clamp(20px,5vw,70px)}
+.hero-copy{left:clamp(20px,7vw,100px);bottom:clamp(90px,13vh,150px);max-width:950px}
+.hero-copy .eyebrow{font-size:11px;letter-spacing:.22em;color:var(--acid)}
+.hero-copy h1{font-family:"Space Grotesk",sans-serif;font-weight:700;line-height:.82;letter-spacing:-.075em;font-size:clamp(70px,12vw,190px);text-transform:uppercase;margin:0;color:#fff}
+.hero-copy h1 em{font-style:normal;color:var(--acid);display:inline-block;transform:skew(-7deg)}
+.hero-text{font-family:"Space Grotesk";font-size:clamp(14px,1.5vw,18px);letter-spacing:.03em;margin-top:28px;color:#f4f0ea}
+.hero-caption{border:1px solid rgba(255,255,255,.45);background:rgba(20,15,17,.2);backdrop-filter:blur(8px);padding:13px 18px;border-radius:0;font:700 10px "Space Grotesk";letter-spacing:.12em;transition:all .3s}
+.hero-caption:hover{background:var(--acid);color:#111;border-color:var(--acid)}
+.hero-index{font:700 9px "Space Grotesk";letter-spacing:.2em}
+.attitude-ticker{background:var(--acid);color:#111;border:0;padding:16px 0}.attitude-track{font-family:"Space Grotesk";font-weight:700;letter-spacing:.1em;font-size:12px}.attitude-track b{font-size:18px}
+.intro{padding:clamp(90px,14vw,180px) 8vw;background:var(--paper);text-align:left;position:relative}
+.intro:before{content:"WA / 001";position:absolute;top:38px;left:8vw;font:700 10px "Space Grotesk";letter-spacing:.2em;color:var(--wine)}
+.intro-title{font:700 clamp(42px,8vw,115px)/.95 "Space Grotesk";letter-spacing:-.07em;text-transform:uppercase;max-width:1000px}
+.intro-title em{font-style:normal;color:var(--wine)}
+.intro-copy{max-width:520px;font-size:15px;line-height:1.8;margin:35px 0 0 auto}
+.wa-frequency{background:#181415;color:#f7f3ed;padding:clamp(60px,8vw,120px) 6vw}
+.frequency-top{font:700 10px "Space Grotesk";letter-spacing:.2em;border-bottom:1px solid #494043;padding-bottom:20px}
+.frequency-heading h2{font:700 clamp(54px,9vw,120px)/.9 "Space Grotesk";letter-spacing:-.07em;text-transform:uppercase}
+.frequency-heading h2 em{color:var(--acid);font-style:normal}
+.frequency-heading p:last-child{font-size:14px;color:#b9adaf}
+.frequency-card{border-radius:0;border:1px solid #51464a;min-height:340px;transition:transform .35s,background .35s}.frequency-card:hover{transform:translateY(-8px);background:#272022}
+.frequency-card strong{font-family:"Space Grotesk";font-size:clamp(35px,4vw,60px);letter-spacing:-.06em;line-height:.95}
+.frequency-symbol{font-size:60px;color:var(--acid)}
+.frequency-foot{font-family:"Space Grotesk";letter-spacing:.05em}
+.frequency-card.frequency-bold{background:var(--wine);border-color:var(--wine)}.frequency-card.frequency-bold .frequency-symbol{color:#fff}
+#shop{padding:80px clamp(18px,5vw,70px)}
+.shop-heading h2,.collection-title,.section-title{font-family:"Space Grotesk";font-size:clamp(48px,7vw,100px);line-height:.9;letter-spacing:-.07em;text-transform:uppercase}
+.shop-toolbar{border-top:1px solid rgba(20,20,20,.15);border-bottom:1px solid rgba(20,20,20,.15);padding:14px 0}
+.product-grid,.products-grid{gap:clamp(12px,2vw,28px)}
+.product-card{background:transparent;border-radius:0}.product-card .product-image{overflow:hidden;background:#e8e0d7;border-radius:0;aspect-ratio:3/4}
+.product-card img{transition:transform .7s cubic-bezier(.2,.7,.2,1),filter .5s}.product-card:hover img{transform:scale(1.04);filter:saturate(.88)}
+.product-card h3{font-family:"Space Grotesk";font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;margin-top:15px}.product-card p{font-family:"Space Grotesk";font-size:12px}
+.quick-add{border-radius:0;background:var(--wine);color:white;font-family:"Space Grotesk";text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+.btn,.primary-button{border-radius:0;font-family:"Space Grotesk";letter-spacing:.1em;text-transform:uppercase}
+footer{background:#171515;color:#f3ede4}footer a:hover{color:var(--acid)}
+@keyframes waReveal{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.hero-copy>*{animation:waReveal .8s both}.hero-copy h1{animation-delay:.12s}.hero-text{animation-delay:.24s}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media(max-width:760px){.site-header{height:64px;padding:0 14px}.hero{min-height:calc(100svh - 64px)}.hero-topline{font-size:8px;left:18px;right:18px}.hero-copy{left:20px;right:20px;bottom:115px}.hero-copy h1{font-size:clamp(64px,17vw,100px)}.hero-text{font-size:13px}.hero-caption{left:20px;bottom:60px;font-size:9px;padding:11px 13px}.hero-index{right:20px;bottom:22px}.intro{padding:100px 22px 80px}.intro:before{left:22px;top:28px}.intro-title{font-size:clamp(46px,12vw,74px)}.intro-copy{margin:28px 0 0;font-size:14px}.wa-frequency{padding:65px 20px}.frequency-top{font-size:8px}.frequency-cards{grid-template-columns:1fr!important}.frequency-card{min-height:260px}.frequency-card strong{font-size:42px}#shop{padding:55px 16px}.shop-toolbar{gap:8px}.product-card h3{font-size:11px}}
