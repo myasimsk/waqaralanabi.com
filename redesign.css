@@ -144,7 +144,7 @@ html[data-theme="dark"] body{background:var(--paper)!important;color:var(--ink)!
 html[data-theme="dark"] .announcement{background:#27131b;color:#f5eee9}
 html[data-theme="dark"] .site-header,html[data-theme="dark"] .search-bar,html[data-theme="dark"] .mobile-menu,html[data-theme="dark"] .shop-section,html[data-theme="dark"] #shop,html[data-theme="dark"] .shop-toolbar{background:var(--paper)!important;color:var(--ink)!important;border-color:var(--line)!important}
 html[data-theme="dark"] .desktop-nav a,html[data-theme="dark"] .mobile-menu a,html[data-theme="dark"] .icon-button,html[data-theme="dark"] .bag-button,html[data-theme="dark"] .country-switch,html[data-theme="dark"] .theme-toggle{color:var(--ink)!important}
-html[data-theme="dark"] .intro,html[data-theme="dark"] .category-editorial,html[data-theme="dark"] .category-tile,html[data-theme="dark"] .lookbook-head,html[data-theme="dark"] .lookbook-foot,html[data-theme="dark"] .shop-section,html[data-theme="dark"] #shop,html[data-theme="dark"] .collection-note{background:var(--paper)!important;color:var(--ink)!important}
+html[data-theme="dark"] .intro,html[data-theme="dark"] .category-editorial,html[data-theme="dark"] .lookbook-head,html[data-theme="dark"] .lookbook-foot,html[data-theme="dark"] .shop-section,html[data-theme="dark"] #shop,html[data-theme="dark"] .collection-note{background:var(--paper)!important;color:var(--ink)!important}\nhtml[data-theme="dark"] .category-tile{background-color:var(--surface-2)!important;color:var(--ink)!important}
 html[data-theme="dark"] .intro-title,html[data-theme="dark"] .section-heading h2,html[data-theme="dark"] .shop-heading h2,html[data-theme="dark"] .collection-title,html[data-theme="dark"] .lookbook-head h2,html[data-theme="dark"] .lookbook-head>p,html[data-theme="dark"] .lookbook-foot,html[data-theme="dark"] .intro-copy,html[data-theme="dark"] .eyebrow:not(.light){color:var(--ink)!important}
 html[data-theme="dark"] .intro-title em,html[data-theme="dark"] .section-heading em,html[data-theme="dark"] .lookbook-head h2 em{color:#d66b8b!important}
 html[data-theme="dark"] .product-card,html[data-theme="dark"] .product-meta,html[data-theme="dark"] .product-card h3,html[data-theme="dark"] .product-card p,html[data-theme="dark"] .product-price,html[data-theme="dark"] .product-category{color:var(--ink)!important}
@@ -170,3 +170,15 @@ html[data-theme="light"] body{background:var(--paper)!important;color:var(--ink)
 html[data-theme="light"] .site-header,html[data-theme="light"] .shop-toolbar{background:var(--paper)!important;color:var(--ink)!important}
 html[data-theme="light"] .intro,html[data-theme="light"] #shop,html[data-theme="light"] .shop-section{background:var(--paper)!important;color:var(--ink)!important}
 html[data-theme="light"] .product-card,html[data-theme="light"] .product-meta,html[data-theme="light"] .product-card h3,html[data-theme="light"] .product-card p{color:var(--ink)!important}
+
+/* THEME BUGFIX — preserve editorial background imagery and nav contrast */
+html[data-theme="dark"] .category-tile{background-color:#252122!important;background-blend-mode:normal!important}
+html[data-theme="dark"] .category-men,html[data-theme="dark"] .category-women{background-image:var(--category-image)!important}
+html[data-theme="light"] .site-header{background:rgba(243,238,231,.97)!important;color:#181416!important}
+html[data-theme="light"] .desktop-nav a,html[data-theme="light"] .mobile-menu a,html[data-theme="light"] .icon-button,html[data-theme="light"] .bag-button,html[data-theme="light"] .country-switch,html[data-theme="light"] .theme-toggle{color:#181416!important;visibility:visible!important;opacity:1!important}
+html[data-theme="light"] .brand-lockup{visibility:visible!important;opacity:1!important}
+html[data-theme="dark"] .site-header{background:rgba(17,17,17,.97)!important;color:#f4f0ea!important}
+html[data-theme="dark"] .desktop-nav a,html[data-theme="dark"] .mobile-menu a,html[data-theme="dark"] .icon-button,html[data-theme="dark"] .bag-button,html[data-theme="dark"] .country-switch,html[data-theme="dark"] .theme-toggle{color:#f4f0ea!important;visibility:visible!important;opacity:1!important}
+html[data-theme="dark"] .brand-lockup{visibility:visible!important;opacity:1!important}
+html[data-theme="dark"] .brand-emblem img{filter:brightness(0) invert(1)!important}
+html[data-theme="light"] .brand-emblem img{filter:none!important}
