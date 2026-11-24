@@ -102,7 +102,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeProductOptions
 function renderBag(){const count=bag.reduce((n,x)=>n+x.qty,0);$("#bagCount").textContent=count;$("#drawerCount").textContent="("+count+")";$("#subtotal").textContent=money(bag.reduce((n,x)=>n+products.find(p=>p.id===x.id).price*x.qty,0));$("#bagItems").innerHTML=bag.length?bag.map((x,i)=>{const p=products.find(p=>p.id===x.id);return `<div class="bag-line"><img src="${p.image}" alt=""><div><h3>${p.name}</h3><p>${x.color} · Size ${x.size}</p><p>${money(p.price)}</p><div class="qty-controls"><button data-qty="${i}" data-delta="-1" aria-label="Decrease quantity">−</button><span>${x.qty}</span><button data-qty="${i}" data-delta="1" aria-label="Increase quantity">+</button></div></div><button class="remove-item" data-remove="${i}" aria-label="Remove item">×</button></div>`}).join(""):'<div class="empty-bag">Your bag is waiting for something special.</div>';$$("[data-qty]").forEach(b=>b.onclick=()=>{const i=+b.dataset.qty;bag[i].qty+=+b.dataset.delta;if(bag[i].qty<1)bag.splice(i,1);saveBag()});$$("[data-remove]").forEach(b=>b.onclick=()=>{bag.splice(+b.dataset.remove,1);saveBag()})}
 function openBag(){$("#bagDrawer").classList.add("open");$("#drawerBackdrop").classList.add("open");$("#bagDrawer").setAttribute("aria-hidden","false");document.body.style.overflow="hidden"}function closeBag(){$("#bagDrawer").classList.remove("open");$("#drawerBackdrop").classList.remove("open");$("#bagDrawer").setAttribute("aria-hidden","true");document.body.style.overflow=""}
 let toastTimer;function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),2600)}
-$("#filters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;activeFilter=b.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts()});$(".desktop-nav [data-filter],.mobile-menu [data-filter],.category-tile[data-filter],.footer-column [data-filter]").forEach(a=>a.addEventListener("click",()=>{activeFilter=a.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts();$("#mobileMenu").classList.remove("open")}));$("#sortSelect").onchange=renderProducts;$("#bagOpen").onclick=openBag;$("#bagContinue").onclick=closeBag;$("#bagClose").onclick=closeBag;$("#drawerBackdrop").onclick=closeBag;$("#checkoutButton").onclick=()=>toast("Online checkout will be available at launch.");$("#menuToggle").onclick=()=>$("#mobileMenu").classList.toggle("open");$("#searchToggle").onclick=()=>{$("#searchBar").classList.toggle("open");if($("#searchBar").classList.contains("open"))$("#searchInput").focus()};$("#searchClose").onclick=()=>{$("#searchBar").classList.remove("open");query="";$("#searchInput").value="";renderProducts()};$("#searchInput").oninput=e=>{query=e.target.value;renderProducts();if(query)$("#shop").scrollIntoView({behavior:"smooth"})};$("#newsletterForm").onsubmit=e=>{e.preventDefault();$("#newsletterMessage").textContent="Thanks — newsletter signup will be connected before launch.";toast("Thank you for your interest.")};$("#backTop").onclick=e=>{e.preventDefault();window.scrollTo({top:0,behavior:"smooth"})};document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBag()});renderProducts();renderBag();
+$("#filters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;activeFilter=b.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts()});$(".desktop-nav [data-filter],.mobile-menu [data-filter],.category-tile[data-filter],.footer-column [data-filter]").forEach(a=>a.addEventListener("click",()=>{activeFilter=a.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts();$("#mobileMenu").classList.remove("open")}));$("#sortSelect").onchange=renderProducts;$("#bagOpen").onclick=openBag;$("#bagContinue").onclick=closeBag;$("#bagClose").onclick=closeBag;$("#drawerBackdrop").onclick=closeBag;$("#checkoutButton").onclick=()=>toast("Online checkout will be available at launch.");$("#menuToggle").onclick=()=>$("#mobileMenu").classList.toggle("open");$("#searchToggle").onclick=()=>{$("#searchBar").classList.toggle("open");if($("#searchBar").classList.contains("open"))$("#searchInput").focus()};$("#searchClose").onclick=()=>{$("#searchBar").classList.remove("open");query="";$("#searchInput").value="";renderProducts()};$("#searchInput").oninput=e=>{query=e.target.value;renderProducts();if(query)$("#shop").scrollIntoView({behavior:"smooth"})};$("#newsletterForm").onsubmit=e=>{e.preventDefault();$("#newsletterMessage").textContent="Thanks — newsletter signup will be connected before launch.";toast("Thank you for your interest.")};$("#backTop").onclick=e=>{e.preventDefault();window.scrollTo({top:0,behavior:"smooth"})};document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeBag();closeAccount()}});renderProducts();renderBag();
 
 /* Mobile app navigation actions and active destination state */
 const mobileSearchAction=$("#mobileSearchAction"),mobileBagAction=$("#mobileBagAction"),mobileBagCount=$("#mobileBagCount");
@@ -126,6 +126,61 @@ if("IntersectionObserver" in window){
  },{rootMargin:"-25% 0px -60% 0px",threshold:[0,.15,.4]});
  mobileNavSections.forEach(([selector])=>{const section=document.querySelector(selector);if(section)navObserver.observe(section);});
 }
+
+
+/* CUSTOMER ACCOUNT PASS 10 — frontend preview only; no real authentication or backend data */
+const accountStoreKey="wa-preview-customer";
+let accountCustomer=JSON.parse(localStorage.getItem(accountStoreKey)||"null");
+let accountView="login",accountTab="profile";
+const escapeAccount=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+function saveAccount(){localStorage.setItem(accountStoreKey,JSON.stringify(accountCustomer));}
+function openAccount(){accountView=accountCustomer?"dashboard":"login";renderAccount();$("#accountModal").classList.add("open");$("#accountBackdrop").classList.add("open");$("#accountModal").setAttribute("aria-hidden","false");document.body.style.overflow="hidden";}
+function closeAccount(){$("#accountModal").classList.remove("open");$("#accountBackdrop").classList.remove("open");$("#accountModal").setAttribute("aria-hidden","true");document.body.style.overflow="";}
+function renderAccount(){
+ const root=$("#accountContent");
+ if(!accountCustomer){
+  root.innerHTML=`<p class="eyebrow">YOUR WA EDIT</p><h2 id="accountTitle">${accountView==="register"?"Create your account":"Welcome back."}</h2><p class="account-intro">${accountView==="register"?"A place for your details, addresses and future orders.":"Sign in to your WA account and keep your essentials together."}</p>
+  <form id="accountAuthForm" class="account-form">
+   ${accountView==="register"?'<label>Full name<input name="name" autocomplete="name" required placeholder="Your name"></label>':""}
+   <label>Email address<input name="email" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+   <label>Password<input name="password" type="password" autocomplete="${accountView==="register"?"new-password":"current-password"}" required minlength="6" placeholder="At least 6 characters"></label>
+   <button class="account-primary" type="submit">${accountView==="register"?"Create preview account":"Sign in"} <span>↗</span></button>
+  </form>
+  <p class="account-switch">${accountView==="register"?'Already have an account? <button type="button" data-account-view="login">Sign in</button>':'New to WA? <button type="button" data-account-view="register">Create an account</button>'}</p>
+  <p class="account-disclaimer">PREVIEW EXPERIENCE · No real authentication yet. Your password is not saved. Demo profile details stay in this browser only.</p>`;
+  return;
+ }
+ const addresses=accountCustomer.addresses||[];
+ root.innerHTML=`<p class="eyebrow">THE WA MEMBERS SPACE</p><div class="account-welcome"><div><h2 id="accountTitle">Your account.</h2><p>${escapeAccount(accountCustomer.name||accountCustomer.email)}</p></div><button type="button" class="account-signout" data-account-action="signout">Sign out</button></div>
+ <nav class="account-tabs" aria-label="Account sections"><button type="button" data-account-tab="profile" class="${accountTab==="profile"?"active":""}">Profile</button><button type="button" data-account-tab="orders" class="${accountTab==="orders"?"active":""}">Orders</button><button type="button" data-account-tab="addresses" class="${accountTab==="addresses"?"active":""}">Addresses <span>${addresses.length}</span></button></nav>
+ <div class="account-panel">
+ ${accountTab==="profile"?`<h3>Personal details</h3><form id="accountProfileForm" class="account-form"><label>Full name<input name="name" required value="${escapeAccount(accountCustomer.name)}"></label><label>Email address<input name="email" type="email" required value="${escapeAccount(accountCustomer.email)}"></label><button class="account-primary" type="submit">Save details <span>↗</span></button></form>`:""}
+ ${accountTab==="orders"?'<div class="account-empty"><span>WA / 00</span><h3>Your next favourite is still out there.</h3><p>Your order history will appear here once online ordering is connected.</p><small>NO ORDERS IN THIS PREVIEW ACCOUNT</small></div>':""}
+ ${accountTab==="addresses"?`<h3>Saved addresses</h3><p class="account-muted">Keep delivery details ready for a future order.</p><div class="account-address-list">${addresses.map((a,i)=>`<article class="account-address"><div><strong>${escapeAccount(a.label)}</strong><p>${escapeAccount(a.name)} · ${escapeAccount(a.phone)}</p><p>${escapeAccount(a.line)}, ${escapeAccount(a.city)}${a.postcode?", "+escapeAccount(a.postcode):""}</p></div><button type="button" data-account-remove-address="${i}" aria-label="Remove address">×</button></article>`).join("")||'<p class="account-muted">No saved addresses yet.</p>'}</div><form id="accountAddressForm" class="account-form account-address-form"><h4>Add an address</h4><label>Address label<input name="label" required placeholder="Home, Work…"></label><label>Recipient name<input name="name" required value="${escapeAccount(accountCustomer.name)}"></label><label>Phone number<input name="phone" required placeholder="+92…"></label><label>Street address<input name="line" required placeholder="House, street, area"></label><div class="account-form-row"><label>City<input name="city" required placeholder="City"></label><label>Postcode<input name="postcode" placeholder="Postcode"></label></div><button class="account-primary" type="submit">Save address <span>↗</span></button></form>`:""}
+ </div><p class="account-disclaimer">PREVIEW ACCOUNT · Details are stored only in this browser. Orders and secure account services are not connected yet.</p>`;
+}
+$("#accountOpen").addEventListener("click",openAccount);
+$("#accountClose").addEventListener("click",closeAccount);
+$("#accountBackdrop").addEventListener("click",closeAccount);
+$("#accountContent").addEventListener("click",e=>{
+ const view=e.target.closest("[data-account-view]");if(view){accountView=view.dataset.accountView;renderAccount();return;}
+ const tab=e.target.closest("[data-account-tab]");if(tab){accountTab=tab.dataset.accountTab;renderAccount();return;}
+ const action=e.target.closest("[data-account-action]");if(action?.dataset.accountAction==="signout"){accountCustomer=null;localStorage.removeItem(accountStoreKey);accountView="login";renderAccount();return;}
+ const remove=e.target.closest("[data-account-remove-address]");if(remove){accountCustomer.addresses.splice(Number(remove.dataset.accountRemoveAddress),1);saveAccount();renderAccount();}
+});
+$("#accountContent").addEventListener("submit",e=>{
+ e.preventDefault();const form=e.target,fd=new FormData(form);
+ if(form.id==="accountAuthForm"){
+  const email=String(fd.get("email")).trim().toLowerCase(),password=String(fd.get("password"));
+  if(password.length<6){toast("Please use at least 6 characters.");return;}
+  accountCustomer={name:String(fd.get("name")||email.split("@")[0]).trim(),email,addresses:[]};
+  saveAccount();accountTab="profile";accountView="dashboard";renderAccount();toast("Preview account created.");
+ }else if(form.id==="accountProfileForm"){
+  accountCustomer.name=String(fd.get("name")).trim();accountCustomer.email=String(fd.get("email")).trim().toLowerCase();saveAccount();renderAccount();toast("Profile details saved.");
+ }else if(form.id==="accountAddressForm"){
+  accountCustomer.addresses=accountCustomer.addresses||[];accountCustomer.addresses.push(Object.fromEntries(["label","name","phone","line","city","postcode"].map(k=>[k,String(fd.get(k)||"").trim()])));saveAccount();renderAccount();toast("Address saved in this browser.");
+ }
+});
 
 /* Footer navigation: open the selected policy panel before scrolling to it */
 $$('.footer-column a[href^="#footer-policy-"]').forEach(link=>link.addEventListener("click",()=>{
