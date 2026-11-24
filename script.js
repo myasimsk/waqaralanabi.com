@@ -173,8 +173,12 @@ $("#accountContent").addEventListener("submit",e=>{
  if(form.id==="accountAuthForm"){
   const email=String(fd.get("email")).trim().toLowerCase(),password=String(fd.get("password"));
   if(password.length<6){toast("Please use at least 6 characters.");return;}
-  accountCustomer={name:String(fd.get("name")||email.split("@")[0]).trim(),email,addresses:[]};
-  saveAccount();accountTab="profile";accountView="dashboard";renderAccount();toast("Preview account created.");
+  if(accountView==="login"&&accountCustomer&&accountCustomer.email===email){
+   accountTab="profile";accountView="dashboard";renderAccount();toast("Preview account opened.");
+  }else{
+   accountCustomer={name:String(fd.get("name")||email.split("@")[0]).trim(),email,addresses:[]};
+   saveAccount();accountTab="profile";accountView="dashboard";renderAccount();toast("Preview account created.");
+  }
  }else if(form.id==="accountProfileForm"){
   accountCustomer.name=String(fd.get("name")).trim();accountCustomer.email=String(fd.get("email")).trim().toLowerCase();saveAccount();renderAccount();toast("Profile details saved.");
  }else if(form.id==="accountAddressForm"){
