@@ -246,3 +246,43 @@ header.site-header .theme-toggle{
   color:#FFFFFF!important;
   border:1px solid rgba(255,255,255,.55)!important;
 }
+
+
+/* NAVBAR FIX 04 — win against theme-specific selectors in both modes */
+html[data-theme="light"] header.site-header,
+html[data-theme="dark"] header.site-header{
+  background:#7A1E3A!important;
+  background-color:#7A1E3A!important;
+  background-image:none!important;
+  color:#fff!important;
+  border-color:rgba(255,255,255,.22)!important;
+}
+html[data-theme="light"] header.site-header .desktop-nav a,
+html[data-theme="dark"] header.site-header .desktop-nav a,
+html[data-theme="light"] header.site-header .icon-button,
+html[data-theme="dark"] header.site-header .icon-button,
+html[data-theme="light"] header.site-header .bag-button,
+html[data-theme="dark"] header.site-header .bag-button,
+html[data-theme="light"] header.site-header .country-switch,
+html[data-theme="dark"] header.site-header .country-switch,
+html[data-theme="light"] header.site-header .theme-toggle,
+html[data-theme="dark"] header.site-header .theme-toggle,
+html[data-theme="light"] header.site-header .brand-lockup,
+html[data-theme="dark"] header.site-header .brand-lockup{
+  color:#fff!important;
+  opacity:1!important;
+  visibility:visible!important;
+}
+html[data-theme="light"] header.site-header .desktop-nav a::after,
+html[data-theme="dark"] header.site-header .desktop-nav a::after{
+  background:#fff!important;
+}
+html[data-theme="light"] header.site-header .brand-emblem img,
+html[data-theme="dark"] header.site-header .brand-emblem img{
+  filter:brightness(0) invert(1)!important;
+}
+html[data-theme="light"] header.site-header .theme-toggle,
+html[data-theme="dark"] header.site-header .theme-toggle{
+  background:transparent!important;
+  border:1px solid rgba(255,255,255,.55)!important;
+}
