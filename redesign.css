@@ -182,3 +182,41 @@ html[data-theme="dark"] .desktop-nav a,html[data-theme="dark"] .mobile-menu a,ht
 html[data-theme="dark"] .brand-lockup{visibility:visible!important;opacity:1!important}
 html[data-theme="dark"] .brand-emblem img{filter:brightness(0) invert(1)!important}
 html[data-theme="light"] .brand-emblem img{filter:none!important}
+
+
+/* NAVBAR BRAND PASS — consistent burgundy navigation in both themes */
+html[data-theme="light"] .site-header,
+html[data-theme="dark"] .site-header{
+  background:#7A1E3A!important;
+  color:#fff!important;
+  border-bottom:1px solid rgba(255,255,255,.18)!important;
+}
+html[data-theme="light"] .site-header .desktop-nav a,
+html[data-theme="dark"] .site-header .desktop-nav a,
+html[data-theme="light"] .site-header .mobile-menu a,
+html[data-theme="dark"] .site-header .mobile-menu a,
+html[data-theme="light"] .site-header .icon-button,
+html[data-theme="dark"] .site-header .icon-button,
+html[data-theme="light"] .site-header .bag-button,
+html[data-theme="dark"] .site-header .bag-button,
+html[data-theme="light"] .site-header .country-switch,
+html[data-theme="dark"] .site-header .country-switch,
+html[data-theme="light"] .site-header .theme-toggle,
+html[data-theme="dark"] .site-header .theme-toggle,
+html[data-theme="light"] .site-header .brand-lockup,
+html[data-theme="dark"] .site-header .brand-lockup{
+  color:#fff!important;
+}
+html[data-theme="light"] .site-header .desktop-nav a:after,
+html[data-theme="dark"] .site-header .desktop-nav a:after{
+  background:#fff!important;
+}
+html[data-theme="light"] .site-header .brand-emblem img,
+html[data-theme="dark"] .site-header .brand-emblem img{
+  filter:brightness(0) invert(1)!important;
+}
+html[data-theme="light"] .site-header .theme-toggle,
+html[data-theme="dark"] .site-header .theme-toggle{
+  background:transparent!important;
+  border-color:rgba(255,255,255,.45)!important;
+}
