@@ -426,3 +426,19 @@ html[data-theme="dark"] .options-detail-block span,html[data-theme="dark"] .opti
  .options-product-info h2{font-size:27px}
  .options-detail-block{padding:11px 0}
 }
+
+
+/* PRODUCT IMAGE PASS 08 — temporary editorial reference gallery */
+.options-visual{display:flex;flex-direction:column;min-width:0}
+.options-visual .options-product-image{flex:1;min-height:0;height:calc(100% - 88px);width:100%;object-fit:cover}
+.options-gallery-thumbs{display:flex;gap:8px;padding:10px 12px;background:var(--surface-2);overflow-x:auto}
+.options-gallery-thumb{width:58px;height:68px;flex:0 0 58px;padding:0;border:1px solid transparent;background:transparent;opacity:.68;cursor:pointer}
+.options-gallery-thumb.selected{border:2px solid var(--wine);opacity:1}
+.options-gallery-thumb img{display:block;width:100%;height:100%;object-fit:cover}
+.options-image-note{max-width:calc(100% - 24px);font-size:7px;line-height:1.5}
+@media(max-width:760px){
+ .options-visual{height:auto}
+ .options-visual .options-product-image{height:220px;min-height:220px;max-height:220px;flex:none}
+ .options-gallery-thumbs{padding:7px 10px;gap:7px}
+ .options-gallery-thumb{width:43px;height:50px;flex-basis:43px}
+}
