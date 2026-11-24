@@ -220,3 +220,29 @@ html[data-theme="dark"] .site-header .theme-toggle{
   background:transparent!important;
   border-color:rgba(255,255,255,.45)!important;
 }
+
+
+/* FINAL NAV HEADER OVERRIDE — independent of theme initialization */
+header.site-header{
+  background-color:#7A1E3A!important;
+  background-image:none!important;
+  color:#FFFFFF!important;
+  border-bottom:1px solid rgba(255,255,255,.2)!important;
+}
+header.site-header a,
+header.site-header button,
+header.site-header button span,
+header.site-header .brand-lockup,
+header.site-header .desktop-nav a,
+header.site-header .header-actions{
+  color:#FFFFFF!important;
+  opacity:1!important;
+  visibility:visible!important;
+}
+header.site-header .desktop-nav a::after{background-color:#FFFFFF!important}
+header.site-header .brand-emblem img{filter:brightness(0) invert(1)!important}
+header.site-header .theme-toggle{
+  background:transparent!important;
+  color:#FFFFFF!important;
+  border:1px solid rgba(255,255,255,.55)!important;
+}
