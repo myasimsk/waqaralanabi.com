@@ -286,3 +286,86 @@ html[data-theme="dark"] header.site-header .theme-toggle{
   background:transparent!important;
   border:1px solid rgba(255,255,255,.55)!important;
 }
+
+
+/* HERO PASS 05 — refined campaign hierarchy and responsive composition */
+.hero{
+  min-height:clamp(650px,82svh,900px);
+  height:auto;
+  background:#21151a;
+}
+.hero-image{
+  background-position:center 31%;
+  filter:saturate(.72) contrast(1.08);
+  transform:scale(1.015);
+}
+.hero-shade{
+  background:
+    linear-gradient(90deg,rgba(15,8,11,.78) 0%,rgba(15,8,11,.48) 43%,rgba(15,8,11,.08) 78%,rgba(15,8,11,.02) 100%),
+    linear-gradient(0deg,rgba(15,8,11,.42) 0%,transparent 48%);
+}
+.hero-copy{
+  left:clamp(24px,7vw,104px);
+  bottom:clamp(92px,13vh,150px);
+  max-width:min(850px,74vw);
+}
+.hero-copy .eyebrow{
+  display:inline-flex;
+  align-items:center;
+  padding:9px 12px;
+  margin-bottom:24px;
+  background:rgba(122,30,58,.92);
+  color:#fff;
+  font-size:9px;
+  letter-spacing:.2em;
+}
+.hero-copy h1{
+  max-width:9ch;
+  font-size:clamp(76px,10.8vw,166px);
+  line-height:.82;
+  letter-spacing:-.09em;
+}
+.hero-copy h1 em{
+  color:#f0dfd2;
+  text-shadow:none;
+}
+.hero-text{
+  max-width:330px;
+  margin-top:25px;
+  font-size:12px;
+  line-height:1.8;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.hero-stamp{
+  right:clamp(24px,8vw,116px);
+  top:47%;
+  border-color:rgba(243,230,220,.78);
+  color:#f3e6dc;
+  box-shadow:0 0 0 10px rgba(243,230,220,.035),0 0 42px rgba(0,0,0,.12);
+}
+.hero-stamp i{color:#f3e6dc}
+.hero-index{color:rgba(255,255,255,.86)}
+@media(max-width:760px){
+  .hero{min-height:690px;height:78svh;max-height:820px}
+  .hero-image{background-position:58% center}
+  .hero-shade{
+    background:
+      linear-gradient(90deg,rgba(15,8,11,.68),rgba(15,8,11,.24) 75%),
+      linear-gradient(0deg,rgba(15,8,11,.58),transparent 70%);
+  }
+  .hero-copy{
+    left:20px;
+    right:20px;
+    bottom:118px;
+    max-width:none;
+  }
+  .hero-copy .eyebrow{font-size:8px;margin-bottom:20px}
+  .hero-copy h1{font-size:clamp(58px,14vw,92px);max-width:8ch}
+  .hero-text{font-size:10px;max-width:250px;margin-top:18px}
+  .hero-stamp{right:20px;top:24%;width:102px;height:102px;font-size:8px}
+  .hero-stamp b{font-size:23px}
+  .hero-stamp i{font-size:6px;margin-top:7px}
+  .hero-index{bottom:22px;left:20px;right:auto;font-size:8px}
+  .hero:after{right:10px;bottom:8px;font-size:105px}
+}
