@@ -56,3 +56,15 @@ All endpoints below require a valid `wa_customer_session` cookie created by cust
 Every order query is scoped by the authenticated customer ID. An order number belonging to another customer is not disclosed and returns the same not-found response as an unknown order. Pagination is capped at 50 records per request.
 
 Loyalty redemption and earning rules are intentionally not implemented yet. Point earning ratios, monetary value, redemption limits, and expiry policy must be approved by the business before those rules are activated.
+
+## Customer delivery address APIs
+
+All endpoints require a valid customer session cookie.
+
+- `GET /account/addresses` lists the signed-in customer's saved addresses.
+- `POST /account/addresses` creates an address. The first saved address becomes the default automatically; `isDefault: true` can select another.
+- `PATCH /account/addresses/:addressId` updates supplied fields on an address owned by the customer.
+- `DELETE /account/addresses/:addressId` deletes an address owned by the customer. If it was the default, the most recently created remaining address is selected.
+- `POST /account/addresses/:addressId/default` selects an owned address as the default.
+
+Address reads and mutations are always scoped to the authenticated customer ID. An address belonging to another customer is not disclosed.
