@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
@@ -14,6 +15,7 @@ export async function buildApp() {
   });
 
   await app.register(helmet);
+  await app.register(cookie);
   await app.register(cors, {
     origin: env.STOREFRONT_ORIGIN,
     credentials: true,

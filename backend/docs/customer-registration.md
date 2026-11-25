@@ -1,46 +1,35 @@
-# Customer registration API (development foundation)
+# Customer authentication API
 
-These endpoints implement the first-order account activation flow. They are not a complete production authentication system yet.
+## Registration
 
-## Request a verification code
+- `POST /auth/register/request-code`
+- `POST /auth/register/complete`
 
-`POST /auth/register/request-code`
+Registration requires an eligible guest order and verification of the email address used for that order. The six-digit code expires after ten minutes and is limited to five attempts. During local development only, the code is written to the backend log. Production registration remains unavailable until transactional email delivery is configured.
 
-JSON body:
+## Login and sessions
 
-```json
-{
-  "orderNumber": "WA-ORDER-EXAMPLE",
-  "email": "customer@example.com"
-}
+- `POST /auth/login` accepts `email` and `password`.
+- Successful login creates a random opaque session token. Only its SHA-256 hash is stored in PostgreSQL.
+- The token is returned only in an HttpOnly cookie named `wa_customer_session`; it is never returned in JSON or written to logs.
+- Cookie settings: HttpOnly, SameSite=Strict, Path=/, 30-day maximum age, Secure in production.
+- `GET /auth/me` returns the signed-in customer's basic profile.
+- `POST /auth/logout` revokes the current server-side session and clears the cookie.
+- Login is rate-limited and returns a generic error for invalid credentials.
+
+## Database migration
+
+Apply `database/migrations/002_customer_sessions.sql` after the initial schema:
+
+```powershell
+docker compose exec -T postgres psql -U postgres -d wa_store_dev < database\migrations\002_customer_sessions.sql
 ```
 
-The API checks that the order number belongs to an unlinked guest order with the supplied email. Responses deliberately do not disclose whether an order or email exists. The endpoint is rate-limited.
+## Production requirements before launch
 
-In local development only, the six-digit code is written to the backend development log. The code is stored as a SHA-256 hash, expires after ten minutes, and older activation codes are invalidated when a new one is requested. Production email delivery is intentionally not enabled until an email provider and verified sender domain are configured.
-
-## Complete registration
-
-`POST /auth/register/complete`
-
-JSON body:
-
-```json
-{
-  "orderNumber": "WA-ORDER-EXAMPLE",
-  "email": "customer@example.com",
-  "code": "123456",
-  "fullName": "Customer Name",
-  "password": "a-long-unique-password"
-}
-```
-
-The endpoint validates the code, rechecks the order inside a database transaction, creates the customer, hashes the password with scrypt, links eligible guest orders for the verified email, creates an empty loyalty account, and consumes the code. Codes have a five-attempt limit.
-
-## Before production
-
-- Integrate a transactional email provider; never expose verification codes in API responses or production logs.
-- Add secure login sessions, logout, password reset, session revocation, and CSRF protection before exposing account sign-in.
-- Add automated integration tests for rate limits, expired/reused codes, concurrent registration, duplicate emails, and order ownership.
-- Review account/order linking and retention policies with the business owner.
-- Do not use real customer data in local development.
+- Configure a transactional email provider and verified sender domain.
+- Add password-reset flow and customer session-management/revocation controls.
+- Add CSRF/origin validation appropriate to the final storefront/API deployment topology.
+- Enforce HTTPS and Secure cookies in production.
+- Add integration tests for login throttling, session expiry/revocation, invalid credentials, and concurrent requests.
+- Review retention and privacy requirements.
