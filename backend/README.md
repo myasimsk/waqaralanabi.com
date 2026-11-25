@@ -36,7 +36,8 @@ This is a private development service. It is not connected to the public WA doma
 2. Set bootstrap values in the backend terminal (do not commit them):
    `$env:ADMIN_BOOTSTRAP_EMAIL = "your-admin-email@example.com"`
    `$env:ADMIN_BOOTSTRAP_ROLE = "owner"`
-   `$env:ADMIN_BOOTSTRAP_PASSWORD = Read-Host "Choose a strong admin password"`
+   `$securePassword = Read-Host "Choose a strong admin password" -AsSecureString
+   $env:ADMIN_BOOTSTRAP_PASSWORD = [System.Net.NetworkCredential]::new("", $securePassword).Password`
 3. Run `npm.cmd run admin:create`.
 4. Clear the temporary variables:
    `Remove-Item Env:ADMIN_BOOTSTRAP_EMAIL, Env:ADMIN_BOOTSTRAP_ROLE, Env:ADMIN_BOOTSTRAP_PASSWORD`

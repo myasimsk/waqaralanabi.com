@@ -1,8 +1,12 @@
 import { randomBytes, scrypt } from "node:crypto";
-import { promisify } from "node:util";
 import { db } from "../db/pool.js";
 
-const scryptAsync = promisify(scrypt);
+function derivePasswordKey(password: string, salt: Buffer): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    scrypt(password, salt, 64, { N: 16_384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 },
+      (error, key) => error ? reject(error) : resolve(key));
+  });
+}
 
 async function main(): Promise<void> {
   const email = process.env.ADMIN_BOOTSTRAP_EMAIL?.trim().toLowerCase();
@@ -23,9 +27,7 @@ async function main(): Promise<void> {
   if (existing.rowCount) throw new Error("An administrator with this email already exists; no changes were made.");
 
   const salt = randomBytes(16);
-  const key = await scryptAsync(password, salt, 64, {
-    N: 16_384, r: 8, p: 1, maxmem: 64 * 1024 * 1024,
-  }) as Buffer;
+  const key = await derivePasswordKey(password, salt);
   const passwordHash = `scrypt$16384$8$1$${salt.toString("hex")}$${key.toString("hex")}`;
 
   await db.query(
