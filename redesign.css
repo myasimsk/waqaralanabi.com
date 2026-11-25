@@ -472,3 +472,8 @@ html[data-theme="dark"] .bag-drawer,html[data-theme="dark"] .bag-footer{backgrou
 html[data-theme="dark"] .bag-line{border-color:rgba(255,255,255,.13)}
 html[data-theme="dark"] .bag-preview-note{color:#df8ca4}
 @media(max-width:600px){.drawer-head{padding:22px 18px 17px}.bag-items{padding:8px 18px 20px}.bag-footer{padding:17px 18px 20px}.bag-line>img{width:78px;height:100px}}
+
+
+/* Search overlay: keep search accessible at the user's current scroll position */
+.search-bar.open{position:fixed;top:78px;left:0;right:0;z-index:42;background:var(--paper);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+@media(max-width:700px){.search-bar.open{top:66px;padding:12px 15px}}
