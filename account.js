@@ -12,6 +12,8 @@
   document.body.appendChild(root);
   const panel = $(".wa-account-panel", root), content = $("#waAccountContent", root);
   const render = () => {
+    const customerName = (data.profile.name || "").trim().split(/\\s+/)[0];
+    $("#waAccountTitle", root).textContent = customerName ? customerName + "'s WA Account" : "Your WA Account";
     root.querySelectorAll("[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === data.active));
     if (data.active === "profile") {
       content.innerHTML = '<p class="eyebrow">ACCOUNT DETAILS</p><h3>Your details.</h3><p class="wa-account-muted">Keep your contact information up to date for a smoother experience.</p><form id="waProfileForm" class="wa-account-form"><label>Full name<input name="name" autocomplete="name" value="'+safe(data.profile.name)+'" placeholder="Your full name" required></label><label>Email address<input name="email" type="email" autocomplete="email" value="'+safe(data.profile.email)+'" placeholder="you@example.com" required></label><label>Phone number<input name="phone" type="tel" autocomplete="tel" value="'+safe(data.profile.phone)+'" placeholder="+92 3XX XXXXXXX"></label><button class="wa-account-primary" type="submit">Save details ↗</button><p class="wa-account-feedback" id="waProfileFeedback" aria-live="polite"></p></form><p class="wa-account-security">This preview does not create a secure login or store passwords. Real customer authentication will be connected before launch.</p>';
