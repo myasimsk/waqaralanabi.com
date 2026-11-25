@@ -477,3 +477,12 @@ html[data-theme="dark"] .bag-preview-note{color:#df8ca4}
 /* Search overlay: keep search accessible at the user's current scroll position */
 .search-bar.open{position:fixed;top:78px;left:0;right:0;z-index:42;background:var(--paper);box-shadow:0 8px 24px rgba(0,0,0,.08)}
 @media(max-width:700px){.search-bar.open{top:66px;padding:12px 15px}}
+
+
+/* MOBILE OVERLAY LAYERING FIX — keep search and bag above the fixed app navigation */
+@media(max-width:700px){
+  .search-bar.open{position:fixed!important;top:66px!important;left:0;right:0;z-index:80!important}
+  .drawer-backdrop.open{z-index:89!important}
+  .bag-drawer{z-index:90!important;height:100dvh;max-height:100dvh;}
+  .mobile-app-nav{z-index:60!important}
+}
