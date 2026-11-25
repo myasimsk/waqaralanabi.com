@@ -41,3 +41,18 @@ docker compose exec -T postgres psql -U postgres -d wa_store_dev < database\migr
 - Reset codes expire after ten minutes, allow at most five attempts, and are single-use.
 - A successful reset invalidates all active customer sessions for that account.
 - For local development only, the code is written to the backend log. Production password recovery remains unavailable until transactional email delivery is configured.
+
+## Customer account APIs
+
+All endpoints below require a valid `wa_customer_session` cookie created by customer login.
+
+- `GET /account/profile` returns the customer's profile and membership date.
+- `PATCH /account/profile` updates `fullName` and/or `phone`.
+- `GET /account/orders?limit=20&offset=0` returns the customer's own orders, line items, totals, status, and placement date.
+- `GET /account/orders/:orderNumber` returns one owned order, its address snapshots, items, totals, and payment status history.
+- `GET /account/loyalty` returns the loyalty account balance and points totals by state.
+- `GET /account/loyalty/transactions?limit=20&offset=0` returns the customer's loyalty ledger.
+
+Every order query is scoped by the authenticated customer ID. An order number belonging to another customer is not disclosed and returns the same not-found response as an unknown order. Pagination is capped at 50 records per request.
+
+Loyalty redemption and earning rules are intentionally not implemented yet. Point earning ratios, monetary value, redemption limits, and expiry policy must be approved by the business before those rules are activated.
