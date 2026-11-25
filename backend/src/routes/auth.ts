@@ -438,4 +438,182 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       .clearCookie(SESSION_COOKIE, sessionCookieOptions())
       .send({ status: "signed_out" });
   });
+
+  app.post(
+    "/password/request-reset-code",
+    { config: { rateLimit: { max: 3, timeWindow: "15 minutes" } } },
+    async (request, reply) => {
+      const parsed = z.object({ email: z.string().trim().email().max(254) }).safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: "INVALID_REQUEST",
+          message: "Enter a valid email address.",
+        });
+      }
+
+      const email = normalizeEmail(parsed.data.email);
+      const customer = await db.query<{ id: string; status: string }>(
+        "SELECT id, status FROM customers WHERE email_normalized = $1 LIMIT 1",
+        [email],
+      );
+
+      // Keep the response identical whether or not an account exists.
+      if (customer.rowCount !== 1 || customer.rows[0]?.status !== "active") {
+        return reply.code(202).send({
+          message: "If an active account exists for this email, password reset instructions will be sent.",
+        });
+      }
+
+      if (env.NODE_ENV !== "development") {
+        request.log.error("Password reset email provider is not configured.");
+        return reply.code(503).send({
+          error: "EMAIL_DELIVERY_UNAVAILABLE",
+          message: "Password reset is temporarily unavailable. Please try again later.",
+        });
+      }
+
+      const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
+      await db.query(
+        `UPDATE email_verifications
+            SET consumed_at = now()
+          WHERE email_normalized = $1
+            AND purpose = 'password_reset'
+            AND consumed_at IS NULL`,
+        [email],
+      );
+      await db.query(
+        `INSERT INTO email_verifications
+           (email_normalized, purpose, token_hash, expires_at)
+         VALUES ($1, 'password_reset', $2, now() + interval '10 minutes')`,
+        [email, hashToken(code)],
+      );
+
+      request.log.info(
+        { email, verificationCode: code },
+        "Development-only password reset code (never enable this in production)",
+      );
+
+      return reply.code(202).send({
+        message: "If an active account exists for this email, password reset instructions will be sent.",
+      });
+    },
+  );
+
+  app.post(
+    "/password/complete-reset",
+    { config: { rateLimit: { max: 5, timeWindow: "15 minutes" } } },
+    async (request, reply) => {
+      const parsed = z.object({
+        email: z.string().trim().email().max(254),
+        code: z.string().regex(/^\\d{6}$/),
+        newPassword: z.string().min(12).max(128),
+      }).safeParse(request.body);
+
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: "INVALID_REQUEST",
+          message: "Check your email, verification code and new password. Passwords must contain at least 12 characters.",
+        });
+      }
+
+      const email = normalizeEmail(parsed.data.email);
+      const client = await db.connect();
+
+      try {
+        await client.query("BEGIN");
+        const verification = await client.query<{
+          id: string;
+          token_hash: string;
+          attempts: number;
+        }>(
+          `SELECT id, token_hash, attempts
+             FROM email_verifications
+            WHERE email_normalized = $1
+              AND purpose = 'password_reset'
+              AND consumed_at IS NULL
+              AND expires_at > now()
+              AND attempts < 5
+            ORDER BY created_at DESC
+            LIMIT 1
+            FOR UPDATE`,
+          [email],
+        );
+
+        if (verification.rowCount !== 1) {
+          await client.query("ROLLBACK");
+          return reply.code(400).send({
+            error: "RESET_FAILED",
+            message: "The verification code is invalid or expired. Request a new code.",
+          });
+        }
+
+        const record = verification.rows[0]!;
+        const storedHash = Buffer.from(record.token_hash, "hex");
+        const submittedHash = Buffer.from(hashToken(parsed.data.code), "hex");
+        const codeMatches =
+          storedHash.length === submittedHash.length &&
+          timingSafeEqual(storedHash, submittedHash);
+
+        if (!codeMatches) {
+          await client.query(
+            `UPDATE email_verifications
+                SET attempts = attempts + 1,
+                    consumed_at = CASE WHEN attempts + 1 >= 5 THEN now() ELSE consumed_at END
+              WHERE id = $1`,
+            [record.id],
+          );
+          await client.query("COMMIT");
+          return reply.code(400).send({
+            error: "RESET_FAILED",
+            message: "The verification code is invalid or expired. Request a new code.",
+          });
+        }
+
+        const customer = await client.query<{ id: string }>(
+          "SELECT id FROM customers WHERE email_normalized = $1 AND status = 'active' FOR UPDATE",
+          [email],
+        );
+        if (customer.rowCount !== 1) {
+          await client.query("ROLLBACK");
+          return reply.code(400).send({
+            error: "RESET_FAILED",
+            message: "The verification code is invalid or expired. Request a new code.",
+          });
+        }
+
+        const newPasswordHash = await hashPassword(parsed.data.newPassword);
+        await client.query(
+          "UPDATE customers SET password_hash = $1, updated_at = now() WHERE id = $2",
+          [newPasswordHash, customer.rows[0]!.id],
+        );
+        await client.query(
+          "UPDATE customer_sessions SET revoked_at = now() WHERE customer_id = $1 AND revoked_at IS NULL",
+          [customer.rows[0]!.id],
+        );
+        await client.query(
+          `UPDATE email_verifications
+              SET consumed_at = now()
+            WHERE email_normalized = $1
+              AND purpose = 'password_reset'
+              AND consumed_at IS NULL`,
+          [email],
+        );
+        await client.query("COMMIT");
+
+        return reply.send({
+          status: "password_updated",
+          message: "Your password has been updated. Please sign in again.",
+        });
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => undefined);
+        request.log.error({ err: error }, "Customer password reset failed");
+        return reply.code(500).send({
+          error: "PASSWORD_RESET_FAILED",
+          message: "We could not update your password. Please try again.",
+        });
+      } finally {
+        client.release();
+      }
+    },
+  );
 }
