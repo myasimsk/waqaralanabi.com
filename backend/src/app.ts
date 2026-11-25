@@ -7,6 +7,7 @@ import { env } from "./config/env.js";
 import { db } from "./db/pool.js";
 import { authRoutes } from "./routes/auth.js";
 import { accountRoutes } from "./routes/account.js";
+import { addressRoutes } from "./routes/addresses.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -44,6 +45,7 @@ export async function buildApp() {
 
   await app.register(authRoutes, { prefix: "/auth" });
   await app.register(accountRoutes, { prefix: "/account" });
+  await app.register(addressRoutes, { prefix: "/account/addresses" });
 
   app.setNotFoundHandler((_request, reply) =>
     reply.code(404).send({
