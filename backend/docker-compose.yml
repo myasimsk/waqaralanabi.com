@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: wa-store-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wa_store_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - wa_store_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d wa_store_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  wa_store_pgdata:
