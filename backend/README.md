@@ -32,7 +32,7 @@ This is a private development service. It is not connected to the public WA doma
 ## Creating the first administrator (local / preview)
 
 1. Apply the admin session migration:
-   `cmd /c "docker compose exec -T postgres psql -U postgres -d wa_store_dev < database\\migrations\\003_admin_sessions.sql"`
+   `cmd /c "docker compose exec -T postgres psql -U postgres -d wa_store_dev < database/migrations/003_admin_sessions.sql"`
 2. Set bootstrap values in the backend terminal (do not commit them):
    `$env:ADMIN_BOOTSTRAP_EMAIL = "your-admin-email@example.com"`
    `$env:ADMIN_BOOTSTRAP_ROLE = "owner"`
