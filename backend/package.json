@@ -2,6 +2,7 @@
   "name": "waqar-al-anabi-backend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "Custom commerce backend for Waqar Al Anabi",
   "engines": { "node": ">=22" },
   "scripts": { "dev": "tsx watch src/server.ts", "build": "tsc -p tsconfig.json", "start": "node dist/server.js", "typecheck": "tsc --noEmit -p tsconfig.json" },
