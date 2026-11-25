@@ -1,0 +1,43 @@
+/* PASS 10 — customer account preview */
+.wa-account-trigger{border:0;background:transparent;color:var(--ink);font:600 9px "Space Grotesk",sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:10px 8px;cursor:pointer}
+#waAccountRoot{position:relative;z-index:120}
+.wa-account-backdrop{position:fixed;inset:0;background:rgba(14,10,11,.58);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+.wa-account-panel{position:fixed;z-index:2;right:0;top:0;width:min(680px,100vw);height:100dvh;max-height:100dvh;background:var(--paper);color:var(--ink);transform:translateX(102%);transition:transform .3s ease;display:flex;flex-direction:column;overflow:auto;box-shadow:-20px 0 55px rgba(0,0,0,.16)}
+#waAccountRoot.open .wa-account-backdrop{opacity:1;visibility:visible}
+#waAccountRoot.open .wa-account-panel{transform:translateX(0)}
+.wa-account-head{padding:30px 34px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.wa-account-head .eyebrow{font-size:8px;letter-spacing:.18em;color:var(--wine);margin:0 0 8px}
+.wa-account-head h2{font:600 30px/1 "Space Grotesk",sans-serif;letter-spacing:-.06em;text-transform:uppercase;margin:0}
+.wa-account-close{border:1px solid var(--line);width:38px;height:38px;background:transparent;color:var(--ink);font-size:24px;cursor:pointer}
+.wa-account-preview{padding:11px 34px;background:rgba(116,31,43,.08);color:var(--wine);font:700 8px/1.5 "Space Grotesk",sans-serif;letter-spacing:.12em}
+.wa-account-layout{display:grid;grid-template-columns:155px minmax(0,1fr);gap:34px;padding:34px;flex:1}
+.wa-account-tabs{display:flex;flex-direction:column;gap:5px}
+.wa-account-tabs button{text-align:left;padding:13px 12px;background:transparent;border:0;border-left:2px solid transparent;color:var(--muted);font:600 10px "Space Grotesk",sans-serif;text-transform:uppercase;letter-spacing:.1em;cursor:pointer}
+.wa-account-tabs button.active{border-left-color:var(--wine);background:rgba(116,31,43,.07);color:var(--wine)}
+.wa-account-content{min-width:0}
+.wa-account-content>.eyebrow{font:700 8px "Space Grotesk",sans-serif;letter-spacing:.16em;color:var(--wine);margin:0 0 9px}
+.wa-account-content h3{font:600 29px/1.1 "Space Grotesk",sans-serif;letter-spacing:-.06em;text-transform:uppercase;margin:0 0 12px}
+.wa-account-muted{font-size:12px;line-height:1.7;color:var(--muted);margin:0 0 24px}
+.wa-account-form{display:grid;gap:16px}
+.wa-account-form label{display:grid;gap:7px;font:700 8px "Space Grotesk",sans-serif;letter-spacing:.12em;text-transform:uppercase}
+.wa-account-form input,.wa-account-form textarea{box-sizing:border-box;width:100%;border:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink);padding:13px 12px;font:400 12px "DM Sans",sans-serif;letter-spacing:0;text-transform:none;outline-offset:2px}
+.wa-account-form textarea{resize:vertical}
+.wa-account-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.wa-account-primary{min-height:48px;padding:13px 18px;border:0;background:var(--wine);color:#fff;font:700 9px "Space Grotesk",sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.wa-account-feedback{font-size:11px;color:var(--wine);min-height:16px;margin:0}
+.wa-account-security{border-top:1px solid var(--line);padding-top:16px;margin-top:22px;color:var(--muted);font-size:10px;line-height:1.65}
+.wa-account-empty{margin-top:25px;padding:30px 24px;border:1px solid var(--line);background:var(--surface-2)}
+.wa-account-empty>span{font:700 9px "Space Grotesk",sans-serif;letter-spacing:.15em;color:var(--wine)}
+.wa-account-empty h4{font:600 21px "Space Grotesk",sans-serif;text-transform:uppercase;margin:25px 0 8px}
+.wa-account-empty p,.wa-account-empty small{font-size:11px;line-height:1.7;color:var(--muted)}
+.wa-account-empty-note{font-size:11px;color:var(--muted);padding:20px 0}
+.wa-address-list{display:grid;gap:10px;margin-top:22px}
+.wa-address-card{display:flex;justify-content:space-between;gap:12px;border:1px solid var(--line);padding:14px}
+.wa-address-card b{font:700 10px "Space Grotesk",sans-serif;text-transform:uppercase}
+.wa-address-card p{font-size:11px;line-height:1.6;color:var(--muted)}
+.wa-address-card button{align-self:flex-start;border:0;background:transparent;color:var(--wine);font:700 8px "Space Grotesk",sans-serif;text-transform:uppercase;cursor:pointer}
+html[data-theme="dark"] .wa-account-panel{background:#171414;color:#f4f0ea}
+html[data-theme="dark"] .wa-account-preview{background:rgba(223,140,164,.1);color:#df8ca4}
+html[data-theme="dark"] .wa-account-tabs button.active{color:#df8ca4}
+@media(max-width:700px){.wa-account-trigger{display:none}.wa-account-head{padding:22px 20px 18px}.wa-account-preview{padding:10px 20px;font-size:7px}.wa-account-layout{grid-template-columns:1fr;gap:18px;padding:22px 20px}.wa-account-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.wa-account-tabs button{text-align:center;padding:12px 5px;border-left:0;border-bottom:2px solid transparent;font-size:8px}.wa-account-tabs button.active{border-bottom-color:var(--wine)}.wa-account-content h3{font-size:25px}.wa-mobile-account{display:flex!important}.wa-account-panel{width:100vw}}
+@media(min-width:701px){.wa-mobile-account{display:none!important}}
