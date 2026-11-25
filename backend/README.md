@@ -27,3 +27,18 @@ This is a private development service. It is not connected to the public WA doma
 - The initial SQL schema is a development baseline, not yet a versioned migration system.
 - Do not expose this API publicly or connect the Hostinger domain at this stage.
 - Do not enable real payments until provider integration, webhook verification and end-to-end tests are complete.
+
+
+## Creating the first administrator (local / preview)
+
+1. Apply the admin session migration:
+   `cmd /c "docker compose exec -T postgres psql -U postgres -d wa_store_dev < database\\migrations\\003_admin_sessions.sql"`
+2. Set bootstrap values in the backend terminal (do not commit them):
+   `$env:ADMIN_BOOTSTRAP_EMAIL = "your-admin-email@example.com"`
+   `$env:ADMIN_BOOTSTRAP_ROLE = "owner"`
+   `$env:ADMIN_BOOTSTRAP_PASSWORD = Read-Host "Choose a strong admin password"`
+3. Run `npm.cmd run admin:create`.
+4. Clear the temporary variables:
+   `Remove-Item Env:ADMIN_BOOTSTRAP_EMAIL, Env:ADMIN_BOOTSTRAP_ROLE, Env:ADMIN_BOOTSTRAP_PASSWORD`
+
+The script refuses to overwrite an existing admin email. Use a unique password of at least 16 characters. Bootstrap is a local operational task; do not expose it as a public HTTP endpoint.

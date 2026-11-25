@@ -68,3 +68,23 @@ All endpoints require a valid customer session cookie.
 - `POST /account/addresses/:addressId/default` selects an owned address as the default.
 
 Address reads and mutations are always scoped to the authenticated customer ID. An address belonging to another customer is not disclosed.
+
+
+## Admin API (preview foundation)
+
+Admin authentication uses a separate `wa_admin_session` HttpOnly cookie and an eight-hour server-side session. Admins must be provisioned out of band; there is no public admin registration endpoint.
+
+After applying `database/migrations/003_admin_sessions.sql`, create an administrator using the one-time bootstrap script described in `backend/README.md`. Do not expose bootstrap credentials in source control.
+
+Routes (all except login require an active admin session):
+- `POST /admin/login` — email and password.
+- `GET /admin/me` — current administrator.
+- `POST /admin/logout` — revoke current session.
+- `GET /admin/customers?search=&limit=&offset=` — search by customer name, email or linked order number.
+- `GET /admin/customers/:customerId` — customer profile, order summary, saved addresses and loyalty balance.
+- `PATCH /admin/customers/:customerId/status` — suspend/reactivate; owner and manager roles only; reason required; suspending revokes customer sessions.
+- `GET /admin/orders?search=&status=&limit=&offset=` — search by order number or customer email.
+- `GET /admin/orders/:orderNumber` — order, items and payment records.
+- `GET /admin/audit-logs?limit=&offset=` — owner and manager roles only.
+
+Order data is read-only in this first admin API increment. Order fulfilment transitions and loyalty adjustments will be added only with explicit transition rules and a ledger model that can represent credits and debits unambiguously.
