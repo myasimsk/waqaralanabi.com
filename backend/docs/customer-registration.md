@@ -33,3 +33,11 @@ docker compose exec -T postgres psql -U postgres -d wa_store_dev < database\migr
 - Enforce HTTPS and Secure cookies in production.
 - Add integration tests for login throttling, session expiry/revocation, invalid credentials, and concurrent requests.
 - Review retention and privacy requirements.
+
+## Password recovery
+
+- `POST /auth/password/request-reset-code` accepts an email address and always returns the same generic response for existing and non-existing accounts.
+- `POST /auth/password/complete-reset` accepts an email address, six-digit code, and a new password of at least 12 characters.
+- Reset codes expire after ten minutes, allow at most five attempts, and are single-use.
+- A successful reset invalidates all active customer sessions for that account.
+- For local development only, the code is written to the backend log. Production password recovery remains unavailable until transactional email delivery is configured.
