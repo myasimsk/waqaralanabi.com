@@ -132,7 +132,7 @@ let activeCheckoutOrder=null;
 function currentBagSubtotal(){return bag.reduce((sum,item)=>sum+(products.find(p=>String(p.id)===String(item.id))?.price||0)*item.qty,0);}
 function openCheckoutPreview(){
  if(!bag.length){toast("Your bag is empty.");return;}
- if(!WA_COMMERCE_LAUNCH_READY){toast("Online ordering opens once final retail prices and inventory are confirmed.");return;}
+ if(!WA_TEST_MODE&&!WA_COMMERCE_LAUNCH_READY){toast("Online ordering opens once final retail prices and inventory are confirmed.");return;}
  $("#checkoutPreviewSubtotal").textContent=money(currentBagSubtotal());
  $("#waCheckoutTotal").textContent=money(currentBagSubtotal());
  $("#waCheckoutError").textContent="";
@@ -155,6 +155,26 @@ function checkoutVariantItems(){
   return {variantId:variant.id,quantity:item.qty};
  });
 }
+function readTestOrders(){try{const value=JSON.parse(localStorage.getItem(WA_TEST_ORDERS_KEY)||"[]");return Array.isArray(value)?value:[];}catch{return [];}}
+function readTestStock(){try{const value=JSON.parse(localStorage.getItem(WA_TEST_STOCK_KEY)||"{}");return value&&typeof value==="object"&&!Array.isArray(value)?value:{};}catch{return {};}}
+function testStockKey(item){return String(item.id)+"|"+String(item.color)+"|"+String(item.size);}
+function escapeTestHtml(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));}
+function renderTestOrders(){
+ const target=$("#waTestOrdersList");if(!target)return;
+ const orders=readTestOrders();
+ target.innerHTML=orders.length?orders.map(order=>'<article class="wa-test-order-card"><div><strong>'+escapeTestHtml(order.orderNumber)+'</strong><small>'+new Date(order.createdAt).toLocaleString()+'</small></div><p>'+escapeTestHtml(order.customer.fullName)+' · '+escapeTestHtml(order.customer.city)+'</p><p>'+order.items.map(item=>escapeTestHtml(item.productName)+' — '+escapeTestHtml(item.colour)+' / '+escapeTestHtml(item.size)+' × '+item.quantity).join('<br>')+'</p><b>'+money(order.total)+'</b><small>TEST ONLY · PAYMENT NOT COLLECTED</small></article>').join(""):'<p class="wa-test-empty">No test orders have been placed in this browser yet.</p>';
+}
+function showTestCheckoutResult(order){
+ const form=$("#waCheckoutForm"),result=$("#waCheckoutResult");
+ form.hidden=true;result.hidden=false;
+ result.innerHTML='<p class="eyebrow">TEST ORDER / NOT REAL</p><h3>Test order<br><em>recorded.</em></h3><p class="wa-order-number">TEST ORDER NUMBER <strong>'+escapeTestHtml(order.orderNumber)+'</strong></p><div class="wa-order-summary"><div><span>Merchandise subtotal</span><strong>'+money(order.subtotal)+'</strong></div><div><span>Shipping simulation</span><strong>FREE</strong></div><div class="wa-order-total"><span>Payment</span><strong>NOT COLLECTED</strong></div></div><p class="wa-test-mode-warning">This is a local test only. No real order was sent to WA, no payment was taken, and no fulfilment will occur.</p><button type="button" class="button button-burgundy" id="waFinishCheckout">Continue exploring</button>';
+ activeCheckoutOrder=null;
+ $("#waFinishCheckout").onclick=()=>{bag=[];saveBag();closeCheckoutPreview();closeBag();};
+ renderTestOrders();
+}
+$("#waTestOrdersRefresh")?.addEventListener("click",renderTestOrders);
+$("#waClearTestOrders")?.addEventListener("click",()=>{if(!window.confirm("Clear all test orders and reset simulated test stock in this browser?"))return;localStorage.removeItem(WA_TEST_ORDERS_KEY);localStorage.removeItem(WA_TEST_STOCK_KEY);renderTestOrders();toast("Local test orders and test stock cleared.");});
+$("#waTestOrdersPanel")?.addEventListener("toggle",event=>{if(event.target.open)renderTestOrders();});
 function showCheckoutResult(order,payment,accessToken){
  const form=$("#waCheckoutForm"),result=$("#waCheckoutResult");
  form.hidden=true;result.hidden=false;
@@ -186,12 +206,24 @@ $("#waCheckoutForm").addEventListener("submit",async event=>{
  event.preventDefault();const form=event.currentTarget,button=$("#waPlaceOrder"),error=$("#waCheckoutError"),data=new FormData(form);
  button.disabled=true;button.textContent="Placing order…";error.textContent="";
  try{
-  const items=checkoutVariantItems();
-  const body={fullName:String(data.get("fullName")).trim(),email:String(data.get("email")).trim(),phone:String(data.get("phone")).trim(),addressLine1:String(data.get("addressLine1")).trim(),addressLine2:String(data.get("addressLine2")).trim(),city:String(data.get("city")).trim(),region:String(data.get("region")).trim(),postalCode:String(data.get("postalCode")).trim(),countryCode:"PK",paymentMethod:String(data.get("paymentMethod")),idempotencyKey:crypto.randomUUID(),items};
-  const response=await fetch(WA_API_BASE+"/checkout/orders",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(body)});
-  const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload.message||payload.error||"We could not place your order. Please check your details and try again.");
-  if(!payload.order?.orderNumber||!payload.accessToken)throw new Error("The order response was incomplete. Please contact WA before retrying.");
-  showCheckoutResult(payload.order,payload.payment,payload.accessToken);
+  if(WA_TEST_MODE){
+   const customer={fullName:String(data.get("fullName")).trim(),email:String(data.get("email")).trim(),phone:String(data.get("phone")).trim(),addressLine1:String(data.get("addressLine1")).trim(),addressLine2:String(data.get("addressLine2")).trim(),city:String(data.get("city")).trim(),region:String(data.get("region")).trim(),postalCode:String(data.get("postalCode")).trim(),countryCode:"PK"};
+   const stock=readTestStock();
+   const items=bag.map(item=>{const product=products.find(p=>String(p.id)===String(item.id));if(!product)throw new Error("A product in your bag is no longer available. Refresh and try again.");const key=testStockKey(item);const available=stock[key]===undefined?10:Number(stock[key]);if(item.qty>available)throw new Error(product.name+" ("+item.color+", "+item.size+") has only "+available+" test units remaining.");return {productId:String(product.id),productName:product.name,colour:item.color,size:item.size,quantity:item.qty,unitPrice:product.price,lineTotal:product.price*item.qty,stockKey:key};});
+   if(!items.length)throw new Error("Your bag is empty.");
+   const total=items.reduce((sum,item)=>sum+item.lineTotal,0);
+   const order={orderNumber:"WAT-"+new Date().toISOString().slice(0,10).replaceAll("-","")+"-"+Math.random().toString(36).slice(2,8).toUpperCase(),createdAt:new Date().toISOString(),status:"TEST_ORDER",paymentStatus:"NOT_COLLECTED",paymentMethod:String(data.get("paymentMethod"))==="bank_transfer"?"TEST_BANK_TRANSFER":"TEST_CASH_ON_DELIVERY",customer,items:items.map(({stockKey,...item})=>item),subtotal:total,shipping:0,total,currency:"PKR",testOnly:true};
+   const orders=readTestOrders();orders.unshift(order);localStorage.setItem(WA_TEST_ORDERS_KEY,JSON.stringify(orders));
+   items.forEach(item=>{stock[item.stockKey]=(stock[item.stockKey]===undefined?10:Number(stock[item.stockKey]))-item.quantity;});localStorage.setItem(WA_TEST_STOCK_KEY,JSON.stringify(stock));
+   showTestCheckoutResult(order);
+  }else{
+   const items=checkoutVariantItems();
+   const body={fullName:String(data.get("fullName")).trim(),email:String(data.get("email")).trim(),phone:String(data.get("phone")).trim(),addressLine1:String(data.get("addressLine1")).trim(),addressLine2:String(data.get("addressLine2")).trim(),city:String(data.get("city")).trim(),region:String(data.get("region")).trim(),postalCode:String(data.get("postalCode")).trim(),countryCode:"PK",paymentMethod:String(data.get("paymentMethod")),idempotencyKey:crypto.randomUUID(),items};
+   const response=await fetch(WA_API_BASE+"/checkout/orders",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(body)});
+   const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload.message||payload.error||"We could not place your order. Please check your details and try again.");
+   if(!payload.order?.orderNumber||!payload.accessToken)throw new Error("The order response was incomplete. Please contact WA before retrying.");
+   showCheckoutResult(payload.order,payload.payment,payload.accessToken);
+  }
  }catch(err){error.textContent=err.message||"Checkout is temporarily unavailable."; }
  finally{button.disabled=false;button.innerHTML='Place order <span>↗</span>';}
 });
@@ -238,10 +270,14 @@ window.addEventListener("scroll",syncHeaderDepth,{passive:true});syncHeaderDepth
 
 
 /* Database-backed catalogue with a safe editorial fallback. */
+const WA_TEST_MODE=true;
+const WA_TEST_ORDERS_KEY="wa-test-orders-v1";
+const WA_TEST_STOCK_KEY="wa-test-stock-v1";
 const WA_COMMERCE_LAUNCH_READY=false;
 const WA_API_BASE=window.WA_API_BASE||"http://127.0.0.1:4000";
 const colourHex={"Black":"#111111","Burgundy":"#741F2B","White":"#F7F7F2","Beige":"#DCC9A8","Cream":"#F1E6D2","Chocolate Brown":"#4A2C20","Chocolate":"#4A2C20","Taupe":"#A89A88","Charcoal":"#55514E","Brown":"#49352C","Olive Green":"#4B5135"};
 async function connectLiveCatalogue(){
+ if(WA_TEST_MODE){console.info("WA test mode: using the seven local preview products; no live catalogue or order API is called.");return;}
  try{
   const response=await fetch(WA_API_BASE+"/catalog",{headers:{"Accept":"application/json"}});
   if(!response.ok)throw new Error("Catalogue API returned "+response.status);
