@@ -135,6 +135,36 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     return reply.clearCookie(SESSION_COOKIE, cookieOptions()).send({ status: "signed_out" });
   });
 
+  app.get("/overview", async (request, reply) => {
+    const admin = await requireAdmin(request, reply);
+    if (!admin) return;
+    const [orders, revenue, stock] = await Promise.all([
+      db.query<{ total: string; pending_payment: string; fulfilment: string }>(
+        `SELECT count(*)::text AS total,
+                count(*) FILTER (WHERE status='pending_payment')::text AS pending_payment,
+                count(*) FILTER (WHERE status IN ('confirmed','processing','shipped'))::text AS fulfilment
+           FROM orders`),
+      db.query<{ paid_minor: string }>(
+        "SELECT COALESCE(sum(amount_minor),0)::text AS paid_minor FROM payments WHERE status='paid'"),
+      db.query<{ available: string; reserved: string }>(
+        `SELECT COALESCE(sum(stock_on_hand-reserved_quantity),0)::text AS available,
+                COALESCE(sum(reserved_quantity),0)::text AS reserved
+           FROM product_variants WHERE is_active=true`),
+    ]);
+    return {
+      orders: {
+        total: Number(orders.rows[0]?.total ?? 0),
+        pendingPayment: Number(orders.rows[0]?.pending_payment ?? 0),
+        inFulfilment: Number(orders.rows[0]?.fulfilment ?? 0),
+      },
+      revenue: { paidMinor: revenue.rows[0]?.paid_minor ?? "0", currency: "PKR" },
+      inventory: {
+        availableUnits: Number(stock.rows[0]?.available ?? 0),
+        reservedUnits: Number(stock.rows[0]?.reserved ?? 0),
+      },
+    };
+  });
+
   app.get("/customers", async (request, reply) => {
     const admin = await requireAdmin(request, reply);
     if (!admin) return;
