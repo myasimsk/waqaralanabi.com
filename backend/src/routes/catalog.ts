@@ -114,6 +114,33 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
+
+  app.patch<{ Params: { productId: string } }>("/products/:productId", async (request, reply) => {
+    const admin = await managerOnly(request, reply);
+    if (!admin) return;
+    const id = idSchema.safeParse(request.params.productId);
+    const parsed = productSchema.safeParse(request.body);
+    if (!id.success || !parsed.success) return reply.code(400).send({ error: "INVALID_PRODUCT", details: parsed.success ? undefined : parsed.error.flatten() });
+    const p = parsed.data;
+    try {
+      const result = await db.query(
+        `UPDATE catalog_products
+            SET name=$1, slug=$2, description=$3, category=$4, price_minor=$5,
+                currency=$6, image_url=$7, is_active=$8, updated_at=now()
+          WHERE id=$9
+          RETURNING id, name, slug, description, category, price_minor, currency, image_url, is_active`,
+        [p.name,p.slug,p.description,p.category,p.priceMinor,p.currency.toUpperCase(),p.imageUrl ?? null,p.isActive,id.data],
+      );
+      if (!result.rowCount) return reply.code(404).send({ error: "PRODUCT_NOT_FOUND" });
+      return { product: result.rows[0] };
+    } catch (error) {
+      if (typeof error === "object" && error !== null && "code" in error && error.code === "23505") {
+        return reply.code(409).send({ error: "PRODUCT_SLUG_EXISTS", message: "A product with this slug already exists." });
+      }
+      throw error;
+    }
+  });
+
   app.post<{ Params: { productId: string } }>("/products/:productId/variants", async (request, reply) => {
     const admin = await managerOnly(request, reply);
     if (!admin) return;
