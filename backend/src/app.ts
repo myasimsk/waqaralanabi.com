@@ -11,12 +11,13 @@ import { addressRoutes } from "./routes/addresses.js";
 import { adminRoutes } from "./routes/admin.js";
 import { catalogRoutes, inventoryRoutes } from "./routes/catalog.js";
 import { newsletterRoutes } from "./routes/newsletter.js";
+import { checkoutRoutes, orderAdminRoutes } from "./routes/checkout.js";
 
 export async function buildApp() {
   const app = Fastify({
     logger: { level: env.LOG_LEVEL },
     trustProxy: false,
-    bodyLimit: 1_048_576,
+    bodyLimit: 7_500_000,
   });
 
   await app.register(helmet);
@@ -52,6 +53,8 @@ export async function buildApp() {
   await app.register(adminRoutes, { prefix: "/admin" });
   await app.register(catalogRoutes);
   await app.register(newsletterRoutes);
+  await app.register(checkoutRoutes);
+  await app.register(orderAdminRoutes, { prefix: "/admin/orders" });
   await app.register(inventoryRoutes, { prefix: "/admin/inventory" });
 
   app.setNotFoundHandler((_request, reply) =>
