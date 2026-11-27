@@ -167,6 +167,38 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
     }
   });
 
+
+  app.patch<{ Params: { variantId: string } }>("/variants/:variantId", async (request, reply) => {
+    const admin = await managerOnly(request, reply);
+    if (!admin) return;
+    const id = idSchema.safeParse(request.params.variantId);
+    const parsed = z.object({
+      sku: z.string().trim().min(3).max(80),
+      colour: z.string().trim().min(2).max(60),
+      size: z.enum(["S", "M", "L", "XL"]),
+      lowStockThreshold: z.number().int().min(0).max(100_000),
+      isActive: z.boolean(),
+    }).safeParse(request.body);
+    if (!id.success || !parsed.success) return reply.code(400).send({ error: "INVALID_VARIANT", details: parsed.success ? undefined : parsed.error.flatten() });
+    const v = parsed.data;
+    try {
+      const result = await db.query(
+        `UPDATE product_variants
+            SET sku=$1, colour=$2, size=$3, low_stock_threshold=$4, is_active=$5, updated_at=now()
+          WHERE id=$6
+          RETURNING id, product_id, sku, colour, size, stock_on_hand, reserved_quantity, low_stock_threshold, is_active`,
+        [v.sku,v.colour,v.size,v.lowStockThreshold,v.isActive,id.data],
+      );
+      if (!result.rowCount) return reply.code(404).send({ error: "VARIANT_NOT_FOUND" });
+      return { variant: result.rows[0] };
+    } catch (error) {
+      if (typeof error === "object" && error !== null && "code" in error && error.code === "23505") {
+        return reply.code(409).send({ error: "VARIANT_ALREADY_EXISTS", message: "That SKU or colour and size combination already exists for this product." });
+      }
+      throw error;
+    }
+  });
+
   app.patch<{ Params: { variantId: string } }>("/variants/:variantId/stock", async (request, reply) => {
     const admin = await managerOnly(request, reply);
     if (!admin) return;
