@@ -560,3 +560,55 @@ html{scroll-behavior:smooth}
  .attitude-track{animation-duration:40s}
  .wa-scroll-reveal{transform:translateY(16px)}
 }
+
+
+/* SHOPPING PASS 11 — interactive colour choices and elevated product discovery */
+.product-image-wrap{position:relative}
+.product-image-index{
+ position:absolute;right:12px;bottom:12px;z-index:1;
+ padding:6px 8px;background:rgba(20,15,17,.68);color:#fff;
+ font:700 7px "Space Grotesk",sans-serif;letter-spacing:.14em;
+ opacity:0;transform:translateY(5px);transition:opacity .25s ease,transform .25s ease;
+}
+.product-card:hover .product-image-index{opacity:1;transform:translateY(0)}
+.product-colors{gap:5px}
+.swatch-button{
+ width:21px;height:21px;padding:0;display:inline-grid;place-items:center;
+ border:1px solid transparent;border-radius:50%;background:transparent;
+ cursor:pointer;transition:transform .2s ease,border-color .2s ease;
+}
+.swatch-button .swatch{
+ display:block;width:13px;height:13px;border-radius:50%;
+ background:var(--swatch);border:1px solid rgba(0,0,0,.18);
+ transition:transform .2s ease,box-shadow .2s ease;
+}
+.swatch-button:hover{transform:scale(1.12)}
+.swatch-button:hover .swatch,.swatch-button:focus-visible .swatch{box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--wine)}
+.swatch-button:focus-visible{outline:2px solid var(--wine);outline-offset:3px}
+.quick-add{letter-spacing:.15em;text-transform:uppercase}
+.product-options-modal{
+ opacity:0;transform:translateY(20px) scale(.985);
+ transition:opacity .35s ease,transform .45s var(--wa-ease);
+}
+.product-options-modal.open{opacity:1;transform:translateY(0) scale(1)}
+.product-options-backdrop{opacity:0;transition:opacity .3s ease}
+.product-options-backdrop.open{opacity:1}
+.options-product-image{transition:opacity .25s ease,transform .7s var(--wa-ease)}
+.options-gallery-thumb{transition:opacity .2s ease,border-color .2s ease,transform .2s ease}
+.options-gallery-thumb:hover{opacity:1;transform:translateY(-2px)}
+.option-swatch,.option-size{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.option-swatch:hover,.option-size:hover{transform:translateY(-2px)}
+.option-swatch.selected,.option-size.selected{box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--wine)}
+.options-add-button{width:100%;margin-top:6px}
+.bag-line{animation:waBagLineIn .35s var(--wa-ease) both}
+@keyframes waBagLineIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+.shop-empty{grid-column:1/-1;padding:45px 15px;text-align:center;color:var(--muted);font:500 13px "DM Sans",sans-serif}
+@media(hover:none){
+ .product-image-index{opacity:1;transform:none}
+ .quick-add{opacity:1;transform:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .product-options-modal,.product-options-backdrop,.options-product-image,.options-gallery-thumb,
+ .option-swatch,.option-size,.swatch-button,.product-image-index{transition:none!important}
+ .bag-line{animation:none!important}
+}
