@@ -71,8 +71,12 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
         if (prior.rows[0]!.checkout_request_hash && prior.rows[0]!.checkout_request_hash !== requestFingerprint) {
           return reply.code(409).send({ error:"IDEMPOTENCY_KEY_REUSED", message:"This checkout key has already been used for different order details. Refresh checkout and try again." });
         }
-        const { checkout_request_hash: _fingerprint, ...existingOrder } = prior.rows[0]!;
-        return reply.code(200).send({ order:existingOrder, reused:true, message:"This checkout request was already recorded. Use the original order confirmation." });
+        const existing = prior.rows[0]!;
+        return reply.code(200).send({
+          order:{orderNumber:existing.order_number,status:existing.status,paymentStatus:existing.payment_status,totalMinor:existing.total_minor,currency:"PKR"},
+          reused:true,
+          message:"This checkout request was already recorded. Use the original order confirmation.",
+        });
       }
 
       const ids = input.items.map((item) => item.variantId);
@@ -175,8 +179,11 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
           if (prior.checkout_request_hash && prior.checkout_request_hash !== requestFingerprint) {
             return reply.code(409).send({error:"IDEMPOTENCY_KEY_REUSED",message:"This checkout key has already been used for different order details."});
           }
-          const { checkout_request_hash: _fingerprint, ...order } = prior;
-          return reply.code(200).send({order,reused:true,message:"This checkout request was already recorded. Use the original order confirmation."});
+          return reply.code(200).send({
+            order:{orderNumber:prior.order_number,status:prior.status,paymentStatus:prior.payment_status,totalMinor:prior.total_minor,currency:"PKR"},
+            reused:true,
+            message:"This checkout request was already recorded. Use the original order confirmation.",
+          });
         }
         return reply.code(409).send({error:"CHECKOUT_ALREADY_SUBMITTED",message:"This checkout has already been submitted. Refresh your orders before trying again."});
       }
@@ -282,8 +289,11 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
               AND v.stock_on_hand>=i.quantity AND v.reserved_quantity>=i.quantity`,
           [row.id],
         );
-        const expected=await client.query("SELECT count(*)::int AS count FROM order_items WHERE order_id=$1 AND variant_id IS NOT NULL",[row.id]);
-        if(committed.rowCount!==Number(expected.rows[0]?.count??0)){
+        const expected=await client.query<{total:number;linked:number}>(
+          "SELECT count(*)::int AS total,count(variant_id)::int AS linked FROM order_items WHERE order_id=$1",[row.id],
+        );
+        const expectedCount=Number(expected.rows[0]?.total??0);
+        if(Number(expected.rows[0]?.linked??0)!==expectedCount || committed.rowCount!==expectedCount){
           await client.query("ROLLBACK");return reply.code(409).send({error:"INVENTORY_COMMIT_FAILED",message:"Reserved stock could not be safely committed. Review inventory before approving this payment."});
         }
         await client.query("UPDATE orders SET payment_status='paid',status='confirmed',updated_at=now() WHERE id=$1",[row.id]);
@@ -332,8 +342,11 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
               SET reserved_quantity=v.reserved_quantity-i.quantity,updated_at=now()
              FROM order_items i
             WHERE i.order_id=$1 AND i.variant_id=v.id AND v.reserved_quantity>=i.quantity`,[order.id]);
-        const expected=await client.query("SELECT count(*)::int AS count FROM order_items WHERE order_id=$1 AND variant_id IS NOT NULL",[order.id]);
-        if(released.rowCount!==Number(expected.rows[0]?.count??0)){
+        const expected=await client.query<{total:number;linked:number}>(
+          "SELECT count(*)::int AS total,count(variant_id)::int AS linked FROM order_items WHERE order_id=$1",[order.id],
+        );
+        const expectedCount=Number(expected.rows[0]?.total??0);
+        if(Number(expected.rows[0]?.linked??0)!==expectedCount || released.rowCount!==expectedCount){
           await client.query("ROLLBACK");return reply.code(409).send({error:"INVENTORY_RESERVATION_MISMATCH",message:"Stock reservation could not be safely released. Please contact technical support."});
         }
       }
@@ -345,8 +358,11 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
              FROM order_items i
             WHERE i.order_id=$1 AND i.variant_id=v.id
               AND v.stock_on_hand>=i.quantity AND v.reserved_quantity>=i.quantity`,[order.id]);
-        const expected=await client.query("SELECT count(*)::int AS count FROM order_items WHERE order_id=$1 AND variant_id IS NOT NULL",[order.id]);
-        if(consumed.rowCount!==Number(expected.rows[0]?.count??0)){
+        const expected=await client.query<{total:number;linked:number}>(
+          "SELECT count(*)::int AS total,count(variant_id)::int AS linked FROM order_items WHERE order_id=$1",[order.id],
+        );
+        const expectedCount=Number(expected.rows[0]?.total??0);
+        if(Number(expected.rows[0]?.linked??0)!==expectedCount || consumed.rowCount!==expectedCount){
           await client.query("ROLLBACK");return reply.code(409).send({error:"INVENTORY_COMMIT_FAILED",message:"Stock could not be safely committed for shipment. Review inventory before retrying."});
         }
       }
