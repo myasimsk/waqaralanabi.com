@@ -10,6 +10,7 @@ import { accountRoutes } from "./routes/account.js";
 import { addressRoutes } from "./routes/addresses.js";
 import { adminRoutes } from "./routes/admin.js";
 import { catalogRoutes, inventoryRoutes } from "./routes/catalog.js";
+import { newsletterRoutes } from "./routes/newsletter.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -50,6 +51,7 @@ export async function buildApp() {
   await app.register(addressRoutes, { prefix: "/account/addresses" });
   await app.register(adminRoutes, { prefix: "/admin" });
   await app.register(catalogRoutes);
+  await app.register(newsletterRoutes);
   await app.register(inventoryRoutes, { prefix: "/admin/inventory" });
 
   app.setNotFoundHandler((_request, reply) =>
