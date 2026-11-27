@@ -2,7 +2,7 @@
 "use strict";
 const $ = (selector, root=document) => root.querySelector(selector);
 const API = window.WA_API_BASE || "http://localhost:4000";
-const state = {admin:null,customerOffset:0,orderOffset:0,limit:20,customerSearch:"",orderSearch:"",orderStatus:"",currentView:"overview"};
+const state = {admin:null,customerOffset:0,orderOffset:0,limit:20,customerSearch:"",orderSearch:"",orderStatus:"",newsletterOffset:0,newsletterSearch:"",currentView:"overview"};
 const escapeHtml = value => String(value == null ? "" : value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const number = value => Number(value || 0).toLocaleString();
 const money = (minor,currency) => {
@@ -23,13 +23,14 @@ function setView(name) {
   state.currentView=name;
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+name));
   document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
-  const titles={overview:"Overview",customers:"Customers",inventory:"Inventory",orders:"Orders","activity":"Activity log"};
+  const titles={overview:"Overview",customers:"Customers",inventory:"Inventory",orders:"Orders","activity":"Activity log",newsletter:"Newsletter"};
   $("#pageTitle").textContent=titles[name] || "Overview";
   notice("");
   if(name==="inventory") loadInventory();
   if(name==="customers") loadCustomers();
   if(name==="orders") loadOrders();
   if(name==="activity") loadActivity();
+  if(name==="newsletter") loadNewsletter();
 }
 function status(value) { const v=String(value || "unknown"); return '<span class="status '+escapeHtml(v)+'">'+escapeHtml(v.replace(/_/g," "))+'</span>'; }
 async function loadOverview() {
@@ -100,6 +101,17 @@ async function loadOrderDetail(orderNumber) {
     $("#closeOrderDetail").addEventListener("click",()=>panel.hidden=true);
   } catch(e) { panel.innerHTML='<p class="empty-cell">'+escapeHtml(e.message)+'</p>'; }
 }
+async function loadNewsletter(){
+  $("#newsletterRows").innerHTML='<tr><td colspan="3" class="empty-cell">Loading subscribers…</td></tr>';
+  try {
+    const query=new URLSearchParams({search:state.newsletterSearch,limit:String(state.limit),offset:String(state.newsletterOffset)});
+    const data=await api("/admin/newsletter?"+query.toString());
+    $("#newsletterRows").innerHTML=data.subscribers.length?data.subscribers.map(x=>'<tr><td><b>'+escapeHtml(x.email)+'</b></td><td>'+escapeHtml(date(x.consented_at))+'</td><td>'+escapeHtml(date(x.created_at))+'</td></tr>').join(""):'<tr><td colspan="3" class="empty-cell">No active subscribers found.</td></tr>';
+    $("#newsletterPageInfo").textContent=(data.pagination.total?state.newsletterOffset+1:0)+"–"+Math.min(state.newsletterOffset+state.limit,data.pagination.total)+" of "+data.pagination.total;
+    $("#newsletterPrev").disabled=state.newsletterOffset===0;
+    $("#newsletterNext").disabled=state.newsletterOffset+state.limit>=data.pagination.total;
+  } catch(e) { $("#newsletterRows").innerHTML='<tr><td colspan="3" class="empty-cell">'+escapeHtml(e.message)+'</td></tr>'; }
+}
 async function loadActivity() {
   $("#activityRows").innerHTML='<tr><td colspan="4" class="empty-cell">Loading activity…</td></tr>';
   try {
@@ -129,5 +141,10 @@ $("#orderSearchButton").addEventListener("click",()=>{state.orderSearch=$("#orde
 $("#orderSearch").addEventListener("keydown",e=>{if(e.key==="Enter")$("#orderSearchButton").click();});
 $("#orderPrev").addEventListener("click",()=>{state.orderOffset=Math.max(0,state.orderOffset-state.limit);loadOrders();});
 $("#orderNext").addEventListener("click",()=>{state.orderOffset+=state.limit;loadOrders();});
+$("#newsletterSearchButton").addEventListener("click",()=>{state.newsletterSearch=$("#newsletterSearch").value.trim();state.newsletterOffset=0;loadNewsletter();});
+$("#newsletterSearch").addEventListener("keydown",e=>{if(e.key==="Enter")$("#newsletterSearchButton").click();});
+$("#newsletterPrev").addEventListener("click",()=>{state.newsletterOffset=Math.max(0,state.newsletterOffset-state.limit);loadNewsletter();});
+$("#newsletterNext").addEventListener("click",()=>{state.newsletterOffset+=state.limit;loadNewsletter();});
+$("#refreshNewsletter").addEventListener("click",loadNewsletter);
 (async()=>{try{const data=await api("/admin/me");await enterAdmin(data.admin);}catch{showLogin(true);}})();
 })();
