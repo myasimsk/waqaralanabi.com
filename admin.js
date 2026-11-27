@@ -34,12 +34,17 @@ function setView(name) {
 }
 function status(value) { const v=String(value || "unknown"); return '<span class="status '+escapeHtml(v)+'">'+escapeHtml(v.replace(/_/g," "))+'</span>'; }
 async function loadOverview() {
-  const [customers,orders] = await Promise.all([
+  const [customers,orders,overview] = await Promise.all([
     api("/admin/customers?limit=1&offset=0"),
-    api("/admin/orders?limit=5&offset=0")
+    api("/admin/orders?limit=5&offset=0"),
+    api("/admin/overview")
   ]);
   $("#metricCustomers").textContent=number(customers.pagination.total);
-  $("#metricOrders").textContent=number(orders.pagination.total);
+  $("#metricOrders").textContent=number(overview.orders.total);
+  $("#metricRevenue").textContent=money(overview.revenue.paidMinor,overview.revenue.currency);
+  $("#metricPending").textContent=number(overview.orders.pendingPayment);
+  $("#metricFulfilment").textContent=number(overview.orders.inFulfilment);
+  $("#metricStock").textContent=number(overview.inventory.availableUnits);
   const recent = orders.orders || [];
   $("#recentOrders").innerHTML=recent.length?recent.map(o=>'<tr><td><b>'+escapeHtml(o.order_number)+'</b></td><td>'+escapeHtml(o.customer_name || o.customer_email || "Guest")+'</td><td>'+status(o.status)+'</td><td>'+money(o.total_minor,o.currency)+'</td></tr>').join(""):'<tr><td colspan="4" class="empty-cell">No orders have been recorded yet.</td></tr>';
   $("#metricLoyalty").textContent="NOT LIVE";
