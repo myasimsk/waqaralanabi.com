@@ -18,6 +18,7 @@
     <nav class="side-nav" aria-label="Admin navigation">
       <button class="nav-item active" data-view="overview"><span>◫</span>Overview</button>
       <button class="nav-item" data-view="customers"><span>♙</span>Customers</button>
+      <button class="nav-item" data-view="inventory"><span>▦</span>Inventory</button>
       <button class="nav-item" data-view="orders"><span>▤</span>Orders</button>
       <button class="nav-item" data-view="activity"><span>◷</span>Activity log</button>
     </nav>
@@ -38,6 +39,18 @@
         <section class="panel quick-panel"><p class="eyebrow">QUICK ACCESS</p><h3>Keep things moving.</h3><button data-go="customers">Find a customer <span>↗</span></button><button data-go="orders">Review an order <span>↗</span></button><button data-go="activity">Review admin activity <span>↗</span></button><div class="loyalty-note"><b>LOYALTY PROGRAM</b><p>Points earning and redemption remain inactive until the programme rules are approved.</p></div></section>
       </div>
     </section>
+    <section class="view" id="view-inventory">
+<div class="section-intro"><div><p class="eyebrow">PRODUCT & STOCK CONTROL</p><h2>Inventory</h2><p>Manage the catalogue, product variants and stock levels.</p></div></div>
+<div class="inventory-metrics"><article class="metric-card"><span>PRODUCTS</span><strong id="inventoryProducts">—</strong><small>Catalogue records</small></article><article class="metric-card"><span>VARIANTS</span><strong id="inventoryVariants">—</strong><small>Colour and size combinations</small></article><article class="metric-card"><span>LOW STOCK</span><strong id="inventoryLow">—</strong><small>At or below alert threshold</small></article></div>
+<div class="inventory-forms">
+<form class="panel inventory-form" id="productForm"><div class="panel-heading"><div><p class="eyebrow">CATALOGUE</p><h3>Add a product</h3></div></div><div class="form-grid">
+<label>Product name<input name="name" required maxlength="160" placeholder="Signature Polo Shirt"></label><label>URL slug<input name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="signature-polo-shirt"></label>
+<label>Category<select name="category"><option>Men</option><option>Women</option><option>Unisex</option></select></label><label>Price (PKR)<input name="price" type="number" min="0" step="1" required></label>
+<label class="form-wide">Description<textarea name="description" rows="3" maxlength="3000"></textarea></label><label class="form-wide">Image URL (optional)<input name="imageUrl" type="url" placeholder="https://…"></label><label class="check-label"><input name="isActive" type="checkbox"> Publish in public catalogue</label></div><button class="primary-button" type="submit">Create product</button></form>
+<form class="panel inventory-form" id="variantForm"><div class="panel-heading"><div><p class="eyebrow">PRODUCT OPTIONS</p><h3>Add a variant</h3></div></div><div class="form-grid">
+<label class="form-wide">Product<select name="productId" id="variantProduct" required><option value="">Create a product first</option></select></label><label>SKU<input name="sku" required maxlength="80" placeholder="WA-POLO-BLK-M"></label><label>Colour<input name="colour" required maxlength="60" placeholder="Black"></label><label>Size<select name="size"><option>S</option><option>M</option><option>L</option><option>XL</option></select></label><label>Opening stock<input name="stockOnHand" type="number" min="0" max="1000000" value="0" required></label><label>Low-stock alert at<input name="lowStockThreshold" type="number" min="0" max="100000" value="3" required></label></div><button class="primary-button" type="submit">Add variant</button></form></div>
+<div class="panel inventory-panel"><div class="panel-heading"><div><p class="eyebrow">LIVE STOCK REGISTER</p><h3>Product inventory</h3></div><button class="text-action" id="refreshInventory" type="button">Refresh ↻</button></div><div class="toolbar inventory-toolbar"><input id="inventorySearch" type="search" placeholder="Filter product, SKU or colour…"><select id="inventoryFilter"><option value="all">All stock</option><option value="low">Low stock</option><option value="out">Out of stock</option><option value="inactive">Inactive products</option></select></div><div class="table-wrap"><table><thead><tr><th>PRODUCT / SKU</th><th>COLOUR</th><th>SIZE</th><th>ON HAND</th><th>RESERVED</th><th>AVAILABLE</th><th>ALERT AT</th><th>STATUS</th><th>ADJUST STOCK</th></tr></thead><tbody id="inventoryRows"><tr><td colspan="9" class="empty-cell">Loading inventory…</td></tr></tbody></table></div></div>
+</section>
     <section class="view" id="view-customers">
       <div class="section-intro"><div><p class="eyebrow">CUSTOMER RELATIONSHIPS</p><h2>Customers</h2><p>Search by name, email address or order number.</p></div></div>
       <div class="toolbar"><input id="customerSearch" type="search" placeholder="Search customers…" autocomplete="off"><button id="customerSearchButton" class="primary-button">Search</button></div>
