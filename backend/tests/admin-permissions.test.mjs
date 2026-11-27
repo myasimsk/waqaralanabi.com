@@ -19,6 +19,7 @@ const [{ default: Fastify }, { default: cookie }, { adminRoutes }, { orderAdminR
   ]);
 
 const originalQuery = db.query.bind(db);
+const originalConnect = db.connect.bind(db);
 let activeRole = "support";
 let queryCalls = [];
 
@@ -53,6 +54,7 @@ test("admin HTTP routes enforce authentication and role boundaries", async (t) =
   t.after(async () => {
     await app.close();
     db.query = originalQuery;
+    db.connect = originalConnect;
     await db.end();
   });
 
@@ -100,6 +102,13 @@ test("admin HTTP routes enforce authentication and role boundaries", async (t) =
     reason: "Verified bank transfer",
   });
   assert.equal(fulfilmentReview.statusCode, 403);
+
+  db.connect = async () => ({
+    query: async (sql) => String(sql).startsWith("SELECT id,status,payment_status,payment_method")
+      ? { rows: [], rowCount: 0 }
+      : { rows: [], rowCount: 0 },
+    release() {},
+  });
 
   const fulfilmentStatus = await call("PATCH", "/admin/orders/WA-TEST-1001/status", "fulfilment", {
     status: "processing",
