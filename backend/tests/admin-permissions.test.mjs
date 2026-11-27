@@ -9,7 +9,7 @@ process.env.DATABASE_SSL = "false";
 process.env.STOREFRONT_ORIGIN = "http://localhost:5500";
 process.env.LOG_LEVEL = "silent";
 
-const [{ default: Fastify }, { default: cookie }, { default: rateLimit }, { scrypt: derive }, { randomBytes }, { adminRoutes }, { orderAdminRoutes }, { db }] =
+const [{ default: Fastify }, { default: cookie }, { default: rateLimit }, { scrypt: derive, randomBytes }, { adminRoutes }, { orderAdminRoutes }, { db }] =
   await Promise.all([
     import("fastify"),
     import("@fastify/cookie"),
