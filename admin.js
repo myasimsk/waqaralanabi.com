@@ -40,7 +40,7 @@ async function loadOverview() {
   $("#metricOrders").textContent=number(orders.pagination.total);
   const recent = orders.orders || [];
   $("#recentOrders").innerHTML=recent.length?recent.map(o=>'<tr><td><b>'+escapeHtml(o.order_number)+'</b></td><td>'+escapeHtml(o.customer_name || o.customer_email || "Guest")+'</td><td>'+status(o.status)+'</td><td>'+money(o.total_minor,o.currency)+'</td></tr>').join(""):'<tr><td colspan="4" class="empty-cell">No orders have been recorded yet.</td></tr>';
-  $("#metricLoyalty").textContent="—";
+  $("#metricLoyalty").textContent="NOT LIVE";
   $("#todayStamp").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long",year:"numeric"}).toUpperCase();
 }
 async function loadCustomers() {
