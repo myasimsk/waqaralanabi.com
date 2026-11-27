@@ -48,6 +48,9 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
     if (!parsed.success) return reply.code(400).send({ error:"INVALID_CHECKOUT", message:"Check your contact, delivery and product details.", details:parsed.error.flatten() });
     const input = parsed.data;
     if (input.paymentMethod === "card") return reply.code(503).send({ error:"CARD_GATEWAY_NOT_CONFIGURED", message:"Card payments are coming soon. Please choose cash on delivery or bank transfer." });
+    if (input.paymentMethod === "bank_transfer" && [env.BANK_TRANSFER_ACCOUNT_TITLE, env.BANK_TRANSFER_BANK_NAME, env.BANK_TRANSFER_IBAN, env.BANK_TRANSFER_ACCOUNT_NUMBER, env.BANK_TRANSFER_BRANCH, env.BANK_TRANSFER_CITY].some((value) => !value.trim())) {
+      return reply.code(503).send({ error:"BANK_TRANSFER_NOT_CONFIGURED", message:"Bank transfer checkout is temporarily unavailable. Please choose another available payment method." });
+    }
     const customerToken = request.cookies["wa_customer_session"];
     let customerId: string | null = null;
     if (customerToken) {
@@ -160,12 +163,12 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
           status:"pending",
           bankInstructionsAvailable:method==="bank_transfer",
           bankTransfer:method==="bank_transfer"?{
-            accountTitle:"M/S Waqar Al Anabi",
-            bankName:"Bank Alfalah",
-            iban:"PK74ALFH0481001011515575",
-            accountNumber:"04811011515575",
-            branch:"Bank Alfalah Ghauri Town Phase IV Islamabad Branch",
-            city:"Islamabad",
+            accountTitle:env.BANK_TRANSFER_ACCOUNT_TITLE,
+            bankName:env.BANK_TRANSFER_BANK_NAME,
+            iban:env.BANK_TRANSFER_IBAN,
+            accountNumber:env.BANK_TRANSFER_ACCOUNT_NUMBER,
+            branch:env.BANK_TRANSFER_BRANCH,
+            city:env.BANK_TRANSFER_CITY,
             instructions:"Transfer the order total shown at checkout. Shipping within Pakistan is free. Upload your transfer receipt against this order. Orders remain pending until the payment is verified by WA."
           }:undefined,
           cardGateway:"awaiting_merchant_credentials"
