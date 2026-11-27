@@ -140,7 +140,20 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
         order:{orderNumber:order.order_number,status:order.status,paymentStatus:order.payment_status,totalMinor:order.total_minor,currency:"PKR",paymentMethod:method},
         accessToken,
         shipping:{quoteRequired:true,message:"Delivery charges are not yet configured and will be confirmed by WA before dispatch. The displayed amount is the merchandise subtotal."},
-        payment:{status:"pending",bankInstructionsAvailable:false,cardGateway:"awaiting_merchant_credentials"},
+        payment:{
+          status:"pending",
+          bankInstructionsAvailable:method==="bank_transfer",
+          bankTransfer:method==="bank_transfer"?{
+            accountTitle:"M/S Waqar Al Anabi",
+            bankName:"Bank Alfalah",
+            iban:"PK74ALFH0481001011515575",
+            accountNumber:"04811011515575",
+            branch:"Bank Alfalah Ghauri Town Phase IV Islamabad Branch",
+            city:"Islamabad",
+            instructions:"Please transfer only after WA confirms the final delivery-inclusive amount. Upload your transfer receipt against this order. Orders remain pending until the payment is verified by WA."
+          }:undefined,
+          cardGateway:"awaiting_merchant_credentials"
+        },
       });
     } catch (error) {
       await client.query("ROLLBACK").catch(()=>undefined);
