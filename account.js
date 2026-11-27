@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const $ = (selector, root=document) => root.querySelector(selector);
-  const API = window.WA_API_BASE || "http://localhost:4000";
+  const API = window.WA_API_BASE || ((location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "http://127.0.0.1:4000" : "/api");
   const state = { customer:null, active:"profile", orders:[], addresses:[], loyalty:null, busy:false };
   const safe = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const money = (minor, currency="PKR") => {
