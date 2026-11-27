@@ -7,6 +7,10 @@ on:
       - storefront-preview
     paths:
       - "backend/**"
+      - "script.js"
+      - "account.js"
+      - "admin.js"
+      - "index.html"
       - ".github/workflows/backend-ci.yml"
   pull_request:
     paths:
@@ -47,6 +51,17 @@ jobs:
           node-version: 22
       - name: Install backend dependencies
         run: npm install --no-audit --no-fund
+      - name: Check storefront JavaScript syntax
+        run: node --check ../script.js && node --check ../account.js && node --check ../admin.js
+      - name: Apply base database schema and migrations
+        env:
+          TEST_DATABASE_URL: postgresql://wa_test:wa_test@localhost:5432/wa_test
+        run: |
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/schema.sql
+          for migration in database/migrations/*.sql; do
+            echo "Applying $migration"
+            psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done
       - name: Run PostgreSQL concurrency tests
         env:
           TEST_DATABASE_URL: postgresql://wa_test:wa_test@localhost:5432/wa_test
