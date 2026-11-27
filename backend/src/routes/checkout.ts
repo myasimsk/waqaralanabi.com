@@ -241,12 +241,16 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
   app.get<{Params:{orderNumber:string}}>("/:orderNumber/bank-transfer-proof",async(request,reply)=>{
     const admin=await requireAdmin(request,reply); if(!admin)return;
     if(admin.role!=="owner"&&admin.role!=="manager"&&admin.role!=="support") return reply.code(403).send({error:"INSUFFICIENT_PERMISSIONS"});
-    const proof=await db.query<{file_name:string;mime_type:string;file_bytes:Buffer}>(
-      `SELECT p.file_name,p.mime_type,p.file_bytes FROM bank_transfer_proofs p
+    const proof=await db.query<{id:string;order_id:string;file_name:string;mime_type:string;file_bytes:Buffer}>(
+      `SELECT p.id,p.order_id,p.file_name,p.mime_type,p.file_bytes FROM bank_transfer_proofs p
         JOIN orders o ON o.id=p.order_id WHERE o.order_number=$1 ORDER BY p.uploaded_at DESC LIMIT 1`,
       [request.params.orderNumber.toUpperCase()],
     );
     if(!proof.rowCount)return reply.code(404).send({error:"PROOF_NOT_FOUND"});
+    await db.query(
+      "INSERT INTO admin_audit_logs(admin_user_id,action,entity_type,entity_id,reason,metadata) VALUES($1,'order.bank_transfer_proof_downloaded','order',$2,$3,$4::jsonb)",
+      [admin.id,proof.rows[0]!.order_id,"Payment receipt downloaded for review.",JSON.stringify({orderNumber:request.params.orderNumber.toUpperCase(),proofId:proof.rows[0]!.id,mimeType:proof.rows[0]!.mime_type})],
+    );
     return reply.type(proof.rows[0]!.mime_type)
       .header("Content-Disposition",'attachment; filename="'+proof.rows[0]!.file_name+'"')
       .header("X-Content-Type-Options","nosniff")
