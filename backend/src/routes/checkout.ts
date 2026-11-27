@@ -43,6 +43,7 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
     const parsed = checkoutSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error:"INVALID_CHECKOUT", message:"Check your contact, delivery and product details.", details:parsed.error.flatten() });
     const input = parsed.data;
+    if (input.paymentMethod === "card") return reply.code(503).send({ error:"CARD_GATEWAY_NOT_CONFIGURED", message:"Card payments are coming soon. Please choose cash on delivery or bank transfer." });
     const customerToken = request.cookies["wa_customer_session"];
     let customerId: string | null = null;
     if (customerToken) {
@@ -130,7 +131,7 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
         );
         await client.query("UPDATE product_variants SET reserved_quantity=reserved_quantity+$1,updated_at=now() WHERE id=$2",[item.quantity,variant.id]);
       }
-      const provider = method === "card" ? "alfa_payment_gateway" : method;
+      const provider = method;
       await client.query(
         "INSERT INTO payments (order_id,provider,amount_minor,currency,status,idempotency_key) VALUES ($1,$2,$3,'PKR','pending',$4)",
         [order.id,provider,subtotal,input.idempotencyKey],
@@ -190,6 +191,63 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
     );
     return reply.code(201).send({status:"received",message:"Your transfer receipt has been securely received and is awaiting verification."});
   });
+  app.patch<{Params:{orderNumber:string}}>("/:orderNumber/status",async(request,reply)=>{
+    const admin=await requireAdmin(request,reply); if(!admin)return;
+    if(!["owner","manager","fulfilment"].includes(admin.role)) return reply.code(403).send({error:"INSUFFICIENT_PERMISSIONS"});
+    const parsed=z.object({status:z.enum(["processing","shipped","delivered","cancelled"]),reason:z.string().trim().min(5).max(500)}).safeParse(request.body);
+    if(!parsed.success)return reply.code(400).send({error:"INVALID_ORDER_UPDATE",message:"Choose a valid next status and provide an operational note."});
+    const number=request.params.orderNumber.trim().toUpperCase();
+    const client=await db.connect();
+    try{
+      await client.query("BEGIN");
+      const result=await client.query<{id:string;status:string;payment_status:string;payment_method:string}>(
+        "SELECT id,status,payment_status,payment_method FROM orders WHERE order_number=$1 FOR UPDATE",[number]);
+      const order=result.rows[0];
+      if(!order){await client.query("ROLLBACK");return reply.code(404).send({error:"ORDER_NOT_FOUND"});}
+      const next=parsed.data.status;
+      const allowed =
+        (order.status==="pending_payment" && next==="cancelled") ||
+        (order.status==="confirmed" && (next==="processing" || next==="cancelled")) ||
+        (order.status==="processing" && (next==="shipped" || next==="cancelled")) ||
+        (order.status==="shipped" && next==="delivered");
+      if(!allowed){await client.query("ROLLBACK");return reply.code(409).send({error:"INVALID_STATUS_TRANSITION",message:"This order cannot move from "+order.status+" to "+next+"."});}
+      if(next==="cancelled" && order.payment_status!=="pending"){
+        await client.query("ROLLBACK");return reply.code(409).send({error:"REFUND_REQUIRED",message:"This order has a recorded payment. Use the refund process before cancelling it."});
+      }
+      if(next==="cancelled"){
+        const released=await client.query(
+          `UPDATE product_variants v
+              SET reserved_quantity=v.reserved_quantity-i.quantity,updated_at=now()
+             FROM order_items i
+            WHERE i.order_id=$1 AND i.variant_id=v.id AND v.reserved_quantity>=i.quantity`,[order.id]);
+        const expected=await client.query("SELECT count(*)::int AS count FROM order_items WHERE order_id=$1 AND variant_id IS NOT NULL",[order.id]);
+        if(released.rowCount!==Number(expected.rows[0]?.count??0)){
+          await client.query("ROLLBACK");return reply.code(409).send({error:"INVENTORY_RESERVATION_MISMATCH",message:"Stock reservation could not be safely released. Please contact technical support."});
+        }
+      }
+      if(next==="shipped" && order.payment_method==="cod"){
+        const consumed=await client.query(
+          `UPDATE product_variants v
+              SET stock_on_hand=v.stock_on_hand-i.quantity,
+                  reserved_quantity=v.reserved_quantity-i.quantity,updated_at=now()
+             FROM order_items i
+            WHERE i.order_id=$1 AND i.variant_id=v.id
+              AND v.stock_on_hand>=i.quantity AND v.reserved_quantity>=i.quantity`,[order.id]);
+        const expected=await client.query("SELECT count(*)::int AS count FROM order_items WHERE order_id=$1 AND variant_id IS NOT NULL",[order.id]);
+        if(consumed.rowCount!==Number(expected.rows[0]?.count??0)){
+          await client.query("ROLLBACK");return reply.code(409).send({error:"INVENTORY_COMMIT_FAILED",message:"Stock could not be safely committed for shipment. Review inventory before retrying."});
+        }
+      }
+      await client.query("UPDATE orders SET status=$1,updated_at=now() WHERE id=$2",[next,order.id]);
+      await client.query(
+        "INSERT INTO admin_audit_logs(admin_user_id,action,entity_type,entity_id,reason,metadata) VALUES($1,$2,'order',$3,$4,$5::jsonb)",
+        [admin.id,"order.status_"+next,order.id,parsed.data.reason,JSON.stringify({orderNumber:number,previousStatus:order.status,newStatus:next,paymentMethod:order.payment_method})]);
+      await client.query("COMMIT");
+      return {status:"updated",orderNumber:number,previousStatus:order.status,newStatus:next};
+    }catch(error){await client.query("ROLLBACK").catch(()=>undefined);request.log.error({err:error},"Order status update failed");return reply.code(500).send({error:"ORDER_STATUS_UPDATE_FAILED"});}
+    finally{client.release();}
+  });
+
 }
 
 export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
