@@ -65,12 +65,12 @@ export async function buildApp() {
     status: "ok",
     service: "waqar-al-anabi-api",
   }));
-
-  app.get("/ready", async (_request, reply) => {
+    app.get("/ready", async (_request, reply) => {
     try {
       await db.query("SELECT 1");
       return { status: "ready", database: "connected" };
-    } catch {
+    } catch (error) {
+      app.log.error({ err: error }, "Database readiness check failed");
       return reply.code(503).send({
         status: "not_ready",
         database: "unavailable",
