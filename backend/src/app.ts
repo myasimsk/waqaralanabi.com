@@ -51,6 +51,16 @@ export async function buildApp() {
     }
   });
 
+  // Account, authentication and admin responses may contain personal or
+  // operational data; browsers and intermediaries must not cache them.
+  app.addHook("onSend", async (request, reply, payload) => {
+    if (/^\/(auth|account|admin)(\/|\?|$)/.test(request.url)) {
+      reply.header("Cache-Control", "private, no-store, max-age=0");
+      reply.header("Pragma", "no-cache");
+    }
+    return payload;
+  });
+
   app.get("/health", async () => ({
     status: "ok",
     service: "waqar-al-anabi-api",
