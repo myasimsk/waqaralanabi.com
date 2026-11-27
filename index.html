@@ -98,13 +98,14 @@
   </div>
   <div class="footer-bottom"><small>© 2026 WAQAR AL ANABI. PEOPLE NOT TRENDS.</small><a href="#top" id="backTop">Back to top ↑</a><span>MADE FOR YOUR OWN POINT OF VIEW.</span></div>
 </footer>
-<div class="drawer-backdrop" id="drawerBackdrop"></div><aside class="bag-drawer" id="bagDrawer" aria-label="Shopping bag" aria-hidden="true"><div class="drawer-head"><div><p class="eyebrow">YOUR WA EDIT</p><h2>Your bag <span id="drawerCount">(0)</span></h2></div><button type="button" class="icon-button" id="bagClose" aria-label="Close bag">×</button></div><div id="bagItems" class="bag-items"></div><div class="bag-footer"><p class="bag-preview-note">COMPLIMENTARY SHIPPING ACROSS PAKISTAN</p><div class="subtotal"><span>Subtotal</span><strong id="subtotal">PKR 0</strong></div><p>Complimentary shipping on every Pakistan order.</p><button type="button" class="button button-burgundy checkout-button" id="checkoutButton">Continue to checkout <span>↗</span></button><button type="button" class="bag-continue" id="bagContinue">Continue exploring</button><small>Online ordering will open once final retail prices and inventory are confirmed.</small></div></aside>
+<div class="drawer-backdrop" id="drawerBackdrop"></div><aside class="bag-drawer" id="bagDrawer" aria-label="Shopping bag" aria-hidden="true"><div class="drawer-head"><div><p class="eyebrow">YOUR WA EDIT</p><h2>Your bag <span id="drawerCount">(0)</span></h2></div><button type="button" class="icon-button" id="bagClose" aria-label="Close bag">×</button></div><div id="bagItems" class="bag-items"></div><div class="bag-footer"><p class="bag-preview-note">COMPLIMENTARY SHIPPING ACROSS PAKISTAN</p><div class="subtotal"><span>Subtotal</span><strong id="subtotal">PKR 0</strong></div><p>Complimentary shipping on every Pakistan order.</p><button type="button" class="button button-burgundy checkout-button" id="checkoutButton">Continue to checkout <span>↗</span></button><button type="button" class="bag-continue" id="bagContinue">Continue exploring</button><small class="wa-test-mode-warning">TEST MODE · Preview orders only. Nothing is sent to WA and no payment is collected.</small></div></aside>
 <div class="checkout-preview-backdrop" id="checkoutPreviewBackdrop"></div>
 <section class="checkout-preview-modal wa-checkout-modal" id="checkoutPreviewModal" role="dialog" aria-modal="true" aria-labelledby="checkoutPreviewTitle" aria-hidden="true">
   <button type="button" class="checkout-preview-close" id="checkoutPreviewClose" aria-label="Close checkout">×</button>
   <p class="eyebrow">WA CHECKOUT / PAKISTAN</p>
   <h2 id="checkoutPreviewTitle">Make it<br><em>yours.</em></h2>
   <p class="checkout-preview-intro">Complete your delivery details. Enjoy complimentary shipping across Pakistan.</p>
+  <p class="wa-test-mode-banner"><strong>TEST MODE ACTIVE</strong> · Use fictitious details. Orders are saved only in this browser. No real payment or fulfilment.</p>
   <div id="checkoutFormWrap">
     <form id="waCheckoutForm" class="wa-checkout-form">
       <h3>01 / Your details</h3>
@@ -123,15 +124,16 @@
       </div>
       <h3>03 / Payment method</h3>
       <div class="wa-payment-options">
-        <label class="wa-payment-option"><input type="radio" name="paymentMethod" value="cod" checked><span><strong>Cash on delivery</strong><small>Pay when your order arrives.</small></span></label>
-        <label class="wa-payment-option"><input type="radio" name="paymentMethod" value="bank_transfer"><span><strong>Bank transfer</strong><small>Transfer after placing your order and follow the payment instructions.</small></span></label>
-        <div class="wa-payment-option wa-payment-disabled"><span><strong>Debit / credit card</strong><small>Online card payments are coming soon.</small></span><b>COMING SOON</b></div>
+        <label class="wa-payment-option"><input type="radio" name="paymentMethod" value="cod" checked><span><strong>Cash on delivery</strong><small>Test simulation only · no cash or payment will be collected.</small></span></label>
+        <label class="wa-payment-option"><input type="radio" name="paymentMethod" value="bank_transfer"><span><strong>Bank transfer</strong><small>Test simulation only · no transfer or receipt is required.</small></span></label>
+        <div class="wa-payment-option wa-payment-disabled"><span><strong>Debit / credit card</strong><small>Online card payments are coming soon.</small></span><b>DISABLED IN TEST MODE</b></div>
       </div>
       <div class="wa-order-summary"><div><span>Merchandise subtotal</span><strong id="checkoutPreviewSubtotal">PKR 0</strong></div><div><span>Shipping across Pakistan</span><strong>FREE</strong></div><div class="wa-order-total"><span>Total</span><strong id="waCheckoutTotal">PKR 0</strong></div></div>
       <p class="wa-checkout-error" id="waCheckoutError" role="alert" aria-live="polite"></p>
       <button class="button button-burgundy wa-place-order" type="submit" id="waPlaceOrder">Place order <span>↗</span></button>
-      <p class="wa-checkout-legal">By placing your order, you confirm that your delivery details are correct. Your order is subject to stock availability.</p>
+      <p class="wa-checkout-legal">TEST ONLY: use fictitious customer details. This preview records a local test order and simulates stock; it does not contact customers, collect money or arrange delivery.</p>
     </form>
+    <details id="waTestOrdersPanel" class="wa-test-orders-panel"><summary>View test orders saved in this browser</summary><p>These records are local to this browser and are not visible to WA staff or other devices.</p><div class="wa-test-orders-actions"><button type="button" id="waTestOrdersRefresh">Refresh list</button><button type="button" id="waClearTestOrders">Clear test orders & reset stock</button></div><div id="waTestOrdersList"><p class="wa-test-empty">Open this section to view saved test orders.</p></div></details>
   </div>
   <div id="waCheckoutResult" class="wa-checkout-result" hidden aria-live="polite"></div>
 </section>
