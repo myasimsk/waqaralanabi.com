@@ -12,7 +12,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "admin:create": "tsx src/scripts/create-admin.ts"
+    "admin:create": "tsx src/scripts/create-admin.ts",
+    "db:seed-demo": "tsx src/scripts/seed-demo-data.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
