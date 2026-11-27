@@ -56,7 +56,7 @@ jobs:
         with:
           node-version: 22
       - name: Install backend dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Check storefront JavaScript syntax
         run: node --check ../script.js && node --check ../account.js && node --check ../admin.js && node --check "../functions/api/[[path]].js"
       - name: Apply base database schema and migrations
