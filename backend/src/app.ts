@@ -64,7 +64,6 @@ export async function buildApp() {
   app.get("/health", async () => ({
     status: "ok",
     service: "waqar-al-anabi-api",
-    environment: env.NODE_ENV,
   }));
 
   app.get("/ready", async (_request, reply) => {
