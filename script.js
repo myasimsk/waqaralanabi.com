@@ -1,5 +1,5 @@
 (() => {
-const products=[
+let products=[
 {id:1,name:"Signature Polo Shirt",category:"Men",price:6500,colors:[["Black","#111111"],["Burgundy","#741F2B"],["White","#F7F7F2"]],sizes:["S","M","L","XL"],image:"https://images.unsplash.com/photo-1625910513413-5fc45e2f4c0c?auto=format&fit=crop&w=900&q=82",badge:"SIGNATURE"},
 {id:2,name:"Relaxed Pleated Trousers",category:"Men",price:8900,colors:[["Black","#111111"],["Beige","#DCC9A8"],["Charcoal","#55514e"],["Brown","#49352c"]],sizes:["S","M","L","XL"],image:"https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=900&q=82",badge:"EVERYDAY"},
 {id:3,name:"Women's Co-ord Set",category:"Women",price:14500,colors:[["Black","#111111"],["Cream","#F1E6D2"],["Chocolate Brown","#4A2C20"],["Burgundy","#741F2B"]],sizes:["S","M","L","XL"],image:"https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=900&q=82",badge:"TWO-PIECE SET"},
@@ -97,16 +97,17 @@ function renderProducts(){
    <div class="product-sizes">S · M · L · XL</div>
   </div>
  </article>`).join("")||'<p class="shop-empty">No pieces found. Try another search.</p>';
- $$("#productGrid [data-add]").forEach(button=>button.addEventListener("click",()=>openProductOptions(Number(button.dataset.add))));
- $$("#productGrid [data-swatch-product]").forEach(button=>button.addEventListener("click",()=>openProductOptions(Number(button.dataset.swatchProduct),button.dataset.swatchColor)));
+ $$("#productGrid [data-add]").forEach(button=>button.addEventListener("click",()=>openProductOptions(button.dataset.add)));
+ $$("#productGrid [data-swatch-product]").forEach(button=>button.addEventListener("click",()=>openProductOptions(button.dataset.swatchProduct,button.dataset.swatchColor)));
 }
 function saveBag(){localStorage.setItem("wa-preview-bag",JSON.stringify(bag));renderBag()}
 let optionProduct=null,optionColor="",optionSize="M";
 function openProductOptions(id, initialColor=null){
- const p=products.find(x=>x.id===id);if(!p)return;
+ const p=products.find(x=>String(x.id)===String(id));if(!p)return;
  optionProduct=p;optionColor=p.colors.some(c=>c[0]===initialColor)?initialColor:p.colors[0][0];optionSize="M";
  const gallery=editorialReferences(p);
- $("#productOptionsContent").innerHTML=`<div class="options-visual"><img class="options-product-image" id="activeProductImage" src="${gallery[0]}" alt="${p.name} — editorial reference"><div class="options-gallery-thumbs">${gallery.map((src,i)=>`<button type="button" class="options-gallery-thumb ${i===0?"selected":""}" data-gallery-image="${src}" aria-label="Show reference image ${i+1}" aria-pressed="${i===0}"><img src="${src}" alt="" loading="lazy"></button>`).join("")}</div><span class="options-image-note">EDITORIAL IMAGE REFERENCES · NOT FINAL PRODUCT PHOTOGRAPHY</span></div><div class="options-product-info"><p class="eyebrow">${p.category} / WA EDIT</p><h2 id="productOptionsTitle">${p.name}</h2><p class="options-price">${money(p.price)}</p><p class="options-description">${productDetails[p.id].intro}</p><div class="options-detail-block"><span>DESIGN NOTES</span><p>${productDetails[p.id].design}</p></div><div class="options-detail-block"><span>THE WA DETAIL</span><p>${productDetails[p.id].brand}</p></div><fieldset class="option-field"><legend>Colour: <strong id="selectedColour">${optionColor}</strong></legend><div class="option-swatches">${p.colors.map((c,i)=>`<button type="button" class="option-swatch ${c[0]===optionColor?"selected":""}" data-option-color="${c[0]}" aria-label="${c[0]}" aria-pressed="${c[0]===optionColor}" title="${c[0]}" style="--swatch:${c[1]}"></button>`).join("")}</div></fieldset><fieldset class="option-field"><legend>Size</legend><div class="option-sizes">${p.sizes.map((s,i)=>`<button type="button" class="option-size ${s===optionSize?"selected":""}" data-option-size="${s}" aria-pressed="${s===optionSize}">${s}</button>`).join("")}</div></fieldset><button type="button" class="button button-burgundy options-add-button" id="confirmAddToBag">Add to bag <span>↗</span></button><details class="options-size-guide"><summary>Size guide & fit</summary><p>Available sizes: S, M, L and XL. The measurement chart for this piece will be added before the store opens. Contact us for fit guidance.</p><a href="mailto:info@waqaralanabi.com?subject=Size%20and%20Fit">Ask us about your size ↗</a></details><p class="options-size-note">Preview store only — checkout is not active yet.</p></div>`;
+ const details=productDetails[p.id]||{intro:p.description||'A considered piece from the WA collection.',design:'Available in selected colours and sizes.',brand:'People not trends.'};
+ $("#productOptionsContent").innerHTML=`<div class="options-visual"><img class="options-product-image" id="activeProductImage" src="${gallery[0]}" alt="${p.name} — editorial reference"><div class="options-gallery-thumbs">${gallery.map((src,i)=>`<button type="button" class="options-gallery-thumb ${i===0?"selected":""}" data-gallery-image="${src}" aria-label="Show reference image ${i+1}" aria-pressed="${i===0}"><img src="${src}" alt="" loading="lazy"></button>`).join("")}</div><span class="options-image-note">EDITORIAL IMAGE REFERENCES · NOT FINAL PRODUCT PHOTOGRAPHY</span></div><div class="options-product-info"><p class="eyebrow">${p.category} / WA EDIT</p><h2 id="productOptionsTitle">${p.name}</h2><p class="options-price">${money(p.price)}</p><p class="options-description">${details.intro}</p><div class="options-detail-block"><span>DESIGN NOTES</span><p>${details.design}</p></div><div class="options-detail-block"><span>THE WA DETAIL</span><p>${details.brand}</p></div><fieldset class="option-field"><legend>Colour: <strong id="selectedColour">${optionColor}</strong></legend><div class="option-swatches">${p.colors.map((c,i)=>`<button type="button" class="option-swatch ${c[0]===optionColor?"selected":""}" data-option-color="${c[0]}" aria-label="${c[0]}" aria-pressed="${c[0]===optionColor}" title="${c[0]}" style="--swatch:${c[1]}"></button>`).join("")}</div></fieldset><fieldset class="option-field"><legend>Size</legend><div class="option-sizes">${p.sizes.map((s,i)=>`<button type="button" class="option-size ${s===optionSize?"selected":""}" data-option-size="${s}" aria-pressed="${s===optionSize}">${s}</button>`).join("")}</div></fieldset><button type="button" class="button button-burgundy options-add-button" id="confirmAddToBag">Add to bag <span>↗</span></button><details class="options-size-guide"><summary>Size guide & fit</summary><p>Available sizes: S, M, L and XL. The measurement chart for this piece will be added before the store opens. Contact us for fit guidance.</p><a href="mailto:info@waqaralanabi.com?subject=Size%20and%20Fit">Ask us about your size ↗</a></details><p class="options-size-note">Preview store only — checkout is not active yet.</p></div>`;
  $("#productOptionsModal").classList.add("open");$("#productOptionsBackdrop").classList.add("open");$("#productOptionsModal").setAttribute("aria-hidden","false");document.body.style.overflow="hidden";
 }
 function closeProductOptions(){$("#productOptionsModal").classList.remove("open");$("#productOptionsBackdrop").classList.remove("open");$("#productOptionsModal").setAttribute("aria-hidden","true");if(!$("#bagDrawer").classList.contains("open"))document.body.style.overflow="";optionProduct=null}
@@ -125,12 +126,12 @@ $("#productOptionsContent").addEventListener("click",e=>{
  }
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeCheckoutPreview();closeProductOptions();closeBag()}});
-function renderBag(){const count=bag.reduce((n,x)=>n+x.qty,0);const subtotal=bag.reduce((n,x)=>n+products.find(p=>p.id===x.id).price*x.qty,0);$("#bagCount").textContent=count;$("#drawerCount").textContent="("+count+")";$("#subtotal").textContent=money(subtotal);const checkout=$("#checkoutButton");if(checkout)checkout.disabled=count===0;$("#bagItems").innerHTML=bag.length?bag.map((x,i)=>{const p=products.find(p=>p.id===x.id);return `<div class="bag-line"><img src="${p.image}" alt=""><div><h3>${p.name}</h3><p>${x.color} · Size ${x.size}</p><p>${money(p.price)}</p><div class="qty-controls"><button data-qty="${i}" data-delta="-1" aria-label="Decrease quantity">−</button><span>${x.qty}</span><button data-qty="${i}" data-delta="1" aria-label="Increase quantity">+</button></div></div><button class="remove-item" data-remove="${i}" aria-label="Remove item">×</button></div>`}).join(""):'<div class="empty-bag">Your bag is waiting for something special.</div>';$$("[data-qty]").forEach(b=>b.onclick=()=>{const i=+b.dataset.qty;bag[i].qty+=+b.dataset.delta;if(bag[i].qty<1)bag.splice(i,1);saveBag()});$$("[data-remove]").forEach(b=>b.onclick=()=>{bag.splice(+b.dataset.remove,1);saveBag()})}
+function renderBag(){const count=bag.reduce((n,x)=>n+x.qty,0);const subtotal=bag.reduce((n,x)=>n+(products.find(p=>String(p.id)===String(x.id))?.price||0)*x.qty,0);$("#bagCount").textContent=count;$("#drawerCount").textContent="("+count+")";$("#subtotal").textContent=money(subtotal);const checkout=$("#checkoutButton");if(checkout)checkout.disabled=count===0;$("#bagItems").innerHTML=bag.length?bag.map((x,i)=>{const p=products.find(p=>String(p.id)===String(x.id));if(!p)return '';return `<div class="bag-line"><img src="${p.image}" alt=""><div><h3>${p.name}</h3><p>${x.color} · Size ${x.size}</p><p>${money(p.price)}</p><div class="qty-controls"><button data-qty="${i}" data-delta="-1" aria-label="Decrease quantity">−</button><span>${x.qty}</span><button data-qty="${i}" data-delta="1" aria-label="Increase quantity">+</button></div></div><button class="remove-item" data-remove="${i}" aria-label="Remove item">×</button></div>`}).join(""):'<div class="empty-bag">Your bag is waiting for something special.</div>';$$("[data-qty]").forEach(b=>b.onclick=()=>{const i=+b.dataset.qty;bag[i].qty+=+b.dataset.delta;if(bag[i].qty<1)bag.splice(i,1);saveBag()});$$("[data-remove]").forEach(b=>b.onclick=()=>{bag.splice(+b.dataset.remove,1);saveBag()})}
 /* A transparent, non-transactional checkout preview while commerce is being built */
 function openCheckoutPreview(){
  if(!bag.length){toast("Your bag is empty.");return;}
  const count=bag.reduce((n,item)=>n+item.qty,0);
- const subtotal=bag.reduce((n,item)=>n+products.find(p=>p.id===item.id).price*item.qty,0);
+ const subtotal=bag.reduce((n,item)=>n+(products.find(p=>String(p.id)===String(item.id))?.price||0)*item.qty,0);
  $("#checkoutPreviewCount").textContent=String(count).padStart(2,"0");
  $("#checkoutPreviewSubtotal").textContent=money(subtotal);
  $("#checkoutPreviewModal").classList.add("open");
@@ -183,6 +184,30 @@ const mainHeader=document.querySelector(".site-header");
 const syncHeaderDepth=()=>{if(mainHeader)mainHeader.classList.toggle("wa-scrolled",window.scrollY>12);};
 window.addEventListener("scroll",syncHeaderDepth,{passive:true});syncHeaderDepth();
 
+
+/* Database-backed catalogue with a safe editorial fallback. */
+const WA_API_BASE="http://127.0.0.1:4000";
+const colourHex={"Black":"#111111","Burgundy":"#741F2B","White":"#F7F7F2","Beige":"#DCC9A8","Cream":"#F1E6D2","Chocolate Brown":"#4A2C20","Chocolate":"#4A2C20","Taupe":"#A89A88","Charcoal":"#55514E","Brown":"#49352C","Olive Green":"#4B5135"};
+async function connectLiveCatalogue(){
+ try{
+  const response=await fetch(WA_API_BASE+"/catalog",{headers:{"Accept":"application/json"}});
+  if(!response.ok)throw new Error("Catalogue API returned "+response.status);
+  const payload=await response.json();
+  if(!Array.isArray(payload.products)||payload.products.length===0){console.info("WA catalogue is empty; keeping editorial preview products.");return;}
+  const previousBag=bag;
+  products=payload.products.map(item=>{
+   const variants=Array.isArray(item.variants)?item.variants:[];
+   const colours=[...new Set(variants.map(v=>v.colour))],sizes=[...new Set(variants.map(v=>v.size))];
+   const reference=products.find(p=>p.name.toLowerCase()===String(item.name).toLowerCase());
+   const image=item.image_url||reference?.image||"https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=82";
+   return {id:String(item.id),name:item.name,category:item.category,price:Number(item.price_minor)/100,description:item.description||"",image,badge:"WA EDIT",colors:(colours.length?colours:["Black"]).map(name=>[name,colourHex[name]||"#B8A99A"]),sizes:sizes.length?sizes:["S","M","L","XL"],variants};
+  });
+  bag=previousBag.filter(item=>products.some(p=>String(p.id)===String(item.id)));
+  saveBag();renderProducts();
+  console.info("WA live catalogue loaded:",products.length,"products");
+ }catch(error){console.warn("WA live catalogue unavailable; using preview catalogue.",error);}
+}
+connectLiveCatalogue();
 /* Footer navigation: open the selected policy panel before scrolling to it */
 $$('.footer-column a[href^="#footer-policy-"]').forEach(link=>link.addEventListener("click",()=>{
  const panel=document.querySelector(link.getAttribute("href"));
