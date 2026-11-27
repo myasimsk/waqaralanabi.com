@@ -486,3 +486,77 @@ html[data-theme="dark"] .bag-preview-note{color:#df8ca4}
   .bag-drawer{z-index:90!important;height:100dvh;max-height:100dvh;}
   .mobile-app-nav{z-index:60!important}
 }
+
+
+/* STOREFRONT PASS 10 — motion-led editorial polish */
+:root{--wa-ease:cubic-bezier(.2,.75,.25,1)}
+html{scroll-behavior:smooth}
+.site-header{transition:box-shadow .3s ease,background .3s ease}
+.site-header.wa-scrolled{box-shadow:0 8px 30px rgba(22,12,16,.08)}
+.hero-image{will-change:transform}
+.hero-stamp{animation:waStampIn .9s .45s var(--wa-ease) both,waStampFloat 8s 1.4s ease-in-out infinite}
+.hero-index span{display:inline-block;animation:waArrowBounce 1.8s ease-in-out infinite}
+.attitude-track{width:max-content;animation:waTickerDrift 32s linear infinite}
+.attitude-ticker{overflow:hidden}
+.frequency-card{position:relative;isolation:isolate;overflow:hidden}
+.frequency-card:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(125deg,rgba(255,255,255,.11),transparent 48%);opacity:0;transition:opacity .35s ease}
+.frequency-card:hover:before,.frequency-card[aria-pressed="true"]:before{opacity:1}
+.frequency-card[aria-pressed="true"]{outline:2px solid var(--acid);outline-offset:4px;transform:translateY(-5px)}
+.frequency-card .frequency-number{transition:letter-spacing .3s ease}
+.frequency-card:hover .frequency-number{letter-spacing:.22em}
+.frequency-result{transition:background .3s ease,transform .3s ease}
+.frequency-result.is-updated{animation:waResultPop .4s var(--wa-ease)}
+.category-tile{isolation:isolate;overflow:hidden}
+.category-tile:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(120deg,transparent 25%,rgba(255,255,255,.14),transparent 70%);transform:translateX(-120%);transition:transform .8s ease}
+.category-tile:hover:after{transform:translateX(120%)}
+.look-frame{transition:transform .45s var(--wa-ease),filter .45s ease}
+.look-frame:after{transition:opacity .35s ease}
+.look-frame:hover{transform:translateY(-7px);filter:saturate(1.08)}
+.look-frame:hover:after{opacity:.9}
+.product-card{animation:waProductEnter .55s var(--wa-ease) both}
+.product-card:nth-child(2){animation-delay:.05s}.product-card:nth-child(3){animation-delay:.1s}
+.product-card:nth-child(4){animation-delay:.15s}.product-card:nth-child(5){animation-delay:.2s}
+.product-card:nth-child(6){animation-delay:.25s}
+.product-image-wrap{isolation:isolate}
+.product-image-wrap:after{content:"";position:absolute;inset:0;pointer-events:none;border:1px solid rgba(255,255,255,.13);opacity:0;transition:opacity .35s ease}
+.product-card:hover .product-image-wrap:after{opacity:1}
+.product-card .product-badge{transition:transform .3s ease,background .3s ease}
+.product-card:hover .product-badge{transform:translateY(-2px);background:var(--acid)}
+.quick-add{z-index:1}
+.filter{transition:background .22s ease,color .22s ease,border-color .22s ease,transform .22s ease}
+.filter:hover{transform:translateY(-2px)}
+.sort-label select{cursor:pointer}
+.manifesto-copy .text-link{transition:gap .25s ease}
+.manifesto-copy .text-link:hover{gap:18px}
+.service-strip>div{transition:transform .25s ease}
+.service-strip>div:hover{transform:translateY(-4px)}
+.newsletter form button{transition:background .25s ease,color .25s ease,transform .25s ease}
+.newsletter form button:hover{transform:translateY(-2px)}
+.footer-column a,.footer-social-link,.footer-bottom a{transition:color .2s ease,transform .2s ease}
+.footer-column a:hover,.footer-bottom a:hover{transform:translateX(3px)}
+.wa-scroll-reveal{opacity:0;transform:translateY(28px);transition:opacity .75s var(--wa-ease),transform .75s var(--wa-ease)}
+.wa-scroll-reveal.wa-visible{opacity:1;transform:translateY(0)}
+.wa-scroll-reveal.wa-delay-1{transition-delay:.08s}.wa-scroll-reveal.wa-delay-2{transition-delay:.16s}.wa-scroll-reveal.wa-delay-3{transition-delay:.24s}
+@keyframes waStampIn{from{opacity:0;transform:translateY(18px) rotate(-8deg) scale(.92)}to{opacity:1;transform:translateY(0) rotate(0) scale(1)}}
+@keyframes waStampFloat{0%,100%{translate:0 0}50%{translate:0 -8px}}
+@keyframes waArrowBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+@keyframes waTickerDrift{to{transform:translateX(-33.333%)}}
+@keyframes waResultPop{0%{transform:scale(.985);opacity:.7}100%{transform:scale(1);opacity:1}}
+@keyframes waProductEnter{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.country-gate{transition:opacity .45s ease,visibility .45s ease}
+.country-panel{animation:waPanelIn .65s .12s var(--wa-ease) both}
+.country-visual-mark{animation:waBrandPulse 7s ease-in-out infinite}
+@keyframes waPanelIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes waBrandPulse{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.035);opacity:1}}
+@media(hover:none){.quick-add{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+ .attitude-track{animation:none!important}
+ .hero-stamp,.hero-index span,.country-panel,.country-visual-mark{animation:none!important}
+ .wa-scroll-reveal{opacity:1;transform:none;transition:none}
+ .product-card{animation:none}
+}
+@media(max-width:760px){
+ .hero-stamp{transform:scale(.82);transform-origin:top right}
+ .attitude-track{animation-duration:40s}
+ .wa-scroll-reveal{transform:translateY(16px)}
+}

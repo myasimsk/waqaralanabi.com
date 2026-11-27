@@ -127,6 +127,20 @@ if("IntersectionObserver" in window){
  mobileNavSections.forEach(([selector])=>{const section=document.querySelector(selector);if(section)navObserver.observe(section);});
 }
 
+/* Storefront motion system: progressive reveals and restrained scroll feedback */
+document.documentElement.classList.add("wa-motion-ready");
+const revealTargets=[".intro",".wa-frequency",".category-editorial",".wa-lookbook",".shop-section",".manifesto",".service-strip",".newsletter",".footer-main"];
+revealTargets.forEach(selector=>{const el=document.querySelector(selector);if(el)el.classList.add("wa-scroll-reveal");});
+if("IntersectionObserver" in window&&!window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+ const revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
+  if(entry.isIntersecting){entry.target.classList.add("wa-visible");revealObserver.unobserve(entry.target);}
+ }),{threshold:.12,rootMargin:"0px 0px -45px 0px"});
+ document.querySelectorAll(".wa-scroll-reveal").forEach(el=>revealObserver.observe(el));
+}else{document.querySelectorAll(".wa-scroll-reveal").forEach(el=>el.classList.add("wa-visible"));}
+const mainHeader=document.querySelector(".site-header");
+const syncHeaderDepth=()=>{if(mainHeader)mainHeader.classList.toggle("wa-scrolled",window.scrollY>12);};
+window.addEventListener("scroll",syncHeaderDepth,{passive:true});syncHeaderDepth();
+
 /* Footer navigation: open the selected policy panel before scrolling to it */
 $$('.footer-column a[href^="#footer-policy-"]').forEach(link=>link.addEventListener("click",()=>{
  const panel=document.querySelector(link.getAttribute("href"));
