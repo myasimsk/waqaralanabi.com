@@ -126,6 +126,45 @@ async function main(): Promise<void> {
       orderIds[order.number] = result.rows[0]!.id;
     }
 
+    // Dedicated synthetic guest order for exercising first-order account registration.
+    const registrationEmail = "new.member.demo@example.test";
+    const registrationOrder = await client.query<{ id: string }>(
+      `INSERT INTO orders
+        (order_number, customer_id, guest_email, currency, subtotal_minor, discount_minor, shipping_minor, tax_minor,
+         total_minor, status, payment_status, shipping_address_snapshot, billing_address_snapshot, placed_at)
+       VALUES ('WAA-DEMO-REG-1001', NULL, $1, 'PKR', 750000, 0, 0, 0, 750000,
+               'delivered', 'paid', $2::jsonb, $2::jsonb, now() - interval '2 days')
+       ON CONFLICT (order_number) DO UPDATE SET
+         customer_id = NULL, guest_email = EXCLUDED.guest_email, currency = EXCLUDED.currency,
+         subtotal_minor = EXCLUDED.subtotal_minor, total_minor = EXCLUDED.total_minor,
+         status = EXCLUDED.status, payment_status = EXCLUDED.payment_status,
+         shipping_address_snapshot = EXCLUDED.shipping_address_snapshot,
+         billing_address_snapshot = EXCLUDED.billing_address_snapshot, placed_at = EXCLUDED.placed_at,
+         updated_at = now()
+       RETURNING id`,
+      [registrationEmail, JSON.stringify({
+        recipientName: "New Member Demo", phone: "+923001119999",
+        addressLine1: "Demo Registration Address", city: "Islamabad",
+        region: "ICT", postalCode: "44000", countryCode: "PK",
+      })],
+    );
+    const registrationOrderId = registrationOrder.rows[0]!.id;
+    await client.query("DELETE FROM order_items WHERE order_id = $1", [registrationOrderId]);
+    await client.query("DELETE FROM payments WHERE order_id = $1", [registrationOrderId]);
+    await client.query(
+      `INSERT INTO order_items
+        (order_id, product_id, product_name_snapshot, sku_snapshot, size_snapshot, color_snapshot,
+         quantity, unit_price_minor, line_total_minor)
+       VALUES ($1, 'WA-POLO-BRG-M', 'Polo Shirt', 'WA-POLO-BRG-M', 'M', 'Burgundy', 1, 750000, 750000)`,
+      [registrationOrderId],
+    );
+    await client.query(
+      `INSERT INTO payments (order_id, provider, provider_reference, amount_minor, currency, status, idempotency_key, paid_at)
+       VALUES ($1, 'demo', 'DEMO-PAY-WAA-DEMO-REG-1001', 750000, 'PKR', 'paid',
+               'demo-seed:WAA-DEMO-REG-1001', now() - interval '2 days')`,
+      [registrationOrderId],
+    );
+
     const seededOrderIds = Object.values(orderIds);
     await client.query("DELETE FROM order_items WHERE order_id = ANY($1::uuid[])", [seededOrderIds]);
     await client.query("DELETE FROM payments WHERE order_id = ANY($1::uuid[])", [seededOrderIds]);
@@ -179,8 +218,8 @@ async function main(): Promise<void> {
 
     await client.query("COMMIT");
     process.stdout.write("Demo data seeded successfully in wa_store_dev.\n");
-    process.stdout.write("Customers: 3 | Orders: 5 | Order items: 8 | Addresses: 3 | Audit entries: 1\n");
-    process.stdout.write("All records use example.test emails and WAA-DEMO order numbers.\n");
+    process.stdout.write("Customers: 3 | Orders: 6 (including one guest registration test order) | Order items: 9 | Addresses: 3 | Audit entries: 1\n");
+    process.stdout.write("All records use example.test emails and WAA-DEMO order numbers. Registration test: WAA-DEMO-REG-1001 / new.member.demo@example.test.\n");
   } catch (error) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw error;
