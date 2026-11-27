@@ -150,7 +150,7 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
             accountNumber:"04811011515575",
             branch:"Bank Alfalah Ghauri Town Phase IV Islamabad Branch",
             city:"Islamabad",
-            instructions:"Please transfer only after WA confirms the final delivery-inclusive amount. Upload your transfer receipt against this order. Orders remain pending until the payment is verified by WA."
+            instructions:"Transfer the order total shown at checkout. Shipping within Pakistan is free. Upload your transfer receipt against this order. Orders remain pending until the payment is verified by WA."
           }:undefined,
           cardGateway:"awaiting_merchant_credentials"
         },
@@ -169,11 +169,11 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
     const parsed=proofSchema.safeParse(request.body);
     if(!parsed.success) return reply.code(400).send({error:"INVALID_PROOF",message:"Upload a JPG, PNG, WebP or PDF payment receipt under 5 MB."});
     const orderNo=request.params.orderNumber.trim().toUpperCase();
-    const order=await db.query<{id:string;payment_method:string;checkout_token_hash:string|null}>(
-      "SELECT id,payment_method,checkout_token_hash FROM orders WHERE order_number=$1 LIMIT 1",[orderNo],
+    const order=await db.query<{id:string;payment_method:string;status:string;payment_status:string;checkout_token_hash:string|null}>(
+      "SELECT id,payment_method,status,payment_status,checkout_token_hash FROM orders WHERE order_number=$1 LIMIT 1",[orderNo],
     );
     const record=order.rows[0];
-    if(!record||record.payment_method!=="bank_transfer"||!record.checkout_token_hash||hash(parsed.data.accessToken)!==record.checkout_token_hash)
+    if(!record||record.payment_method!=="bank_transfer"||record.status!=="pending_payment"||record.payment_status!=="pending"||!record.checkout_token_hash||hash(parsed.data.accessToken)!==record.checkout_token_hash)
       return reply.code(404).send({error:"ORDER_NOT_FOUND",message:"The order or secure upload link could not be verified."});
     const buffer=Buffer.from(parsed.data.dataBase64.replace(/^data:[^,]+,/,""),"base64");
     if(buffer.length<1||buffer.length>5*1024*1024) return reply.code(413).send({error:"PROOF_TOO_LARGE",message:"The receipt must be smaller than 5 MB."});
