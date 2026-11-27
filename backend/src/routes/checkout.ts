@@ -115,7 +115,7 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
         `INSERT INTO orders
           (order_number,customer_id,guest_email,currency,subtotal_minor,discount_minor,shipping_minor,tax_minor,total_minor,
            status,payment_status,shipping_address_snapshot,payment_method,shipping_quote_required,checkout_token_hash,idempotency_key)
-         VALUES ($1,$2,$3,'PKR',$4,0,0,0,$4,$5,'pending',$6::jsonb,$7,true,$8,$9)
+         VALUES ($1,$2,$3,'PKR',$4,0,0,0,$4,$5,'pending',$6::jsonb,$7,false,$8,$9)
          RETURNING id,order_number,status,payment_status,total_minor::text`,
         [number,customerId,input.email.toLowerCase(),subtotal,status,JSON.stringify(address),method,hash(accessToken),input.idempotencyKey],
       );
@@ -139,7 +139,7 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
       return reply.code(201).send({
         order:{orderNumber:order.order_number,status:order.status,paymentStatus:order.payment_status,totalMinor:order.total_minor,currency:"PKR",paymentMethod:method},
         accessToken,
-        shipping:{quoteRequired:true,message:"Delivery charges are not yet configured and will be confirmed by WA before dispatch. The displayed amount is the merchandise subtotal."},
+        shipping:{quoteRequired:false,chargeMinor:0,message:"Free shipping within Pakistan. No delivery fee will be added to this order."},
         payment:{
           status:"pending",
           bankInstructionsAvailable:method==="bank_transfer",
