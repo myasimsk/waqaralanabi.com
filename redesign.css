@@ -641,3 +641,10 @@ html[data-theme="dark"] .checkout-preview-modal{background:#171414;color:#f4f0ea
 html[data-theme="dark"] .checkout-preview-modal h2 em{color:#df8ca4}
 @media(max-width:520px){.checkout-preview-modal{padding:28px 20px;max-height:88dvh}.checkout-preview-step{grid-template-columns:25px 1fr;gap:8px}.checkout-preview-step>b{grid-column:2;justify-self:start}.checkout-preview-summary strong{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.checkout-preview-backdrop,.checkout-preview-modal{transition:none!important}}
+
+/* Newsletter signup consent and anti-spam field */
+.newsletter .newsletter-consent{display:flex;align-items:flex-start;gap:10px;max-width:520px;margin:14px 0 18px;font:500 10px/1.6 "DM Sans",sans-serif;letter-spacing:0;text-transform:none;color:inherit;opacity:.82;text-align:left}
+.newsletter .newsletter-consent input{width:15px;height:15px;flex:0 0 15px;margin:2px 0 0;accent-color:var(--wine)}
+.newsletter .newsletter-honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important}
+.newsletter form button:disabled{opacity:.55;cursor:wait;transform:none}
+.newsletter #newsletterMessage{display:block;min-height:1.5em}
