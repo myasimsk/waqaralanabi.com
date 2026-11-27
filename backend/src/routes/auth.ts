@@ -511,7 +511,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const parsed = z.object({
         email: z.string().trim().email().max(254),
-        code: z.string().regex(/^\\d{6}$/),
+        code: z.string().regex(/^\d{6}$/),
         newPassword: z.string().min(12).max(128),
       }).safeParse(request.body);
 
