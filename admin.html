@@ -21,6 +21,7 @@
       <button class="nav-item" data-view="inventory"><span>▦</span>Inventory</button>
       <button class="nav-item" data-view="orders"><span>▤</span>Orders</button>
       <button class="nav-item" data-view="activity"><span>◷</span>Activity log</button>
+      <button class="nav-item" data-view="newsletter"><span>✉</span>Newsletter</button>
     </nav>
     <div class="sidebar-bottom"><span class="secure-dot"></span><span>SECURE ADMIN SESSION</span><button id="logoutButton" type="button">Sign out ↗</button></div>
   </aside>
@@ -70,6 +71,12 @@
       <div class="toolbar"><input id="orderSearch" type="search" placeholder="Search orders…" autocomplete="off"><select id="orderStatus"><option value="">All statuses</option><option>pending_payment</option><option>confirmed</option><option>processing</option><option>shipped</option><option>delivered</option><option>cancelled</option><option>partially_refunded</option><option>refunded</option></select><button id="orderSearchButton" class="primary-button">Search</button></div>
       <div class="panel"><div class="table-wrap"><table><thead><tr><th>ORDER</th><th>CUSTOMER</th><th>DATE</th><th>STATUS</th><th>PAYMENT</th><th>TOTAL</th><th></th></tr></thead><tbody id="orderRows"><tr><td colspan="7" class="empty-cell">Loading orders…</td></tr></tbody></table></div><div class="pagination"><span id="orderPageInfo">—</span><div><button id="orderPrev" disabled>Previous</button><button id="orderNext" disabled>Next</button></div></div></div>
       <div class="panel detail-panel" id="orderDetail" hidden></div>
+    </section>
+    <section class="view" id="view-newsletter">
+      <div class="section-intro"><div><p class="eyebrow">COMMUNITY & UPDATES</p><h2>Newsletter</h2><p>People who have explicitly opted in to receive WA updates.</p></div></div>
+      <div class="toolbar"><input id="newsletterSearch" type="search" placeholder="Search subscriber email…" autocomplete="off"><button id="newsletterSearchButton" class="primary-button" type="button">Search</button></div>
+      <div class="panel"><div class="panel-heading"><div><p class="eyebrow">OPT-IN REGISTER</p><h3>Subscribers</h3></div><button class="text-action" id="refreshNewsletter" type="button">Refresh ↻</button></div><div class="table-wrap"><table><thead><tr><th>EMAIL</th><th>CONSENT RECORDED</th><th>JOINED</th></tr></thead><tbody id="newsletterRows"><tr><td colspan="3" class="empty-cell">Loading subscribers…</td></tr></tbody></table></div><div class="pagination"><span id="newsletterPageInfo">—</span><div><button id="newsletterPrev" disabled>Previous</button><button id="newsletterNext" disabled>Next</button></div></div></div>
+      <p class="table-subline">Email delivery and unsubscribe management will be connected before marketing campaigns begin.</p>
     </section>
     <section class="view" id="view-activity">
       <div class="section-intro"><div><p class="eyebrow">ACCOUNTABILITY</p><h2>Activity log</h2><p>Review administrative actions recorded by the system.</p></div></div>
