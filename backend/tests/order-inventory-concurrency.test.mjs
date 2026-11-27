@@ -198,7 +198,7 @@ test("bank-transfer approval commits payment and stock atomically; rejection and
     } finally {
       approve.release();
     }
-    const approved = await pool.query(`SELECT o.status,o.payment_status,p.status AS proof_status,pm.status AS payment_state,v.stock_on_hand,v.reserved_quantity
+    const approved = await pool.query(`SELECT o.status,o.payment_status,p.review_status AS proof_status,pm.status AS payment_state,v.stock_on_hand,v.reserved_quantity
       FROM ${q("orders")} o JOIN ${q("proofs")} p ON p.order_id=o.id
       JOIN ${q("payments")} pm ON pm.order_id=o.id JOIN ${q("variants")} v ON v.id=1 WHERE o.id=1`);
     assert.deepEqual(approved.rows[0], {
