@@ -92,6 +92,7 @@ export async function addressRoutes(app: FastifyInstance): Promise<void> {
     const client = await db.connect();
     try {
       await client.query("BEGIN");
+      await client.query("SELECT id FROM customers WHERE id = $1 FOR UPDATE", [customerId]);
       const existing = await client.query<{ count: string }>(
         "SELECT count(*)::text AS count FROM customer_addresses WHERE customer_id = $1",
         [customerId],
@@ -171,6 +172,7 @@ export async function addressRoutes(app: FastifyInstance): Promise<void> {
     const client = await db.connect();
     try {
       await client.query("BEGIN");
+      await client.query("SELECT id FROM customers WHERE id = $1 FOR UPDATE", [customerId]);
       const removed = await client.query<{ was_default: boolean }>(
         `DELETE FROM customer_addresses
           WHERE id = $1 AND customer_id = $2
@@ -211,6 +213,7 @@ export async function addressRoutes(app: FastifyInstance): Promise<void> {
     const client = await db.connect();
     try {
       await client.query("BEGIN");
+      await client.query("SELECT id FROM customers WHERE id = $1 FOR UPDATE", [customerId]);
       const owned = await client.query(
         "SELECT id FROM customer_addresses WHERE id = $1 AND customer_id = $2 FOR UPDATE",
         [id.data, customerId],
