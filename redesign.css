@@ -699,3 +699,83 @@ html[data-theme="dark"] .checkout-preview-modal h2 em{color:#df8ca4}
 .wa-faq-list details p{max-width:650px;margin:0;padding:0 28px 23px 0;color:var(--muted);font-size:12px;line-height:1.85}
 .wa-faq-list details p a{color:var(--wine);text-decoration:underline;text-underline-offset:3px}
 @media(max-width:760px){.wa-faq-section{grid-template-columns:1fr;gap:35px;padding:72px 22px}.wa-faq-intro{position:static}.wa-faq-intro h2{font-size:68px}.wa-faq-list summary{padding:19px 34px 19px 0}.wa-faq-list summary:after{top:14px}}
+
+
+/* Preview-only test checkout and local test-order review */
+.wa-test-mode-banner{
+  margin:14px 0 20px;
+  padding:12px 14px;
+  border:1px solid rgba(122,30,58,.35);
+  background:rgba(122,30,58,.07);
+  color:var(--ink);
+  font:500 11px/1.65 "DM Sans",sans-serif;
+}
+.wa-test-mode-banner strong{
+  color:var(--wine);
+  font:700 9px "Space Grotesk",sans-serif;
+  letter-spacing:.12em;
+}
+.wa-test-mode-warning{
+  display:block;
+  margin:14px 0;
+  color:var(--wine);
+  font:700 9px/1.7 "Space Grotesk",sans-serif;
+  letter-spacing:.08em;
+}
+.wa-test-orders-panel{
+  margin-top:24px;
+  border-top:1px solid var(--line);
+  padding-top:16px;
+}
+.wa-test-orders-panel>summary{
+  cursor:pointer;
+  color:var(--wine);
+  font:700 10px "Space Grotesk",sans-serif;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.wa-test-orders-panel>p,.wa-test-empty{
+  color:var(--muted);
+  font:400 11px/1.6 "DM Sans",sans-serif;
+}
+.wa-test-orders-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:12px 0;
+}
+.wa-test-orders-actions button{
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--ink);
+  padding:9px 12px;
+  cursor:pointer;
+  font:600 9px "Space Grotesk",sans-serif;
+  letter-spacing:.05em;
+}
+.wa-test-order-card{
+  display:grid;
+  gap:7px;
+  padding:13px 0;
+  border-top:1px solid var(--line);
+  color:var(--ink);
+}
+.wa-test-order-card>div{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  gap:8px;
+}
+.wa-test-order-card strong,.wa-test-order-card>b{
+  font:700 11px "Space Grotesk",sans-serif;
+}
+.wa-test-order-card small{
+  color:var(--muted);
+  font:600 8px "Space Grotesk",sans-serif;
+  letter-spacing:.06em;
+}
+.wa-test-order-card p{
+  margin:0;
+  color:var(--muted);
+  font:400 11px/1.6 "DM Sans",sans-serif;
+}
