@@ -7,6 +7,12 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1),
   DATABASE_SSL: z.enum(["true", "false"]).default("false"),
   COMMERCE_LAUNCH_READY: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
+  BANK_TRANSFER_ACCOUNT_TITLE: z.string().default(""),
+  BANK_TRANSFER_BANK_NAME: z.string().default(""),
+  BANK_TRANSFER_IBAN: z.string().default(""),
+  BANK_TRANSFER_ACCOUNT_NUMBER: z.string().default(""),
+  BANK_TRANSFER_BRANCH: z.string().default(""),
+  BANK_TRANSFER_CITY: z.string().default(""),
   STOREFRONT_ORIGIN: z.string().url(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info")
 });
