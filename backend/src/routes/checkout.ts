@@ -224,7 +224,7 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
       if(!proof.rowCount){await client.query("ROLLBACK");return reply.code(409).send({error:"PENDING_PROOF_NOT_FOUND"});}
       if(parsed.data.decision==="approve"){
         await client.query("UPDATE bank_transfer_proofs SET review_status='approved',review_reason=$1,reviewed_by_admin_id=$2,reviewed_at=now() WHERE id=$3",[parsed.data.reason,admin.id,proof.rows[0]!.id]);
-        await client.query(
+        const committed=await client.query(
           `UPDATE product_variants v
               SET stock_on_hand=v.stock_on_hand-i.quantity,
                   reserved_quantity=v.reserved_quantity-i.quantity,
@@ -234,6 +234,10 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
               AND v.stock_on_hand>=i.quantity AND v.reserved_quantity>=i.quantity`,
           [row.id],
         );
+        const expected=await client.query("SELECT count(*)::int AS count FROM order_items WHERE order_id=$1 AND variant_id IS NOT NULL",[row.id]);
+        if(committed.rowCount!==Number(expected.rows[0]?.count??0)){
+          await client.query("ROLLBACK");return reply.code(409).send({error:"INVENTORY_COMMIT_FAILED",message:"Reserved stock could not be safely committed. Review inventory before approving this payment."});
+        }
         await client.query("UPDATE payments SET status='paid',paid_at=now() WHERE order_id=$1 AND provider='bank_transfer' AND status='pending'",[row.id]);
         await client.query("UPDATE orders SET payment_status='paid',status='confirmed',updated_at=now() WHERE id=$1",[row.id]);
       }else{
