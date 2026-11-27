@@ -165,3 +165,156 @@ html[data-theme="dark"] .wa-account-form input:focus,html[data-theme="dark"] .wa
   .wa-account-content h3{font-size:29px}
   .wa-account-loyalty{min-height:158px;padding:22px}
 }
+
+
+/* PASS 13 — expressive motion and editorial interaction polish */
+.wa-account-head{
+  isolation:isolate;
+  background-size:180% 180%;
+  animation:waHeaderFlow 12s ease-in-out infinite alternate;
+}
+.wa-account-head:before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  width:310px;height:310px;
+  right:-115px;bottom:-245px;
+  border:1px solid rgba(255,255,255,.19);
+  border-radius:50%;
+  box-shadow:0 0 0 24px rgba(255,255,255,.035),0 0 0 52px rgba(255,255,255,.025);
+  animation:waOrbit 18s linear infinite;
+}
+.wa-account-head:after{animation:waWatermarkFloat 7s ease-in-out infinite}
+.wa-account-preview{
+  position:relative;
+  overflow:hidden;
+}
+.wa-account-preview:after{
+  content:"";
+  position:absolute;top:0;left:-35%;width:22%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.48),transparent);
+  transform:skewX(-22deg);
+  animation:waShimmer 7s ease-in-out infinite;
+  pointer-events:none;
+}
+.wa-account-content{animation:waContentRise .55s cubic-bezier(.2,.75,.25,1) both}
+.wa-account-content h3{position:relative;display:inline-block}
+.wa-account-content h3:after{
+  content:"";
+  display:block;
+  width:34px;height:2px;margin-top:11px;
+  background:var(--wine);
+  transform-origin:left;
+  animation:waUnderline .65s .15s cubic-bezier(.2,.8,.2,1) both;
+}
+.wa-account-tabs button{
+  position:relative;
+  overflow:hidden;
+  border-radius:0 7px 7px 0;
+  transition:background .25s ease,color .25s ease,transform .25s ease,padding .25s ease;
+}
+.wa-account-tabs button:hover{transform:translateX(4px);padding-left:17px}
+.wa-account-tabs button:before{
+  content:"";
+  position:absolute;inset:0;
+  background:linear-gradient(100deg,rgba(122,30,58,.09),transparent 75%);
+  opacity:0;transition:opacity .25s ease;
+}
+.wa-account-tabs button:hover:before,.wa-account-tabs button.active:before{opacity:1}
+.wa-account-tabs button.active{box-shadow:inset 3px 0 0 var(--wine)}
+.wa-account-primary{
+  position:relative;isolation:isolate;overflow:hidden;
+  border-radius:3px;
+  box-shadow:0 7px 18px rgba(80,15,37,.15);
+  transition:transform .22s ease,box-shadow .22s ease,background .22s ease;
+}
+.wa-account-primary:before{
+  content:"";
+  position:absolute;z-index:-1;inset:0;
+  background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.24) 48%,transparent 70%);
+  transform:translateX(-120%);
+  transition:transform .65s ease;
+}
+.wa-account-primary:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(80,15,37,.22);background:#5d142d}
+.wa-account-primary:hover:before{transform:translateX(120%)}
+.wa-account-primary:active{transform:translateY(0) scale(.985)}
+.wa-account-close{transition:transform .25s ease,background .25s ease,color .25s ease}
+.wa-account-close:hover{transform:rotate(90deg);background:rgba(255,255,255,.13);color:#fff}
+.wa-account-signout{color:#f5dce3;position:relative;z-index:1}
+.wa-account-signout:hover{text-decoration:underline;text-underline-offset:4px}
+.wa-account-order,.wa-address-card,.wa-account-loyalty,.wa-account-empty{
+  position:relative;overflow:hidden;
+  transition:transform .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s ease,border-color .28s ease;
+}
+.wa-account-order:before,.wa-address-card:before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:var(--wine);transform:scaleY(0);transform-origin:bottom;
+  transition:transform .3s ease;
+}
+.wa-account-order:hover,.wa-address-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(122,30,58,.35);
+  box-shadow:0 14px 28px rgba(40,15,22,.08);
+}
+.wa-account-order:hover:before,.wa-address-card:hover:before{transform:scaleY(1)}
+.wa-account-order:nth-child(2){animation-delay:.07s}
+.wa-account-order:nth-child(3){animation-delay:.14s}
+.wa-account-order:nth-child(4){animation-delay:.21s}
+.wa-account-order{animation:waCardIn .5s both}
+.wa-address-card{animation:waCardIn .48s both}
+.wa-address-card:nth-child(2){animation-delay:.08s}
+.wa-address-card:nth-child(3){animation-delay:.16s}
+.wa-account-status,.wa-address-default{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 9px;border-radius:30px;
+  background:rgba(122,30,58,.075);
+}
+.wa-account-status:before{
+  content:"";width:5px;height:5px;border-radius:50%;background:currentColor;
+  box-shadow:0 0 0 3px rgba(122,30,58,.09);
+}
+.wa-account-loyalty{
+  background:linear-gradient(135deg,rgba(122,30,58,.12),rgba(122,30,58,.025) 65%),var(--surface-2);
+}
+.wa-account-loyalty:after{
+  content:"WA";position:absolute;right:18px;bottom:-23px;
+  font:700 105px/.9 "Space Grotesk",sans-serif;letter-spacing:-.12em;
+  color:rgba(122,30,58,.07);pointer-events:none;
+}
+.wa-account-loyalty strong{animation:waNumberPop .65s .15s both}
+.wa-account-loyalty-grid>div{transition:transform .25s ease,border-color .25s ease}
+.wa-account-loyalty-grid>div:hover{transform:translateY(-3px);border-color:rgba(122,30,58,.35)}
+.wa-account-form input,.wa-account-form textarea{
+  transition:border-color .2s ease,box-shadow .2s ease,background .2s ease;
+}
+.wa-account-form input:focus,.wa-account-form textarea:focus{
+  border-color:var(--wine);
+  box-shadow:0 0 0 3px rgba(122,30,58,.09);
+}
+.wa-account-auth-links button{transition:transform .2s ease,color .2s ease}
+.wa-account-auth-links button:hover{transform:translateX(3px);color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+.wa-account-feedback:not(:empty){animation:waFeedbackIn .3s ease both}
+@keyframes waHeaderFlow{0%{background-position:0% 45%}100%{background-position:100% 55%}}
+@keyframes waOrbit{to{transform:rotate(360deg)}}
+@keyframes waWatermarkFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(7px) rotate(-2deg)}}
+@keyframes waShimmer{0%,72%,100%{left:-35%}88%{left:125%}}
+@keyframes waContentRise{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
+@keyframes waUnderline{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes waCardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes waNumberPop{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes waFeedbackIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+html[data-theme="dark"] .wa-account-order:hover,html[data-theme="dark"] .wa-address-card:hover{box-shadow:0 14px 28px rgba(0,0,0,.22)}
+html[data-theme="dark"] .wa-account-loyalty{background:linear-gradient(135deg,rgba(223,140,164,.12),rgba(223,140,164,.025) 65%),#211b1d}
+@media(max-width:700px){
+  .wa-account-tabs button:hover{transform:translateY(-2px);padding-left:3px}
+  .wa-account-order:hover,.wa-address-card:hover{transform:translateY(-2px)}
+  .wa-account-head:before{right:-180px}
+}
+@media(prefers-reduced-motion:reduce){
+  .wa-account-head,.wa-account-head:before,.wa-account-head:after,.wa-account-preview:after,
+  .wa-account-content,.wa-account-content h3:after,.wa-account-order,.wa-address-card,
+  .wa-account-loyalty strong,.wa-account-feedback:not(:empty){animation:none!important}
+  .wa-account-tabs button,.wa-account-primary,.wa-account-close,.wa-account-order,
+  .wa-address-card,.wa-account-loyalty,.wa-account-loyalty-grid>div,
+  .wa-account-form input,.wa-account-form textarea,.wa-account-auth-links button{transition:none!important}
+}
