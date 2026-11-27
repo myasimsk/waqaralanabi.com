@@ -6,6 +6,7 @@ const schema = z.object({
   HOST: z.string().default("127.0.0.1"),
   DATABASE_URL: z.string().min(1),
   DATABASE_SSL: z.enum(["true", "false"]).default("false"),
+  COMMERCE_LAUNCH_READY: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
   STOREFRONT_ORIGIN: z.string().url(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info")
 });
