@@ -21,13 +21,16 @@ const [{ default: Fastify }, { default: cookie }, { adminRoutes }, { orderAdminR
 const originalQuery = db.query.bind(db);
 const originalConnect = db.connect.bind(db);
 let activeRole = "support";
+let sessionValid = true;
 let queryCalls = [];
 
 db.query = async (sql, params) => {
   const statement = String(sql);
   queryCalls.push(statement);
   if (statement.includes("FROM admin_sessions s") && statement.includes("JOIN admin_users a")) {
-    return { rows: [{ id: "admin-test-id", email: "admin@example.test", role: activeRole }], rowCount: 1 };
+    return sessionValid
+      ? { rows: [{ id: "admin-test-id", email: "admin@example.test", role: activeRole }], rowCount: 1 }
+      : { rows: [], rowCount: 0 };
   }
   if (statement.startsWith("UPDATE admin_sessions SET last_seen_at")) {
     return { rows: [], rowCount: 1 };
@@ -71,6 +74,25 @@ test("admin HTTP routes enforce authentication and role boundaries", async (t) =
 
   const unauthenticated = await app.inject({ method: "GET", url: "/admin/audit-logs" });
   assert.equal(unauthenticated.statusCode, 401);
+
+  sessionValid = false;
+  const expired = await app.inject({
+    method: "GET",
+    url: "/admin/me",
+    headers: { cookie: "wa_admin_session=expired-session-token" },
+  });
+  assert.equal(expired.statusCode, 401);
+  assert.match(expired.headers["set-cookie"], /wa_admin_session=;/);
+  sessionValid = true;
+
+  const logout = await app.inject({
+    method: "POST",
+    url: "/admin/logout",
+    headers: { cookie: "wa_admin_session=role-test-token" },
+  });
+  assert.equal(logout.statusCode, 200);
+  assert.equal(logout.json().status, "signed_out");
+  assert.equal(queryCalls.some((sql) => sql.includes("UPDATE admin_sessions SET revoked_at")), true);
 
   const supportAudit = await call("GET", "/admin/audit-logs", "support");
   assert.equal(supportAudit.statusCode, 403);
