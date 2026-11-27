@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $ = (selector, root=document) => root.querySelector(selector);
-const API = window.WA_API_BASE || "http://127.0.0.1:4000";
+const API = window.WA_API_BASE || "http://localhost:4000";
 const state = {admin:null,customerOffset:0,orderOffset:0,limit:20,customerSearch:"",orderSearch:"",orderStatus:"",currentView:"overview"};
 const escapeHtml = value => String(value == null ? "" : value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const number = value => Number(value || 0).toLocaleString();
