@@ -1,38 +1,106 @@
 (() => {
   "use strict";
-  const $ = (s, root=document) => root.querySelector(s);
-  const KEY = "wa-customer-preview";
-  const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {profile:{name:"",email:"",phone:""},addresses:[],active:"profile"}; } catch { return {profile:{name:"",email:"",phone:""},addresses:[],active:"profile"}; } };
-  let data = read();
-  const save = () => localStorage.setItem(KEY, JSON.stringify(data));
-  const safe = value => String(value || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const root = document.createElement("div");
-  root.id = "waAccountRoot";
-  root.innerHTML = '<div class="wa-account-backdrop" data-account-close></div><section class="wa-account-panel" role="dialog" aria-modal="true" aria-labelledby="waAccountTitle" aria-hidden="true"><header class="wa-account-head"><div><p class="eyebrow">YOUR WA WORLD</p><h2 id="waAccountTitle">My account</h2></div><button type="button" class="wa-account-close" aria-label="Close account" data-account-close>×</button></header><div class="wa-account-preview">PREVIEW EXPERIENCE · ACCOUNT DATA IS SAVED ONLY IN THIS BROWSER</div><div class="wa-account-layout"><nav class="wa-account-tabs" aria-label="Account sections"><button type="button" data-tab="profile">Profile</button><button type="button" data-tab="orders">Orders</button><button type="button" data-tab="addresses">Addresses</button></nav><div class="wa-account-content" id="waAccountContent"></div></div></section>';
-  document.body.appendChild(root);
-  const panel = $(".wa-account-panel", root), content = $("#waAccountContent", root);
-  const render = () => {
-    const customerName = (data.profile.name || "").trim().split(/\\s+/)[0];
-    $("#waAccountTitle", root).textContent = customerName ? customerName + "'s WA Account" : "Your WA Account";
-    root.querySelectorAll("[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === data.active));
-    if (data.active === "profile") {
-      content.innerHTML = '<p class="eyebrow">ACCOUNT DETAILS</p><h3>Your details.</h3><p class="wa-account-muted">Keep your contact information up to date for a smoother experience.</p><form id="waProfileForm" class="wa-account-form"><label>Full name<input name="name" autocomplete="name" value="'+safe(data.profile.name)+'" placeholder="Your full name" required></label><label>Email address<input name="email" type="email" autocomplete="email" value="'+safe(data.profile.email)+'" placeholder="you@example.com" required></label><label>Phone number<input name="phone" type="tel" autocomplete="tel" value="'+safe(data.profile.phone)+'" placeholder="+92 3XX XXXXXXX"></label><button class="wa-account-primary" type="submit">Save details ↗</button><p class="wa-account-feedback" id="waProfileFeedback" aria-live="polite"></p></form><p class="wa-account-security">This preview does not create a secure login or store passwords. Real customer authentication will be connected before launch.</p>';
-      $("#waProfileForm",content).addEventListener("submit", e => { e.preventDefault(); const f=new FormData(e.currentTarget); data.profile={name:f.get("name").trim(),email:f.get("email").trim(),phone:f.get("phone").trim()}; save(); $("#waProfileFeedback",content).textContent="Your details have been saved on this device."; });
-    } else if (data.active === "orders") {
-      content.innerHTML = '<p class="eyebrow">YOUR PURCHASES</p><h3>Order history.</h3><div class="wa-account-empty"><span>WA / 00</span><h4>Your first order is waiting.</h4><p>Once online ordering launches, confirmed purchases and delivery updates will appear here.</p><small>No real orders are connected in this preview.</small></div>';
-    } else {
-      content.innerHTML = '<p class="eyebrow">DELIVERY DETAILS</p><h3>Saved addresses.</h3><p class="wa-account-muted">Add an address to see how delivery details will be managed.</p><form id="waAddressForm" class="wa-account-form"><label>Address label<input name="label" placeholder="Home, Work…" required></label><label>Full delivery address<textarea name="address" rows="3" placeholder="House, street, area" required></textarea></label><div class="wa-account-two"><label>City<input name="city" placeholder="City" required></label><label>Postcode<input name="postcode" placeholder="Postcode"></label></div><button class="wa-account-primary" type="submit">Add address ↗</button></form><div class="wa-address-list">'+(data.addresses.length?data.addresses.map((a,i)=>'<article class="wa-address-card"><div><b>'+safe(a.label)+'</b><p>'+safe(a.address)+'<br>'+safe(a.city)+' '+safe(a.postcode)+'</p></div><button type="button" data-delete-address="'+i+'" aria-label="Delete '+safe(a.label)+' address">Remove</button></article>').join(""):'<p class="wa-account-empty-note">No saved addresses yet.</p>')+'</div>';
-      $("#waAddressForm",content).addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.currentTarget);data.addresses.push({label:f.get("label").trim(),address:f.get("address").trim(),city:f.get("city").trim(),postcode:f.get("postcode").trim()});save();render();});
-      content.querySelectorAll("[data-delete-address]").forEach(b=>b.addEventListener("click",()=>{data.addresses.splice(Number(b.dataset.deleteAddress),1);save();render();}));
-    }
+  const $ = (selector, root=document) => root.querySelector(selector);
+  const API = window.WA_API_BASE || "http://localhost:4000";
+  const state = { customer:null, active:"profile", orders:[], addresses:[], loyalty:null, busy:false };
+  const safe = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const money = (minor, currency="PKR") => {
+    try { return new Intl.NumberFormat(undefined,{style:"currency",currency,maximumFractionDigits:2}).format(Number(minor||0)/100); }
+    catch { return currency+" "+(Number(minor||0)/100).toFixed(2); }
   };
-  const open = () => { data=read(); render(); root.classList.add("open"); panel.setAttribute("aria-hidden","false"); document.body.style.overflow="hidden"; };
-  const close = () => { root.classList.remove("open"); panel.setAttribute("aria-hidden","true"); document.body.style.overflow=""; };
+  const date = value => value ? new Date(value).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}) : "—";
+  async function api(path, options={}) {
+    const response = await fetch(API+path,{credentials:"include",headers:{"Content-Type":"application/json",...(options.headers||{})},...options});
+    const body = await response.json().catch(()=>({}));
+    if (!response.ok) { const error=new Error(body.message||body.error||"We couldn't complete that request."); error.status=response.status; throw error; }
+    return body;
+  }
+  const root=document.createElement("div");
+  root.id="waAccountRoot";
+  root.innerHTML='<div class="wa-account-backdrop" data-account-close></div><section class="wa-account-panel" role="dialog" aria-modal="true" aria-labelledby="waAccountTitle" aria-hidden="true"><header class="wa-account-head"><div><p class="eyebrow">YOUR WA WORLD</p><h2 id="waAccountTitle">My account</h2></div><div class="wa-account-head-actions"><button type="button" class="wa-account-signout" id="waSignOut" hidden>Sign out</button><button type="button" class="wa-account-close" aria-label="Close account" data-account-close>×</button></div></header><div class="wa-account-preview" id="waAccountNotice">YOUR WA ACCOUNT · SECURE CUSTOMER ACCESS</div><div class="wa-account-layout"><nav class="wa-account-tabs" id="waAccountTabs" aria-label="Account sections" hidden><button type="button" data-tab="profile">Profile</button><button type="button" data-tab="orders">Orders</button><button type="button" data-tab="addresses">Addresses</button><button type="button" data-tab="loyalty">Loyalty</button></nav><div class="wa-account-content" id="waAccountContent" aria-live="polite"></div></div></section>';
+  document.body.appendChild(root);
+  const panel=$(".wa-account-panel",root), content=$("#waAccountContent",root), tabs=$("#waAccountTabs",root);
+  function feedback(message,kind="") { const el=$("#waAccountFeedback",content); if(el){el.textContent=message;el.className="wa-account-feedback"+(kind?" "+kind:"");} }
+  function authScreen(mode="login",message="") {
+    state.customer=null; tabs.hidden=true; $("#waSignOut",root).hidden=true;
+    $("#waAccountTitle",root).textContent="Your WA Account";
+    const login=mode==="login";
+    const register=mode==="register";
+    const verify=mode==="verify";
+    const reset=mode==="reset";
+    let body="";
+    if(login) body='<p class="eyebrow">WELCOME BACK</p><h3>Sign in.</h3><p class="wa-account-muted">Access your orders, personal details and saved delivery addresses.</p><form id="waLoginForm" class="wa-account-form"><label>Email address<input name="email" type="email" autocomplete="email" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="wa-account-primary" type="submit">Sign in ↗</button></form><div class="wa-account-auth-links"><button type="button" data-auth="register">Create an account after your first order</button><button type="button" data-auth="reset">Forgot password?</button></div>';
+    if(register) body='<p class="eyebrow">FIRST ORDER, THEN YOUR WA ACCOUNT</p><h3>Create your account.</h3><p class="wa-account-muted">Use the order number and email address from your first purchase. We will verify that you own the email before creating your account.</p><form id="waRegisterForm" class="wa-account-form"><label>Order number<input name="orderNumber" autocomplete="off" placeholder="Your order number" required></label><label>Order email address<input name="email" type="email" autocomplete="email" placeholder="Email used at checkout" required></label><button class="wa-account-primary" type="submit">Send verification code ↗</button></form><div class="wa-account-auth-links"><button type="button" data-auth="login">Already have an account? Sign in</button></div>';
+    if(verify) body='<p class="eyebrow">EMAIL VERIFICATION</p><h3>Check your inbox.</h3><p class="wa-account-muted">Enter the six-digit code sent to your order email, then choose your account name and password.</p><form id="waVerifyForm" class="wa-account-form"><label>Verification code<input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required></label><label>Full name<input name="fullName" autocomplete="name" required></label><label>Create password<input name="password" type="password" minlength="12" autocomplete="new-password" required><small>Use at least 12 characters.</small></label><button class="wa-account-primary" type="submit">Create account ↗</button></form><div class="wa-account-auth-links"><button type="button" data-auth="register">Back to order details</button></div>';
+    if(reset) body='<p class="eyebrow">ACCOUNT RECOVERY</p><h3>Reset password.</h3><p class="wa-account-muted">Request a verification code using your account email, then choose a new password.</p><form id="waResetRequestForm" class="wa-account-form"><label>Email address<input name="email" type="email" autocomplete="email" required></label><button class="wa-account-primary" type="submit">Send reset code ↗</button></form><form id="waResetCompleteForm" class="wa-account-form wa-account-reset-complete"><label>Six-digit code<input name="code" inputmode="numeric" maxlength="6" required></label><label>New password<input name="newPassword" type="password" minlength="12" autocomplete="new-password" required></label><button class="wa-account-primary" type="submit">Update password ↗</button></form><div class="wa-account-auth-links"><button type="button" data-auth="login">Back to sign in</button></div>';
+    content.innerHTML=body+'<p class="wa-account-feedback" id="waAccountFeedback" role="status">'+safe(message)+'</p><p class="wa-account-security">Your account details are securely stored with WA. Never share your password or verification code.</p>';
+    content.querySelectorAll("[data-auth]").forEach(button=>button.addEventListener("click",()=>authScreen(button.dataset.auth)));
+    const loginForm=$("#waLoginForm",content);
+    if(loginForm) loginForm.addEventListener("submit",async e=>{e.preventDefault();const f=new FormData(loginForm);await run(async()=>{const result=await api("/auth/login",{method:"POST",body:JSON.stringify({email:f.get("email"),password:f.get("password")})});state.customer=result.customer;await loadAccount();});});
+    const registerForm=$("#waRegisterForm",content);
+    if(registerForm) registerForm.addEventListener("submit",async e=>{e.preventDefault();const f=new FormData(registerForm);await run(async()=>{await api("/auth/register/request-code",{method:"POST",body:JSON.stringify({orderNumber:f.get("orderNumber"),email:f.get("email")})});state.registration={orderNumber:String(f.get("orderNumber")).trim(),email:String(f.get("email")).trim()};authScreen("verify","If the order is eligible, a code has been generated for its email address. In this local development preview, check the backend terminal for the development-only code.");});});
+    const verifyForm=$("#waVerifyForm",content);
+    if(verifyForm) verifyForm.addEventListener("submit",async e=>{e.preventDefault();const f=new FormData(verifyForm);await run(async()=>{await api("/auth/register/complete",{method:"POST",body:JSON.stringify({...state.registration,code:f.get("code"),fullName:f.get("fullName"),password:f.get("password")})});const result=await api("/auth/login",{method:"POST",body:JSON.stringify({email:state.registration.email,password:f.get("password")})});state.customer=result.customer;await loadAccount();});});
+    const resetRequest=$("#waResetRequestForm",content);
+    if(resetRequest) resetRequest.addEventListener("submit",async e=>{e.preventDefault();const f=new FormData(resetRequest);await run(async()=>{await api("/auth/password/request-reset-code",{method:"POST",body:JSON.stringify({email:f.get("email")})});$("#waResetCompleteForm",content).dataset.email=String(f.get("email"));feedback("If an active account exists, a reset code has been generated. Check the backend terminal in this local development preview.");});});
+    const resetComplete=$("#waResetCompleteForm",content);
+    if(resetComplete) resetComplete.addEventListener("submit",async e=>{e.preventDefault();const f=new FormData(resetComplete);await run(async()=>{await api("/auth/password/complete-reset",{method:"POST",body:JSON.stringify({email:resetComplete.dataset.email,code:f.get("code"),newPassword:f.get("newPassword")})});authScreen("login","Password updated. Please sign in with your new password.");});});
+  }
+  async function run(task) {
+    if(state.busy)return;state.busy=true;
+    const buttons=content.querySelectorAll("button[type=submit]");buttons.forEach(b=>{b.disabled=true;b.dataset.oldText=b.textContent;b.textContent="Please wait…";});
+    try{await task();}catch(error){feedback(error.message,"error");}
+    finally{state.busy=false;buttons.forEach(b=>{b.disabled=false;if(b.dataset.oldText)b.textContent=b.dataset.oldText;});}
+  }
+  async function loadAccount() {
+    const [profile,orders,addresses,loyalty]=await Promise.all([
+      api("/account/profile"),api("/account/orders?limit=50&offset=0"),api("/account/addresses"),api("/account/loyalty")
+    ]);
+    state.customer=profile.customer;state.orders=orders.orders||[];state.addresses=addresses.addresses||[];state.loyalty=loyalty.loyalty;
+    renderAccount();
+  }
+  function renderAccount() {
+    tabs.hidden=false;$("#waSignOut",root).hidden=false;
+    $("#waAccountTitle",root).textContent=(state.customer.fullName||"Your")+"’s WA Account";
+    $("#waAccountNotice",root).textContent="SIGNED IN · YOUR DETAILS ARE PRIVATE TO YOUR ACCOUNT";
+    root.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.active));
+    if(state.active==="profile") renderProfile();
+    else if(state.active==="orders") renderOrders();
+    else if(state.active==="addresses") renderAddresses();
+    else renderLoyalty();
+  }
+  function renderProfile() {
+    const c=state.customer;
+    content.innerHTML='<p class="eyebrow">ACCOUNT DETAILS</p><h3>Your details.</h3><p class="wa-account-muted">Keep your contact information up to date for a smoother experience.</p><form id="waProfileForm" class="wa-account-form"><label>Full name<input name="fullName" autocomplete="name" value="'+safe(c.fullName)+'" required></label><label>Email address<input value="'+safe(c.email)+'" type="email" disabled><small>Email changes require a separate verification process.</small></label><label>Phone number<input name="phone" type="tel" autocomplete="tel" value="'+safe(c.phone||"")+'" placeholder="+92 3XX XXXXXXX"></label><button class="wa-account-primary" type="submit">Save details ↗</button></form><p class="wa-account-feedback" id="waAccountFeedback" role="status"></p><p class="wa-account-security">Member since '+safe(date(c.memberSince))+'. Email address is verified and cannot be changed from this screen.</p>';
+    $("#waProfileForm",content).addEventListener("submit",async e=>{e.preventDefault();const f=new FormData(e.currentTarget);await run(async()=>{const result=await api("/account/profile",{method:"PATCH",body:JSON.stringify({fullName:f.get("fullName"),phone:f.get("phone")||null})});state.customer={...state.customer,...result.customer};renderProfile();feedback("Your details have been updated.");});});
+  }
+  function renderOrders() {
+    const html=state.orders.length?state.orders.map(o=>'<article class="wa-account-order"><div class="wa-account-order-head"><div><b>'+safe(o.order_number)+'</b><small>'+safe(date(o.placed_at))+'</small></div><span class="wa-account-status">'+safe(String(o.status).replace(/_/g," "))+'</span></div><div class="wa-account-order-lines">'+(o.items||[]).map(i=>'<div><span>'+safe(i.productName)+' · '+safe(i.color||"")+' / '+safe(i.size||"")+' × '+safe(i.quantity)+'</span><b>'+money(i.lineTotalMinor,o.currency)+'</b></div>').join("")+'</div><div class="wa-account-order-total"><span>'+safe(o.payment_status.replace(/_/g," "))+'</span><b>'+money(o.total_minor,o.currency)+'</b></div></article>').join(""):'<div class="wa-account-empty"><span>WA / 00</span><h4>Your first order is waiting.</h4><p>Once you place an order, its details and updates will appear here.</p></div>';
+    content.innerHTML='<p class="eyebrow">YOUR PURCHASES</p><h3>Order history.</h3><p class="wa-account-muted">Your purchases and order progress, all in one place.</p><div class="wa-account-orders">'+html+'</div>';
+  }
+  function renderAddresses() {
+    const list=state.addresses.length?state.addresses.map(a=>'<article class="wa-address-card"><div><b>'+safe(a.label||"Delivery address")+(a.is_default?' <span class="wa-address-default">DEFAULT</span>':'')+'</b><p>'+safe(a.recipient_name)+' · '+safe(a.phone||"")+'<br>'+safe(a.address_line_1)+' '+safe(a.address_line_2||"")+'<br>'+safe(a.city)+' '+safe(a.region||"")+' '+safe(a.postal_code||"")+' · '+safe(a.country_code)+'</p><div class="wa-address-actions">'+(!a.is_default?'<button type="button" data-default-address="'+safe(a.id)+'">Make default</button>':'')+'<button type="button" data-delete-address="'+safe(a.id)+'">Remove</button></div></div></article>').join(""):'<p class="wa-account-empty-note">No saved addresses yet.</p>';
+    content.innerHTML='<p class="eyebrow">DELIVERY DETAILS</p><h3>Saved addresses.</h3><p class="wa-account-muted">Manage the places where your WA orders are delivered.</p><form id="waAddressForm" class="wa-account-form"><label>Address label<input name="label" placeholder="Home, Work…" maxlength="40"></label><label>Recipient name<input name="recipientName" autocomplete="name" required></label><label>Phone number<input name="phone" type="tel" required></label><label>Address line 1<input name="addressLine1" autocomplete="address-line1" required></label><label>Address line 2<input name="addressLine2" autocomplete="address-line2"></label><div class="wa-account-two"><label>City<input name="city" autocomplete="address-level2" required></label><label>Region / province<input name="region" autocomplete="address-level1"></label></div><div class="wa-account-two"><label>Postcode<input name="postalCode" autocomplete="postal-code"></label><label>Country code<input name="countryCode" value="PK" maxlength="2" required></label></div><label class="wa-account-check"><input type="checkbox" name="isDefault"> Set as default address</label><button class="wa-account-primary" type="submit">Save address ↗</button></form><div class="wa-address-list">'+list+'</div><p class="wa-account-feedback" id="waAccountFeedback" role="status"></p>';
+    $("#waAddressForm",content).addEventListener("submit",async e=>{e.preventDefault();const f=new FormData(e.currentTarget);await run(async()=>{await api("/account/addresses",{method:"POST",body:JSON.stringify({label:f.get("label")||null,recipientName:f.get("recipientName"),phone:f.get("phone"),addressLine1:f.get("addressLine1"),addressLine2:f.get("addressLine2")||null,city:f.get("city"),region:f.get("region")||null,postalCode:f.get("postalCode")||null,countryCode:f.get("countryCode"),isDefault:f.get("isDefault")==="on"})});state.addresses=(await api("/account/addresses")).addresses;renderAddresses();feedback("Address saved successfully.");});});
+    content.querySelectorAll("[data-delete-address]").forEach(b=>b.addEventListener("click",async()=>run(async()=>{await api("/account/addresses/"+encodeURIComponent(b.dataset.deleteAddress),{method:"DELETE"});state.addresses=(await api("/account/addresses")).addresses;renderAddresses();feedback("Address removed.");})));
+    content.querySelectorAll("[data-default-address]").forEach(b=>b.addEventListener("click",async()=>run(async()=>{await api("/account/addresses/"+encodeURIComponent(b.dataset.defaultAddress)+"/default",{method:"POST"});state.addresses=(await api("/account/addresses")).addresses;renderAddresses();feedback("Default address updated.");})));
+  }
+  function renderLoyalty() {
+    const l=state.loyalty||{};
+    content.innerHTML='<p class="eyebrow">WA REWARDS</p><h3>Your loyalty.</h3><div class="wa-account-loyalty"><span>POINTS BALANCE</span><strong>'+safe(l.balance||"0")+'</strong><p>Lifetime earned: '+safe(l.lifetimeEarned||"0")+'</p></div><div class="wa-account-loyalty-grid"><div><small>Pending</small><b>'+safe(l.pendingPoints||"0")+'</b></div><div><small>Available earned</small><b>'+safe(l.availableEarned||"0")+'</b></div><div><small>Redeemed</small><b>'+safe(l.redeemedPoints||"0")+'</b></div><div><small>Expired</small><b>'+safe(l.expiredPoints||"0")+'</b></div></div><p class="wa-account-security">The WA loyalty programme is not active yet. Points earning and redemption will be enabled after the programme rules are finalised.</p>';
+  }
+  async function open() {
+    root.classList.add("open");panel.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";
+    try{const result=await api("/auth/me");state.customer=result.customer;await loadAccount();}
+    catch(error){if(error.status===401)authScreen("login");else authScreen("login","Account service is currently unavailable. Please try again.");}
+  }
+  function close(){root.classList.remove("open");panel.setAttribute("aria-hidden","true");document.body.style.overflow="";}
   root.querySelectorAll("[data-account-close]").forEach(b=>b.addEventListener("click",close));
-  root.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>{data.active=b.dataset.tab;render();}));
+  root.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>{state.active=b.dataset.tab;renderAccount();}));
+  $("#waSignOut",root).addEventListener("click",async()=>{try{await api("/auth/logout",{method:"POST"});}catch{}state.customer=null;state.orders=[];state.addresses=[];authScreen("login","You have been signed out.");});
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&root.classList.contains("open"))close();});
-  const headerActions = document.querySelector(".header-actions");
-  if(headerActions){const b=document.createElement("button");b.type="button";b.className="wa-account-trigger";b.textContent="Account";b.setAttribute("aria-label","Open customer account");b.addEventListener("click",open);headerActions.insertBefore(b,headerActions.firstChild);}
-  const mobileNav = document.querySelector(".mobile-app-nav");
-  if(mobileNav){const b=document.createElement("button");b.type="button";b.className="app-nav-item wa-mobile-account";b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 21c.5-4.1 3.2-6.2 7.5-6.2s7 2.1 7.5 6.2"/></svg><span>Account</span>';b.addEventListener("click",open);mobileNav.appendChild(b);}
+  const headerActions=document.querySelector(".header-actions");
+  if(headerActions){const button=document.createElement("button");button.type="button";button.className="wa-account-trigger";button.textContent="Account";button.setAttribute("aria-label","Open customer account");button.addEventListener("click",open);headerActions.insertBefore(button,headerActions.firstChild);}
+  const mobileNav=document.querySelector(".mobile-app-nav");
+  if(mobileNav){const button=document.createElement("button");button.type="button";button.className="app-nav-item wa-mobile-account";button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 21c.5-4.1 3.2-6.2 7.5-6.2"/></svg><span>Account</span>';button.addEventListener("click",open);mobileNav.appendChild(button);}
 })();
