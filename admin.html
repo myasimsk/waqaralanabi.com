@@ -32,8 +32,12 @@
       <div class="welcome-row"><div><p class="eyebrow">YOUR STORE AT A GLANCE</p><h2>Good to have you back.</h2><p>Manage customer relationships and keep orders moving.</p></div><span class="date-stamp" id="todayStamp"></span></div>
       <div class="metric-grid">
         <article class="metric-card"><span>TOTAL CUSTOMERS</span><strong id="metricCustomers">—</strong><small>Registered accounts</small></article>
-        <article class="metric-card"><span>ORDERS IN SYSTEM</span><strong id="metricOrders">—</strong><small>All recorded orders</small></article>
-        <article class="metric-card"><span>LOYALTY MEMBERS</span><strong id="metricLoyalty">—</strong><small>Accounts with a points balance</small></article>
+        <article class="metric-card"><span>ALL ORDERS</span><strong id="metricOrders">—</strong><small>Recorded orders</small></article>
+        <article class="metric-card"><span>PAID REVENUE</span><strong id="metricRevenue">—</strong><small>Payments verified as paid · PKR</small></article>
+        <article class="metric-card"><span>AWAITING PAYMENT</span><strong id="metricPending">—</strong><small>Orders pending payment</small></article>
+        <article class="metric-card"><span>IN FULFILMENT</span><strong id="metricFulfilment">—</strong><small>Confirmed, processing or shipped</small></article>
+        <article class="metric-card"><span>AVAILABLE STOCK</span><strong id="metricStock">—</strong><small>Units not reserved</small></article>
+        <article class="metric-card"><span>LOYALTY PROGRAMME</span><strong id="metricLoyalty">NOT LIVE</strong><small>Rules await approval</small></article>
       </div>
       <div class="dashboard-grid">
         <section class="panel"><div class="panel-heading"><div><p class="eyebrow">LATEST RECORDS</p><h3>Recent orders</h3></div><button class="text-action" data-go="orders">View all ↗</button></div><div class="table-wrap"><table><thead><tr><th>ORDER</th><th>CUSTOMER</th><th>STATUS</th><th>TOTAL</th></tr></thead><tbody id="recentOrders"><tr><td colspan="4" class="empty-cell">Loading records…</td></tr></tbody></table></div></section>
@@ -94,6 +98,6 @@
     <p class="login-feedback" id="loginFeedback" aria-live="polite"></p><small class="login-foot">WAQAR AL ANABI · PEOPLE NOT TRENDS</small>
   </form>
 </section>
-<script src="admin.js?v=order-fulfilment-1"></script>
+<script src="admin.js?v=commerce-dashboard-1"></script>
 </body>
 </html>
