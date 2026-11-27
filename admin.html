@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#7A1E3A">
+<title>WA Admin | Waqar Al Anabi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div class="admin-shell">
+  <aside class="sidebar">
+    <a class="brand" href="index.html"><span class="brand-mark">WA</span><span>WAQAR AL ANABI<small>ADMINISTRATION</small></span></a>
+    <div class="side-label">WORKSPACE</div>
+    <nav class="side-nav" aria-label="Admin navigation">
+      <button class="nav-item active" data-view="overview"><span>◫</span>Overview</button>
+      <button class="nav-item" data-view="customers"><span>♙</span>Customers</button>
+      <button class="nav-item" data-view="orders"><span>▤</span>Orders</button>
+      <button class="nav-item" data-view="activity"><span>◷</span>Activity log</button>
+    </nav>
+    <div class="sidebar-bottom"><span class="secure-dot"></span><span>SECURE ADMIN SESSION</span><button id="logoutButton" type="button">Sign out ↗</button></div>
+  </aside>
+  <main class="main">
+    <header class="topbar"><div><p class="eyebrow">WA / CONTROL ROOM</p><h1 id="pageTitle">Overview</h1></div><div class="admin-identity"><span class="identity-mark">WA</span><span><b id="adminEmail">Administrator</b><small id="adminRole">OWNER</small></span></div></header>
+    <div class="notice" id="notice" role="status" aria-live="polite"></div>
+    <section class="view active" id="view-overview">
+      <div class="welcome-row"><div><p class="eyebrow">YOUR STORE AT A GLANCE</p><h2>Good to have you back.</h2><p>Manage customer relationships and keep orders moving.</p></div><span class="date-stamp" id="todayStamp"></span></div>
+      <div class="metric-grid">
+        <article class="metric-card"><span>TOTAL CUSTOMERS</span><strong id="metricCustomers">—</strong><small>Registered accounts</small></article>
+        <article class="metric-card"><span>ORDERS IN SYSTEM</span><strong id="metricOrders">—</strong><small>All recorded orders</small></article>
+        <article class="metric-card"><span>LOYALTY MEMBERS</span><strong id="metricLoyalty">—</strong><small>Accounts with a points balance</small></article>
+      </div>
+      <div class="dashboard-grid">
+        <section class="panel"><div class="panel-heading"><div><p class="eyebrow">LATEST RECORDS</p><h3>Recent orders</h3></div><button class="text-action" data-go="orders">View all ↗</button></div><div class="table-wrap"><table><thead><tr><th>ORDER</th><th>CUSTOMER</th><th>STATUS</th><th>TOTAL</th></tr></thead><tbody id="recentOrders"><tr><td colspan="4" class="empty-cell">Loading records…</td></tr></tbody></table></div></section>
+        <section class="panel quick-panel"><p class="eyebrow">QUICK ACCESS</p><h3>Keep things moving.</h3><button data-go="customers">Find a customer <span>↗</span></button><button data-go="orders">Review an order <span>↗</span></button><button data-go="activity">Review admin activity <span>↗</span></button><div class="loyalty-note"><b>LOYALTY PROGRAM</b><p>Points earning and redemption remain inactive until the programme rules are approved.</p></div></section>
+      </div>
+    </section>
+    <section class="view" id="view-customers">
+      <div class="section-intro"><div><p class="eyebrow">CUSTOMER RELATIONSHIPS</p><h2>Customers</h2><p>Search by name, email address or order number.</p></div></div>
+      <div class="toolbar"><input id="customerSearch" type="search" placeholder="Search customers…" autocomplete="off"><button id="customerSearchButton" class="primary-button">Search</button></div>
+      <div class="panel"><div class="table-wrap"><table><thead><tr><th>CUSTOMER</th><th>EMAIL</th><th>ORDERS</th><th>LIFETIME VALUE</th><th>POINTS</th><th>STATUS</th><th></th></tr></thead><tbody id="customerRows"><tr><td colspan="7" class="empty-cell">Search or load customers to begin.</td></tr></tbody></table></div><div class="pagination"><span id="customerPageInfo">—</span><div><button id="customerPrev" disabled>Previous</button><button id="customerNext" disabled>Next</button></div></div></div>
+      <div class="panel detail-panel" id="customerDetail" hidden></div>
+    </section>
+    <section class="view" id="view-orders">
+      <div class="section-intro"><div><p class="eyebrow">COMMERCE OPERATIONS</p><h2>Orders</h2><p>Search by order number or customer email.</p></div></div>
+      <div class="toolbar"><input id="orderSearch" type="search" placeholder="Search orders…" autocomplete="off"><select id="orderStatus"><option value="">All statuses</option><option>pending_payment</option><option>confirmed</option><option>processing</option><option>shipped</option><option>delivered</option><option>cancelled</option><option>partially_refunded</option><option>refunded</option></select><button id="orderSearchButton" class="primary-button">Search</button></div>
+      <div class="panel"><div class="table-wrap"><table><thead><tr><th>ORDER</th><th>CUSTOMER</th><th>DATE</th><th>STATUS</th><th>PAYMENT</th><th>TOTAL</th><th></th></tr></thead><tbody id="orderRows"><tr><td colspan="7" class="empty-cell">Loading orders…</td></tr></tbody></table></div><div class="pagination"><span id="orderPageInfo">—</span><div><button id="orderPrev" disabled>Previous</button><button id="orderNext" disabled>Next</button></div></div></div>
+      <div class="panel detail-panel" id="orderDetail" hidden></div>
+    </section>
+    <section class="view" id="view-activity">
+      <div class="section-intro"><div><p class="eyebrow">ACCOUNTABILITY</p><h2>Activity log</h2><p>Review administrative actions recorded by the system.</p></div></div>
+      <div class="panel"><div class="table-wrap"><table><thead><tr><th>TIME</th><th>ADMIN</th><th>ACTION</th><th>REASON</th></tr></thead><tbody id="activityRows"><tr><td colspan="4" class="empty-cell">Loading activity…</td></tr></tbody></table></div></div>
+    </section>
+  </main>
+</div>
+<section class="login-screen" id="loginScreen">
+  <form class="login-card" id="loginForm">
+    <a class="login-brand" href="index.html"><span class="brand-mark">WA</span><span>WAQAR AL ANABI<small>PRIVATE ADMINISTRATION</small></span></a>
+    <p class="eyebrow">RESTRICTED ACCESS</p><h1>Welcome<br><em>back.</em></h1><p class="login-copy">Sign in with your administrator credentials to manage the WA store.</p>
+    <label>Email address<input id="loginEmail" type="email" autocomplete="username" required placeholder="admin@waqaralanabi.com"></label>
+    <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Your password"></label>
+    <button class="primary-button login-submit" type="submit">Sign in securely <span>↗</span></button>
+    <p class="login-feedback" id="loginFeedback" aria-live="polite"></p><small class="login-foot">WAQAR AL ANABI · PEOPLE NOT TRENDS</small>
+  </form>
+</section>
+<script src="admin.js"></script>
+</body>
+</html>
