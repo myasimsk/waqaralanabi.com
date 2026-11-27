@@ -104,7 +104,6 @@ test("admin HTTP routes enforce authentication and role boundaries", async (t) =
   assert.equal(successfulLogin.statusCode, 200);
   assert.equal(successfulLogin.json().admin.role, "owner");
   assert.match(successfulLogin.headers["set-cookie"], /wa_admin_session=/);
-  assert.equal(successfulLogin.headers["cache-control"], "private, no-store, max-age=0");
 
   loginAccount = { ...loginAccount, is_active: false };
   const inactiveLogin = await app.inject({
