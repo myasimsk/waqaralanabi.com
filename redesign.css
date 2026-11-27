@@ -612,3 +612,32 @@ html{scroll-behavior:smooth}
  .option-swatch,.option-size,.swatch-button,.product-image-index{transition:none!important}
  .bag-line{animation:none!important}
 }
+
+
+/* CHECKOUT JOURNEY PASS 12 — clear, honest pre-launch order review */
+.checkout-button:disabled{opacity:.38;cursor:not-allowed;filter:grayscale(.35)}
+.checkout-preview-backdrop{position:fixed;inset:0;z-index:110;background:rgba(15,10,12,.68);backdrop-filter:blur(7px);opacity:0;visibility:hidden;transition:opacity .28s ease,visibility .28s ease}
+.checkout-preview-backdrop.open{opacity:1;visibility:visible}
+.checkout-preview-modal{position:fixed;z-index:111;top:50%;left:50%;width:min(620px,calc(100vw - 32px));max-height:min(90dvh,900px);overflow:auto;transform:translate(-50%,-47%) scale(.985);opacity:0;visibility:hidden;background:var(--surface);color:var(--ink);padding:clamp(26px,5vw,54px);border:1px solid var(--line);box-shadow:0 30px 100px rgba(0,0,0,.28);transition:opacity .28s ease,transform .35s var(--wa-ease),visibility .28s ease}
+.checkout-preview-modal.open{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+.checkout-preview-close{position:absolute;top:18px;right:20px;width:38px;height:38px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:25px}
+.checkout-preview-modal>.eyebrow{font:700 9px "Space Grotesk",sans-serif;letter-spacing:.18em;color:var(--wine);margin:0 0 22px}
+.checkout-preview-modal h2{font:700 clamp(42px,7vw,72px)/.88 "Space Grotesk",sans-serif;letter-spacing:-.075em;text-transform:uppercase;margin:0}
+.checkout-preview-modal h2 em{font-family:"Playfair Display",serif;font-weight:500;text-transform:none;color:var(--wine)}
+.checkout-preview-intro{max-width:470px;color:var(--muted);font:400 13px/1.75 "DM Sans",sans-serif;margin:22px 0 26px}
+.checkout-preview-summary{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:17px 0;gap:18px}
+.checkout-preview-summary div{display:flex;flex-direction:column;gap:6px}
+.checkout-preview-summary span{font:700 8px "Space Grotesk",sans-serif;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.checkout-preview-summary strong{font:600 19px "Space Grotesk",sans-serif}
+.checkout-preview-steps{margin:10px 0 20px}
+.checkout-preview-step{display:grid;grid-template-columns:32px 1fr auto;gap:12px;align-items:start;padding:16px 0;border-bottom:1px solid var(--line)}
+.checkout-preview-step>span{font:700 10px "Space Grotesk",sans-serif;color:var(--wine)}
+.checkout-preview-step strong{font:700 11px "Space Grotesk",sans-serif;text-transform:uppercase;letter-spacing:.04em}
+.checkout-preview-step p{font:400 10px/1.6 "DM Sans",sans-serif;color:var(--muted);margin:5px 0 0}
+.checkout-preview-step>b{font:700 7px "Space Grotesk",sans-serif;letter-spacing:.1em;color:var(--wine);border:1px solid var(--line);padding:6px 7px;white-space:nowrap}
+.checkout-preview-disclaimer{font:700 8px/1.6 "Space Grotesk",sans-serif;letter-spacing:.11em;color:var(--wine);margin:22px 0 14px}
+.checkout-preview-return{width:100%;min-height:50px}
+html[data-theme="dark"] .checkout-preview-modal{background:#171414;color:#f4f0ea}
+html[data-theme="dark"] .checkout-preview-modal h2 em{color:#df8ca4}
+@media(max-width:520px){.checkout-preview-modal{padding:28px 20px;max-height:88dvh}.checkout-preview-step{grid-template-columns:25px 1fr;gap:8px}.checkout-preview-step>b{grid-column:2;justify-self:start}.checkout-preview-summary strong{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.checkout-preview-backdrop,.checkout-preview-modal{transition:none!important}}
