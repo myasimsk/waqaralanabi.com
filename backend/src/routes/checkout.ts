@@ -57,15 +57,22 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
 
     const client = await db.connect();
     const accessToken = randomBytes(32).toString("hex");
+    const requestFingerprint = hash(JSON.stringify(input));
     try {
       await client.query("BEGIN");
-      const prior = await client.query<{order_number:string;status:string;payment_status:string;total_minor:string}>(
-        "SELECT order_number,status,payment_status,total_minor::text FROM orders WHERE idempotency_key=$1",
+      // Serialize requests sharing a key so simultaneous retries resolve to one order.
+      await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [input.idempotencyKey]);
+      const prior = await client.query<{order_number:string;status:string;payment_status:string;total_minor:string;checkout_request_hash:string|null}>(
+        "SELECT order_number,status,payment_status,total_minor::text,checkout_request_hash FROM orders WHERE idempotency_key=$1",
         [input.idempotencyKey],
       );
       if (prior.rowCount) {
         await client.query("ROLLBACK");
-        return reply.code(200).send({ order:prior.rows[0], reused:true, message:"This checkout request was already recorded. Use the original order confirmation." });
+        if (prior.rows[0]!.checkout_request_hash && prior.rows[0]!.checkout_request_hash !== requestFingerprint) {
+          return reply.code(409).send({ error:"IDEMPOTENCY_KEY_REUSED", message:"This checkout key has already been used for different order details. Refresh checkout and try again." });
+        }
+        const { checkout_request_hash: _fingerprint, ...existingOrder } = prior.rows[0]!;
+        return reply.code(200).send({ order:existingOrder, reused:true, message:"This checkout request was already recorded. Use the original order confirmation." });
       }
 
       const ids = input.items.map((item) => item.variantId);
@@ -115,10 +122,10 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
       const inserted = await client.query(
         `INSERT INTO orders
           (order_number,customer_id,guest_email,currency,subtotal_minor,discount_minor,shipping_minor,tax_minor,total_minor,
-           status,payment_status,shipping_address_snapshot,payment_method,shipping_quote_required,checkout_token_hash,idempotency_key)
-         VALUES ($1,$2,$3,'PKR',$4,0,0,0,$4,$5,'pending',$6::jsonb,$7,false,$8,$9)
+           status,payment_status,shipping_address_snapshot,payment_method,shipping_quote_required,checkout_token_hash,idempotency_key,checkout_request_hash)
+         VALUES ($1,$2,$3,'PKR',$4,0,0,0,$4,$5,'pending',$6::jsonb,$7,false,$8,$9,$10)
          RETURNING id,order_number,status,payment_status,total_minor::text`,
-        [number,customerId,input.email.toLowerCase(),subtotal,status,JSON.stringify(address),method,hash(accessToken),input.idempotencyKey],
+        [number,customerId,input.email.toLowerCase(),subtotal,status,JSON.stringify(address),method,hash(accessToken),input.idempotencyKey,requestFingerprint],
       );
       const order = inserted.rows[0]!;
       for (const item of input.items) {
@@ -159,6 +166,18 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
     } catch (error) {
       await client.query("ROLLBACK").catch(()=>undefined);
       if (typeof error==="object" && error!==null && "code" in error && error.code==="23505") {
+        const existing = await db.query<{order_number:string;status:string;payment_status:string;total_minor:string;checkout_request_hash:string|null}>(
+          "SELECT order_number,status,payment_status,total_minor::text,checkout_request_hash FROM orders WHERE idempotency_key=$1",
+          [input.idempotencyKey],
+        ).catch(() => ({ rows: [], rowCount: 0 } as any));
+        if (existing.rowCount) {
+          const prior = existing.rows[0]!;
+          if (prior.checkout_request_hash && prior.checkout_request_hash !== requestFingerprint) {
+            return reply.code(409).send({error:"IDEMPOTENCY_KEY_REUSED",message:"This checkout key has already been used for different order details."});
+          }
+          const { checkout_request_hash: _fingerprint, ...order } = prior;
+          return reply.code(200).send({order,reused:true,message:"This checkout request was already recorded. Use the original order confirmation."});
+        }
         return reply.code(409).send({error:"CHECKOUT_ALREADY_SUBMITTED",message:"This checkout has already been submitted. Refresh your orders before trying again."});
       }
       request.log.error({err:error},"Checkout order creation failed");
@@ -170,12 +189,6 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
     const parsed=proofSchema.safeParse(request.body);
     if(!parsed.success) return reply.code(400).send({error:"INVALID_PROOF",message:"Upload a JPG, PNG, WebP or PDF payment receipt under 5 MB."});
     const orderNo=request.params.orderNumber.trim().toUpperCase();
-    const order=await db.query<{id:string;payment_method:string;status:string;payment_status:string;checkout_token_hash:string|null}>(
-      "SELECT id,payment_method,status,payment_status,checkout_token_hash FROM orders WHERE order_number=$1 LIMIT 1",[orderNo],
-    );
-    const record=order.rows[0];
-    if(!record||record.payment_method!=="bank_transfer"||record.status!=="pending_payment"||record.payment_status!=="pending"||!record.checkout_token_hash||hash(parsed.data.accessToken)!==record.checkout_token_hash)
-      return reply.code(404).send({error:"ORDER_NOT_FOUND",message:"The order or secure upload link could not be verified."});
     const buffer=Buffer.from(parsed.data.dataBase64.replace(/^data:[^,]+,/,""),"base64");
     if(buffer.length<1||buffer.length>5*1024*1024) return reply.code(413).send({error:"PROOF_TOO_LARGE",message:"The receipt must be smaller than 5 MB."});
     const signatureOk =
@@ -184,12 +197,34 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
       (parsed.data.mimeType==="image/webp" && buffer.toString("ascii",8,12)==="WEBP") ||
       (parsed.data.mimeType==="application/pdf" && buffer.toString("ascii",0,5)==="%PDF-");
     if(!signatureOk) return reply.code(400).send({error:"INVALID_FILE_CONTENT",message:"The uploaded file does not match its declared file type."});
-    await db.query(
-      `INSERT INTO bank_transfer_proofs(order_id,file_name,mime_type,file_bytes)
-       VALUES($1,$2,$3,$4)`,
-      [record.id,safeFileName(parsed.data.fileName),parsed.data.mimeType,buffer],
-    );
-    return reply.code(201).send({status:"received",message:"Your transfer receipt has been securely received and is awaiting verification."});
+    const client=await db.connect();
+    try {
+      await client.query("BEGIN");
+      const order=await client.query<{id:string;payment_method:string;status:string;payment_status:string;checkout_token_hash:string|null}>(
+        "SELECT id,payment_method,status,payment_status,checkout_token_hash FROM orders WHERE order_number=$1 FOR UPDATE",[orderNo],
+      );
+      const record=order.rows[0];
+      if(!record||record.payment_method!=="bank_transfer"||record.status!=="pending_payment"||record.payment_status!=="pending"||!record.checkout_token_hash||hash(parsed.data.accessToken)!==record.checkout_token_hash) {
+        await client.query("ROLLBACK");
+        return reply.code(404).send({error:"ORDER_NOT_FOUND",message:"The order or secure upload link could not be verified."});
+      }
+      const pending=await client.query("SELECT id FROM bank_transfer_proofs WHERE order_id=$1 AND review_status='pending' LIMIT 1",[record.id]);
+      if(pending.rowCount) {
+        await client.query("ROLLBACK");
+        return reply.code(409).send({error:"PROOF_ALREADY_RECEIVED",message:"A receipt is already awaiting review for this order. Please wait for WA to review it."});
+      }
+      await client.query(
+        `INSERT INTO bank_transfer_proofs(order_id,file_name,mime_type,file_bytes)
+         VALUES($1,$2,$3,$4)`,
+        [record.id,safeFileName(parsed.data.fileName),parsed.data.mimeType,buffer],
+      );
+      await client.query("COMMIT");
+      return reply.code(201).send({status:"received",message:"Your transfer receipt has been securely received and is awaiting verification."});
+    } catch(error) {
+      await client.query("ROLLBACK").catch(()=>undefined);
+      request.log.error({err:error},"Bank transfer proof upload failed");
+      return reply.code(500).send({error:"PROOF_UPLOAD_FAILED",message:"We could not securely save this receipt. Please try again."});
+    } finally { client.release(); }
   });
 
 
@@ -205,7 +240,12 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
       [request.params.orderNumber.toUpperCase()],
     );
     if(!proof.rowCount)return reply.code(404).send({error:"PROOF_NOT_FOUND"});
-    return reply.type(proof.rows[0]!.mime_type).header("Content-Disposition",'inline; filename="'+proof.rows[0]!.file_name+'"').header("X-Content-Type-Options","nosniff").send(proof.rows[0]!.file_bytes);
+    return reply.type(proof.rows[0]!.mime_type)
+      .header("Content-Disposition",'attachment; filename="'+proof.rows[0]!.file_name+'"')
+      .header("X-Content-Type-Options","nosniff")
+      .header("Content-Security-Policy","sandbox")
+      .header("Cache-Control","private, no-store, max-age=0")
+      .send(proof.rows[0]!.file_bytes);
   });
 
   app.patch<{Params:{orderNumber:string}}>("/:orderNumber/bank-transfer-review",async(request,reply)=>{
@@ -219,11 +259,19 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
         "SELECT id,status,payment_status,payment_method FROM orders WHERE order_number=$1 FOR UPDATE",[request.params.orderNumber.toUpperCase()],
       );
       const row=order.rows[0]; if(!row){await client.query("ROLLBACK");return reply.code(404).send({error:"ORDER_NOT_FOUND"});}
-      if(row.payment_method!=="bank_transfer"||row.status!=="pending_payment"){await client.query("ROLLBACK");return reply.code(409).send({error:"ORDER_NOT_REVIEWABLE"});}
+      if(row.payment_method!=="bank_transfer"||row.status!=="pending_payment"||row.payment_status!=="pending"){await client.query("ROLLBACK");return reply.code(409).send({error:"ORDER_NOT_REVIEWABLE"});}
       const proof=await client.query<{id:string}>("SELECT id FROM bank_transfer_proofs WHERE order_id=$1 AND review_status='pending' ORDER BY uploaded_at DESC LIMIT 1 FOR UPDATE",[row.id]);
       if(!proof.rowCount){await client.query("ROLLBACK");return reply.code(409).send({error:"PENDING_PROOF_NOT_FOUND"});}
       if(parsed.data.decision==="approve"){
         await client.query("UPDATE bank_transfer_proofs SET review_status='approved',review_reason=$1,reviewed_by_admin_id=$2,reviewed_at=now() WHERE id=$3",[parsed.data.reason,admin.id,proof.rows[0]!.id]);
+        const payment=await client.query(
+          "UPDATE payments SET status='paid',paid_at=now() WHERE order_id=$1 AND provider='bank_transfer' AND status='pending' RETURNING id",
+          [row.id],
+        );
+        if(payment.rowCount!==1) {
+          await client.query("ROLLBACK");
+          return reply.code(409).send({error:"PENDING_PAYMENT_NOT_FOUND",message:"The pending bank-transfer payment record could not be verified. No inventory was changed."});
+        }
         const committed=await client.query(
           `UPDATE product_variants v
               SET stock_on_hand=v.stock_on_hand-i.quantity,
@@ -238,7 +286,6 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
         if(committed.rowCount!==Number(expected.rows[0]?.count??0)){
           await client.query("ROLLBACK");return reply.code(409).send({error:"INVENTORY_COMMIT_FAILED",message:"Reserved stock could not be safely committed. Review inventory before approving this payment."});
         }
-        await client.query("UPDATE payments SET status='paid',paid_at=now() WHERE order_id=$1 AND provider='bank_transfer' AND status='pending'",[row.id]);
         await client.query("UPDATE orders SET payment_status='paid',status='confirmed',updated_at=now() WHERE id=$1",[row.id]);
       }else{
         await client.query("UPDATE bank_transfer_proofs SET review_status='rejected',review_reason=$1,reviewed_by_admin_id=$2,reviewed_at=now() WHERE id=$3",[parsed.data.reason,admin.id,proof.rows[0]!.id]);
@@ -276,6 +323,10 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
         await client.query("ROLLBACK");return reply.code(409).send({error:"REFUND_REQUIRED",message:"This order has a recorded payment. Use the refund process before cancelling it."});
       }
       if(next==="cancelled"){
+        await client.query(
+          "UPDATE bank_transfer_proofs SET review_status='rejected',review_reason='Order cancelled before payment review.',reviewed_by_admin_id=$2,reviewed_at=now() WHERE order_id=$1 AND review_status='pending'",
+          [order.id,admin.id],
+        );
         const released=await client.query(
           `UPDATE product_variants v
               SET reserved_quantity=v.reserved_quantity-i.quantity,updated_at=now()
