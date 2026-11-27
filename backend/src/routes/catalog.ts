@@ -128,7 +128,7 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
         `UPDATE catalog_products
             SET name=$1, slug=$2, description=$3, category=$4, price_minor=$5,
                 currency=$6, image_url=$7, image_urls=$8, is_active=$9, updated_at=now()
-          WHERE id=$9
+          WHERE id=$10
           RETURNING id, name, slug, description, category, price_minor, currency, image_url, image_urls, is_active`,
         [p.name,p.slug,p.description,p.category,p.priceMinor,p.currency.toUpperCase(),p.imageUrls[0] ?? p.imageUrl ?? null,p.imageUrls,p.isActive,id.data],
       );
