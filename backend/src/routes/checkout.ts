@@ -208,6 +208,16 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
       if(!proof.rowCount){await client.query("ROLLBACK");return reply.code(409).send({error:"PENDING_PROOF_NOT_FOUND"});}
       if(parsed.data.decision==="approve"){
         await client.query("UPDATE bank_transfer_proofs SET review_status='approved',review_reason=$1,reviewed_by_admin_id=$2,reviewed_at=now() WHERE id=$3",[parsed.data.reason,admin.id,proof.rows[0]!.id]);
+        await client.query(
+          `UPDATE product_variants v
+              SET stock_on_hand=v.stock_on_hand-i.quantity,
+                  reserved_quantity=v.reserved_quantity-i.quantity,
+                  updated_at=now()
+             FROM order_items i
+            WHERE i.order_id=$1 AND i.variant_id=v.id
+              AND v.stock_on_hand>=i.quantity AND v.reserved_quantity>=i.quantity`,
+          [row.id],
+        );
         await client.query("UPDATE payments SET status='paid',paid_at=now() WHERE order_id=$1 AND provider='bank_transfer' AND status='pending'",[row.id]);
         await client.query("UPDATE orders SET payment_status='paid',status='confirmed',updated_at=now() WHERE id=$1",[row.id]);
       }else{
