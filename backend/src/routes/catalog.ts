@@ -81,7 +81,7 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
     const admin = await requireAdmin(request, reply);
     if (!admin) return;
     const result = await db.query(
-      `SELECT p.id AS product_id, p.name, p.slug, p.category, p.price_minor, p.currency, p.is_active AS product_active,
+      `SELECT p.id AS product_id, p.name, p.slug, p.description, p.category, p.price_minor, p.currency, p.image_url, p.is_active AS product_active,
               v.id AS variant_id, v.sku, v.colour, v.size, v.stock_on_hand, v.reserved_quantity,
               (v.stock_on_hand - v.reserved_quantity) AS available_quantity,
               v.low_stock_threshold, v.is_active AS variant_active,
