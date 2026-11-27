@@ -13,7 +13,7 @@ const SESSION_COOKIE = "wa_admin_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 8;
 
 type AdminRole = "owner" | "manager" | "support" | "fulfilment";
-type AdminIdentity = { id: string; email: string; role: AdminRole };
+export type AdminIdentity = { id: string; email: string; role: AdminRole };
 
 function hashToken(token: string): string {
   return createHash("sha256").update(token, "utf8").digest("hex");
@@ -46,7 +46,7 @@ function cookieOptions() {
   };
 }
 
-async function requireAdmin(request: FastifyRequest, reply: FastifyReply): Promise<AdminIdentity | null> {
+export async function requireAdmin(request: FastifyRequest, reply: FastifyReply): Promise<AdminIdentity | null> {
   const token = request.cookies[SESSION_COOKIE];
   if (!token) {
     reply.code(401).send({ error: "ADMIN_AUTHENTICATION_REQUIRED", message: "Please sign in to the admin panel." });
