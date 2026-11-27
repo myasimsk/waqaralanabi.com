@@ -1,0 +1,39 @@
+name: Backend checks
+
+on:
+  push:
+    branches:
+      - main
+      - storefront-preview
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck-and-build:
+    name: TypeScript typecheck and production build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install backend dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck backend
+        run: npm run typecheck
+      - name: Build backend
+        run: npm run build
