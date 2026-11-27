@@ -127,13 +127,16 @@ $("#productOptionsContent").addEventListener("click",e=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeCheckoutPreview();closeProductOptions();closeBag()}});
 function renderBag(){const count=bag.reduce((n,x)=>n+x.qty,0);const subtotal=bag.reduce((n,x)=>n+(products.find(p=>String(p.id)===String(x.id))?.price||0)*x.qty,0);$("#bagCount").textContent=count;$("#drawerCount").textContent="("+count+")";$("#subtotal").textContent=money(subtotal);const checkout=$("#checkoutButton");if(checkout)checkout.disabled=count===0;$("#bagItems").innerHTML=bag.length?bag.map((x,i)=>{const p=products.find(p=>String(p.id)===String(x.id));if(!p)return '';return `<div class="bag-line"><img src="${p.image}" alt=""><div><h3>${p.name}</h3><p>${x.color} · Size ${x.size}</p><p>${money(p.price)}</p><div class="qty-controls"><button data-qty="${i}" data-delta="-1" aria-label="Decrease quantity">−</button><span>${x.qty}</span><button data-qty="${i}" data-delta="1" aria-label="Increase quantity">+</button></div></div><button class="remove-item" data-remove="${i}" aria-label="Remove item">×</button></div>`}).join(""):'<div class="empty-bag">Your bag is waiting for something special.</div>';$$("[data-qty]").forEach(b=>b.onclick=()=>{const i=+b.dataset.qty;bag[i].qty+=+b.dataset.delta;if(bag[i].qty<1)bag.splice(i,1);saveBag()});$$("[data-remove]").forEach(b=>b.onclick=()=>{bag.splice(+b.dataset.remove,1);saveBag()})}
-/* A transparent, non-transactional checkout preview while commerce is being built */
+/* Customer checkout: server-authoritative prices and stock; PKR / Pakistan only. */
+let activeCheckoutOrder=null;
+function currentBagSubtotal(){return bag.reduce((sum,item)=>sum+(products.find(p=>String(p.id)===String(item.id))?.price||0)*item.qty,0);}
 function openCheckoutPreview(){
  if(!bag.length){toast("Your bag is empty.");return;}
- const count=bag.reduce((n,item)=>n+item.qty,0);
- const subtotal=bag.reduce((n,item)=>n+(products.find(p=>String(p.id)===String(item.id))?.price||0)*item.qty,0);
- $("#checkoutPreviewCount").textContent=String(count).padStart(2,"0");
- $("#checkoutPreviewSubtotal").textContent=money(subtotal);
+ $("#checkoutPreviewSubtotal").textContent=money(currentBagSubtotal());
+ $("#waCheckoutTotal").textContent=money(currentBagSubtotal());
+ $("#waCheckoutError").textContent="";
+ $("#waCheckoutForm").hidden=false;
+ $("#waCheckoutResult").hidden=true;
  $("#checkoutPreviewModal").classList.add("open");
  $("#checkoutPreviewBackdrop").classList.add("open");
  $("#checkoutPreviewModal").setAttribute("aria-hidden","false");
@@ -143,6 +146,54 @@ function closeCheckoutPreview(){
  $("#checkoutPreviewBackdrop").classList.remove("open");
  $("#checkoutPreviewModal").setAttribute("aria-hidden","true");
 }
+function checkoutVariantItems(){
+ return bag.map(item=>{
+  const product=products.find(p=>String(p.id)===String(item.id));
+  const variant=product?.variants?.find(v=>v.colour===item.color&&v.size===item.size&&v.available);
+  if(!product||!variant?.id)throw new Error("One or more selected pieces are not currently available for online ordering. Please refresh the collection.");
+  return {variantId:variant.id,quantity:item.qty};
+ });
+}
+function showCheckoutResult(order,payment,accessToken){
+ const form=$("#waCheckoutForm"),result=$("#waCheckoutResult");
+ form.hidden=true;result.hidden=false;
+ const bank=payment?.bankTransfer;
+ result.innerHTML=`<p class="eyebrow">ORDER RECEIVED / WA</p><h3>Thank you.<br><em>Your order is in.</em></h3><p class="wa-order-number">ORDER NUMBER <strong>${order.orderNumber}</strong></p><div class="wa-order-summary"><div><span>Merchandise subtotal</span><strong>${money(Number(order.totalMinor)/100)}</strong></div><div><span>Shipping across Pakistan</span><strong>FREE</strong></div><div class="wa-order-total"><span>Order status</span><strong>${order.status==="confirmed"?"Confirmed":"Awaiting payment"}</strong></div></div>
+ ${order.paymentMethod==="bank_transfer"&&bank?`<div class="wa-bank-instructions"><h4>Bank transfer details</h4><p><b>${bank.accountTitle}</b><br>${bank.bankName}<br>IBAN: <strong>${bank.iban}</strong><br>Account number: ${bank.accountNumber}<br>${bank.branch}, ${bank.city}</p><p>${bank.instructions}</p><label class="wa-receipt-label">Upload transfer receipt<input id="waReceiptFile" type="file" accept="image/png,image/jpeg,image/webp,application/pdf"></label><button type="button" class="button button-burgundy" id="waUploadReceipt">Submit receipt</button><p id="waReceiptMessage" role="status" aria-live="polite"></p></div>`:''}
+ <p class="wa-checkout-legal">We have received your order. Keep your order number for reference. WA will contact you regarding fulfilment.</p><button type="button" class="button button-burgundy" id="waFinishCheckout">Continue exploring</button>`;
+ activeCheckoutOrder={orderNumber:order.orderNumber,accessToken,paymentMethod:order.paymentMethod};
+ $("#waFinishCheckout").onclick=()=>{bag=[];saveBag();closeCheckoutPreview();closeBag();};
+ const upload=$("#waUploadReceipt");
+ if(upload)upload.onclick=uploadBankReceipt;
+}
+async function uploadBankReceipt(){
+ const file=$("#waReceiptFile")?.files?.[0],message=$("#waReceiptMessage"),button=$("#waUploadReceipt");
+ if(!file){message.textContent="Choose your transfer receipt first.";return;}
+ if(file.size>5*1024*1024){message.textContent="The receipt must be 5 MB or smaller.";return;}
+ const allowed=["image/png","image/jpeg","image/webp","application/pdf"];
+ if(!allowed.includes(file.type)){message.textContent="Upload a PNG, JPG, WebP or PDF receipt.";return;}
+ button.disabled=true;message.textContent="Uploading receipt…";
+ try{
+  const dataBase64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(",")[1]);reader.onerror=()=>reject(new Error("Could not read this file."));reader.readAsDataURL(file);});
+  const response=await fetch(WA_API_BASE+`/checkout/orders/${encodeURIComponent(activeCheckoutOrder.orderNumber)}/bank-transfer-proof`,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({fileName:file.name,mimeType:file.type,dataBase64,accessToken:activeCheckoutOrder.accessToken})});
+  const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||"Receipt upload failed. Please try again.");
+  message.textContent="Receipt received. Your payment will remain pending until WA verifies it.";
+ }catch(error){message.textContent=error.message||"Receipt upload failed.";}
+ finally{button.disabled=false;}
+}
+$("#waCheckoutForm").addEventListener("submit",async event=>{
+ event.preventDefault();const form=event.currentTarget,button=$("#waPlaceOrder"),error=$("#waCheckoutError"),data=new FormData(form);
+ button.disabled=true;button.textContent="Placing order…";error.textContent="";
+ try{
+  const items=checkoutVariantItems();
+  const body={fullName:String(data.get("fullName")).trim(),email:String(data.get("email")).trim(),phone:String(data.get("phone")).trim(),addressLine1:String(data.get("addressLine1")).trim(),addressLine2:String(data.get("addressLine2")).trim(),city:String(data.get("city")).trim(),region:String(data.get("region")).trim(),postalCode:String(data.get("postalCode")).trim(),countryCode:"PK",paymentMethod:String(data.get("paymentMethod")),idempotencyKey:crypto.randomUUID(),items};
+  const response=await fetch(WA_API_BASE+"/checkout/orders",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(body)});
+  const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload.message||payload.error||"We could not place your order. Please check your details and try again.");
+  if(!payload.order?.orderNumber||!payload.accessToken)throw new Error("The order response was incomplete. Please contact WA before retrying.");
+  showCheckoutResult(payload.order,payload.payment,payload.accessToken);
+ }catch(err){error.textContent=err.message||"Checkout is temporarily unavailable."; }
+ finally{button.disabled=false;button.innerHTML='Place order <span>↗</span>';}
+});
 function openBag(){$("#searchBar").classList.remove("open");$("#bagDrawer").classList.add("open");$("#drawerBackdrop").classList.add("open");$("#bagDrawer").setAttribute("aria-hidden","false");document.body.style.overflow="hidden"}function closeBag(){$("#bagDrawer").classList.remove("open");$("#drawerBackdrop").classList.remove("open");$("#bagDrawer").setAttribute("aria-hidden","true");document.body.style.overflow="";}
 let toastTimer;function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),2600)}
 $("#filters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;activeFilter=b.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts()});$$(".desktop-nav [data-filter],.mobile-menu [data-filter],.category-tile[data-filter],.footer-column [data-filter]").forEach(a=>a.addEventListener("click",()=>{activeFilter=a.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts();$("#mobileMenu").classList.remove("open")}));$("#sortSelect").onchange=renderProducts;$("#bagOpen").onclick=openBag;$("#bagContinue").onclick=closeBag;$("#bagClose").onclick=closeBag;$("#drawerBackdrop").onclick=closeBag;$("#checkoutButton").onclick=openCheckoutPreview;$("#checkoutPreviewClose").onclick=closeCheckoutPreview;$("#checkoutPreviewBackdrop").onclick=closeCheckoutPreview;$("#checkoutReturnToBag").onclick=closeCheckoutPreview;$("#menuToggle").onclick=()=>$("#mobileMenu").classList.toggle("open");$("#searchToggle").onclick=()=>{$("#searchBar").classList.toggle("open");if($("#searchBar").classList.contains("open"))$("#searchInput").focus()};$("#searchClose").onclick=()=>{$("#searchBar").classList.remove("open");query="";$("#searchInput").value="";renderProducts()};$("#searchInput").oninput=e=>{query=e.target.value;renderProducts()};$("#newsletterForm").onsubmit=async e=>{e.preventDefault();const form=e.currentTarget,email=form.elements.email.value.trim(),consent=form.elements.consent.checked,website=form.elements.website.value,button=form.querySelector("button[type=submit]"),message=$("#newsletterMessage");if(!consent){message.textContent="Please confirm consent to receive updates.";return;}button.disabled=true;button.textContent="Joining…";message.textContent="Adding you to the WA list…";try{const response=await fetch((window.WA_API_BASE||"http://127.0.0.1:4000")+"/newsletter",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({email,consent,website})});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.message||"We could not save your signup. Please try again.");message.textContent="You’re on the list. Thank you for joining the WA world.";form.reset();toast("You’re on the WA list.");}catch(error){message.textContent=error.message||"Signup is temporarily unavailable. Please try again.";toast("We couldn’t complete your signup.");}finally{button.disabled=false;button.textContent="Join us ↗";}};$("#backTop").onclick=e=>{e.preventDefault();window.scrollTo({top:0,behavior:"smooth"})};document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBag()});renderProducts();renderBag();
