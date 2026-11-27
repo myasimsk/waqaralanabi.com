@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: waqar-al-anabi-preview-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install --no-audit --no-fund && npm run typecheck && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATABASE_SSL
+        value: "true"
+      - key: COMMERCE_LAUNCH_READY
+        value: "false"
+      - key: STOREFRONT_ORIGIN
+        value: https://waqar-al-anabi-preview.pages.dev
+      - key: DATABASE_URL
+        sync: false
