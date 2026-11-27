@@ -12,9 +12,16 @@ This is a private development service. It is not connected to the public WA doma
 2. Install dependencies: `npm install`.
 3. Copy `.env.example` to `.env` and keep the local defaults for development.
 4. Start local PostgreSQL from the repository root: `docker compose -f backend/docker-compose.yml up -d`.
-5. Apply the initial schema to the local database: `psql "postgresql://postgres:postgres@localhost:5432/wa_store_dev" -f backend/database/schema.sql`.
-6. Start the API from `backend`: `npm run dev`.
-7. Check `http://127.0.0.1:4000/health` and `http://127.0.0.1:4000/ready`.
+5. Apply the base schema from the repository root: `psql "postgresql://postgres:postgres@localhost:5432/wa_store_dev" -v ON_ERROR_STOP=1 -f backend/database/schema.sql`.
+6. Apply every migration once, in filename order, from the repository root (PowerShell):
+   ```powershell
+   Get-ChildItem .\\backend\\database\\migrations\\*.sql | Sort-Object Name | ForEach-Object {
+     psql "postgresql://postgres:postgres@localhost:5432/wa_store_dev" -v ON_ERROR_STOP=1 -f $_.FullName
+     if ($LASTEXITCODE -ne 0) { throw "Migration failed: $($_.Name)" }
+   }
+   ```
+7. Start the API from `backend`: `npm run dev`.
+8. Check `http://127.0.0.1:4000/health` and `http://127.0.0.1:4000/ready`.
 
 ## Useful commands
 - `npm run typecheck`: check TypeScript types.
@@ -24,15 +31,14 @@ This is a private development service. It is not connected to the public WA doma
 ## Safety
 - Never commit `.env` or real credentials.
 - Never use production customer data in local development.
-- The initial SQL schema is a development baseline, not yet a versioned migration system.
+- `database/schema.sql` is the base schema. Apply every file in `database/migrations/` once, in numeric filename order, before starting the API. There is not yet an automated migration runner.
 - Do not expose this API publicly or connect the Hostinger domain at this stage.
 - Do not enable real payments until provider integration, webhook verification and end-to-end tests are complete.
 
 
 ## Creating the first administrator (local / preview)
 
-1. Apply the admin session migration:
-   `cmd /c "docker compose exec -T postgres psql -U postgres -d wa_store_dev < database/migrations/003_admin_sessions.sql"`
+1. Complete the base schema and all migrations in the Setup section first; migration `003_admin_sessions.sql` is included in that sequence.
 2. Set bootstrap values in the backend terminal (do not commit them):
    `$env:ADMIN_BOOTSTRAP_EMAIL = "your-admin-email@example.com"`
    `$env:ADMIN_BOOTSTRAP_ROLE = "owner"`
