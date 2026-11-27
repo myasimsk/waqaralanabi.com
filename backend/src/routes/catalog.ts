@@ -12,6 +12,7 @@ const productSchema = z.object({
   priceMinor: z.number().int().nonnegative().max(100_000_000),
   currency: z.string().length(3).default("PKR"),
   imageUrl: z.string().url().max(1000).nullable().optional(),
+  imageUrls: z.array(z.string().url().max(1000)).max(8).default([]),
   isActive: z.boolean().default(false),
 });
 const variantSchema = z.object({
@@ -41,7 +42,7 @@ export async function catalogRoutes(app: FastifyInstance): Promise<void> {
   app.get("/catalog", async () => {
     const result = await db.query(
       `SELECT p.id, p.name, p.slug, p.description, p.category, p.price_minor,
-              p.currency, p.image_url, p.updated_at,
+              p.currency, p.image_url, p.image_urls, p.updated_at,
               COALESCE(jsonb_agg(jsonb_build_object(
                 'id', v.id, 'sku', v.sku, 'colour', v.colour, 'size', v.size,
                 'available', (v.is_active AND v.stock_on_hand > v.reserved_quantity)
@@ -81,7 +82,7 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
     const admin = await requireAdmin(request, reply);
     if (!admin) return;
     const result = await db.query(
-      `SELECT p.id AS product_id, p.name, p.slug, p.description, p.category, p.price_minor, p.currency, p.image_url, p.is_active AS product_active,
+      `SELECT p.id AS product_id, p.name, p.slug, p.description, p.category, p.price_minor, p.currency, p.image_url, p.image_urls, p.is_active AS product_active,
               v.id AS variant_id, v.sku, v.colour, v.size, v.stock_on_hand, v.reserved_quantity,
               (v.stock_on_hand - v.reserved_quantity) AS available_quantity,
               v.low_stock_threshold, v.is_active AS variant_active,
@@ -100,10 +101,10 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
     const p = parsed.data;
     try {
       const result = await db.query(
-        `INSERT INTO catalog_products (name, slug, description, category, price_minor, currency, image_url, is_active)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        `INSERT INTO catalog_products (name, slug, description, category, price_minor, currency, image_url, image_urls, is_active)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
          RETURNING id, name, slug, category, price_minor, currency, is_active`,
-        [p.name,p.slug,p.description,p.category,p.priceMinor,p.currency.toUpperCase(),p.imageUrl ?? null,p.isActive],
+        [p.name,p.slug,p.description,p.category,p.priceMinor,p.currency.toUpperCase(),p.imageUrls[0] ?? p.imageUrl ?? null,p.imageUrls,p.isActive],
       );
       return reply.code(201).send({ product: result.rows[0] });
     } catch (error) {
@@ -126,10 +127,10 @@ export async function inventoryRoutes(app: FastifyInstance): Promise<void> {
       const result = await db.query(
         `UPDATE catalog_products
             SET name=$1, slug=$2, description=$3, category=$4, price_minor=$5,
-                currency=$6, image_url=$7, is_active=$8, updated_at=now()
+                currency=$6, image_url=$7, image_urls=$8, is_active=$9, updated_at=now()
           WHERE id=$9
-          RETURNING id, name, slug, description, category, price_minor, currency, image_url, is_active`,
-        [p.name,p.slug,p.description,p.category,p.priceMinor,p.currency.toUpperCase(),p.imageUrl ?? null,p.isActive,id.data],
+          RETURNING id, name, slug, description, category, price_minor, currency, image_url, image_urls, is_active`,
+        [p.name,p.slug,p.description,p.category,p.priceMinor,p.currency.toUpperCase(),p.imageUrls[0] ?? p.imageUrl ?? null,p.imageUrls,p.isActive,id.data],
       );
       if (!result.rowCount) return reply.code(404).send({ error: "PRODUCT_NOT_FOUND" });
       return { product: result.rows[0] };
