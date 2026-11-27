@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { db } from "../db/pool.js";
+import { env } from "../config/env.js";
 import { requireAdmin } from "./admin.js";
 
 const checkoutSchema = z.object({
@@ -40,6 +41,9 @@ const safeFileName = (value: string) => value.replace(/[^a-zA-Z0-9._-]/g,"_").sl
 
 export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
   app.post("/checkout/orders", { config: { rateLimit: { max: 8, timeWindow: "15 minutes" } } }, async (request, reply) => {
+    if (!env.COMMERCE_LAUNCH_READY) {
+      return reply.code(503).send({ error: "COMMERCE_NOT_OPEN", message: "Online ordering is not open yet. Please check back soon." });
+    }
     const parsed = checkoutSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error:"INVALID_CHECKOUT", message:"Check your contact, delivery and product details.", details:parsed.error.flatten() });
     const input = parsed.data;
