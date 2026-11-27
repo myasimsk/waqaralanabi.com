@@ -111,6 +111,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       const email = normalizeEmail(parsed.data.email);
       const { orderNumber } = parsed.data;
 
+      // Fail closed before account/order lookups so this endpoint does not
+      // reveal whether an email or guest order exists while mail is offline.
       const eligibleOrder = await db.query(
         `SELECT o.id
            FROM orders o
@@ -196,6 +198,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
               AND purpose = 'account_activation'
               AND consumed_at IS NULL
               AND expires_at > now()
+              AND attempts < 5
             ORDER BY created_at DESC
             LIMIT 1
             FOR UPDATE`,
@@ -452,6 +455,9 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       }
 
       const email = normalizeEmail(parsed.data.email);
+
+      // Return the same service state for every address while email delivery
+      // is unavailable; do not reveal whether a customer account exists.
       const customer = await db.query<{ id: string; status: string }>(
         "SELECT id, status FROM customers WHERE email_normalized = $1 LIMIT 1",
         [email],
