@@ -274,7 +274,7 @@ const WA_TEST_MODE=true;
 const WA_TEST_ORDERS_KEY="wa-test-orders-v1";
 const WA_TEST_STOCK_KEY="wa-test-stock-v1";
 const WA_COMMERCE_LAUNCH_READY=false;
-const WA_API_BASE=window.WA_API_BASE||"http://127.0.0.1:4000";
+const WA_API_BASE=window.WA_API_BASE||((location.hostname==="localhost"||location.hostname==="127.0.0.1")?"http://127.0.0.1:4000":"/api");
 const colourHex={"Black":"#111111","Burgundy":"#741F2B","White":"#F7F7F2","Beige":"#DCC9A8","Cream":"#F1E6D2","Chocolate Brown":"#4A2C20","Chocolate":"#4A2C20","Taupe":"#A89A88","Charcoal":"#55514E","Brown":"#49352C","Olive Green":"#4B5135"};
 async function connectLiveCatalogue(){
  if(WA_TEST_MODE){console.info("WA test mode: using the seven local preview products; no live catalogue or order API is called.");return;}
