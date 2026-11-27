@@ -50,7 +50,7 @@ jobs:
       - name: Run PostgreSQL concurrency tests
         env:
           TEST_DATABASE_URL: postgresql://wa_test:wa_test@localhost:5432/wa_test
-        run: node --test tests/*.test.mjs
+        run: node --import tsx --test tests/*.test.mjs
       - name: Typecheck backend
         run: npm run typecheck
       - name: Build backend
