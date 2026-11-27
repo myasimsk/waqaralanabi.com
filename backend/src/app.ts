@@ -29,6 +29,28 @@ export async function buildApp() {
   });
   await app.register(rateLimit, { max: 100, timeWindow: "1 minute" });
 
+  // Reject cross-origin browser mutations before they reach authenticated routes.
+  // SameSite cookies remain enabled as a second layer; non-browser clients without
+  // Origin / Fetch Metadata headers can still use the API normally.
+  const storefrontOrigin = new URL(env.STOREFRONT_ORIGIN).origin;
+  app.addHook("onRequest", async (request, reply) => {
+    if (!["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) return;
+    const origin = request.headers.origin;
+    const fetchSite = request.headers["sec-fetch-site"];
+    if (origin && origin !== storefrontOrigin) {
+      return reply.code(403).send({
+        error: "CROSS_ORIGIN_REQUEST_BLOCKED",
+        message: "This request origin is not allowed.",
+      });
+    }
+    if (fetchSite === "cross-site") {
+      return reply.code(403).send({
+        error: "CROSS_SITE_REQUEST_BLOCKED",
+        message: "Cross-site browser requests are not allowed.",
+      });
+    }
+  });
+
   app.get("/health", async () => ({
     status: "ok",
     service: "waqar-al-anabi-api",
