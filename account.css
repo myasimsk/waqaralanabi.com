@@ -318,3 +318,18 @@ html[data-theme="dark"] .wa-account-loyalty{background:linear-gradient(135deg,rg
   .wa-address-card,.wa-account-loyalty,.wa-account-loyalty-grid>div,
   .wa-account-form input,.wa-account-form textarea,.wa-account-auth-links button{transition:none!important}
 }
+
+/* Order progress in customer account */
+.wa-order-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;list-style:none;margin:20px 0 17px;padding:0;position:relative}
+.wa-order-progress:before{content:"";position:absolute;left:8px;right:8px;top:5px;height:1px;background:rgba(122,30,58,.2)}
+.wa-order-progress li{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:8px;color:var(--muted);font:600 9px "Space Grotesk",sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.wa-order-step-dot{position:relative;z-index:1;width:11px;height:11px;border:1px solid rgba(122,30,58,.35);border-radius:50%;background:var(--surface,#fff)}
+.wa-order-progress li.is-complete{color:var(--wine)}
+.wa-order-progress li.is-complete .wa-order-step-dot{background:var(--wine);border-color:var(--wine);box-shadow:0 0 0 3px rgba(122,30,58,.1)}
+.wa-order-progress li.is-current{color:var(--ink)}
+.wa-order-progress li.is-current .wa-order-step-dot{border:2px solid var(--wine);box-shadow:0 0 0 3px rgba(122,30,58,.1)}
+.wa-order-pending,.wa-order-cancelled{margin:13px 0;padding:11px 13px;border-left:2px solid var(--wine);background:rgba(122,30,58,.055);font-size:11px;line-height:1.7;color:var(--muted)}
+.wa-order-help{display:inline-block;margin-top:15px;color:var(--wine);font:700 9px "Space Grotesk",sans-serif;letter-spacing:.1em;text-decoration:none;border-bottom:1px solid rgba(122,30,58,.35);padding-bottom:5px}
+.wa-order-help:hover{text-decoration:underline;text-underline-offset:4px}
+@media(max-width:520px){.wa-order-progress{gap:3px}.wa-order-progress li{font-size:8px;letter-spacing:.02em}.wa-order-progress:before{right:5px}.wa-order-progress li span:last-child{max-width:65px}}
+@media(prefers-reduced-motion:reduce){.wa-order-progress *{transition:none!important}}
