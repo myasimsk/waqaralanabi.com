@@ -303,6 +303,11 @@ $$("a[data-filter]").forEach(link=>link.addEventListener("click",()=>{
  setCollectionFilter(link.dataset.filter);
  setMobileMenu(false);
 }));
+$$("[data-look]").forEach(button=>button.addEventListener("click",()=>{
+ setCollectionFilter("All");
+ setCollectionSearch(button.dataset.look);
+ $("#shop").scrollIntoView();
+}));
 $("#collectionSearch").addEventListener("input",event=>setCollectionSearch(event.target.value));
 $("#sortSelect").onchange=renderProducts;$("#bagOpen").onclick=openBag;$("#bagContinue").onclick=closeBag;$("#bagClose").onclick=closeBag;$("#drawerBackdrop").onclick=closeBag;$("#checkoutButton").onclick=openCheckoutPreview;$("#checkoutPreviewClose").onclick=closeCheckoutPreview;$("#checkoutPreviewBackdrop").onclick=closeCheckoutPreview;$("#menuToggle").onclick=()=>{
  $("#searchBar").classList.remove("open");
