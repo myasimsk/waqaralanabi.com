@@ -1,11 +1,20 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
+import pg from "pg";
 
 test("preview checkout advertises test mode and rejects real contact and payment details", async () => {
+  const sharedDatabase = process.env.TEST_DATABASE_URL;
+  const schema = "wa_preview_" + randomUUID().replaceAll("-", "");
+  const setup = sharedDatabase ? new pg.Pool({ connectionString: sharedDatabase }) : null;
+  const database = new URL(sharedDatabase ?? "postgresql://test:test@localhost:5432/test");
+  if (setup) {
+    await setup.query('CREATE SCHEMA "' + schema + '"');
+    database.searchParams.set("options", "-c search_path=" + schema + ",public");
+  }
   Object.assign(process.env, {
     NODE_ENV: "test",
-    DATABASE_URL: "postgresql://test:test@localhost:5432/test",
+    DATABASE_URL: database.toString(),
     DATABASE_SSL: "false",
     PREVIEW_CHECKOUT_ENABLED: "true",
     COMMERCE_LAUNCH_READY: "false",
@@ -51,8 +60,35 @@ test("preview checkout advertises test mode and rejects real contact and payment
     });
     assert.equal(proof.statusCode, 503);
     assert.equal(proof.json().error, "PREVIEW_PAYMENT_DISABLED");
+
+    if (setup) {
+      const { initializePreviewDatabase } = await import("../src/db/initialize-preview.ts");
+      await initializePreviewDatabase();
+      await initializePreviewDatabase();
+      const catalogue = await app.inject("/catalog");
+      assert.equal(catalogue.statusCode, 200);
+      assert.equal(catalogue.json().products.length, 7);
+      assert.equal(catalogue.json().products.flatMap((product) => product.variants).length, 104);
+
+      const variant = catalogue.json().products[0].variants[0];
+      const payload = { ...fixture, items: [{ variantId: variant.id, quantity: 1 }] };
+      const order = await app.inject({ method: "POST", url: "/checkout/orders", payload });
+      assert.equal(order.statusCode, 201);
+      assert.equal(order.json().testOnly, true);
+      assert.match(order.json().order.orderNumber, /^WAT-/);
+      const retry = await app.inject({ method: "POST", url: "/checkout/orders", payload });
+      assert.equal(retry.statusCode, 200);
+      assert.equal(retry.json().order.orderNumber, order.json().order.orderNumber);
+
+      const stock = await db.query("SELECT reserved_quantity FROM product_variants WHERE id=$1", [variant.id]);
+      assert.equal(stock.rows[0].reserved_quantity, 1);
+    }
   } finally {
     await app.close();
     await db.end();
+    if (setup) {
+      await setup.query('DROP SCHEMA "' + schema + '" CASCADE');
+      await setup.end();
+    }
   }
 });

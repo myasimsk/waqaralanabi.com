@@ -78,16 +78,6 @@ export async function buildApp() {
     }
   });
 
-  await app.register(authRoutes, { prefix: "/auth" });
-  await app.register(accountRoutes, { prefix: "/account" });
-  await app.register(addressRoutes, { prefix: "/account/addresses" });
-  await app.register(adminRoutes, { prefix: "/admin" });
-  await app.register(catalogRoutes);
-  await app.register(newsletterRoutes);
-  await app.register(checkoutRoutes);
-  await app.register(orderAdminRoutes, { prefix: "/admin/orders" });
-  await app.register(inventoryRoutes, { prefix: "/admin/inventory" });
-
   app.setNotFoundHandler((_request, reply) =>
     reply.code(404).send({
       error: "NOT_FOUND",
@@ -116,6 +106,16 @@ export async function buildApp() {
           : "The request could not be processed.",
     });
   });
+
+  await app.register(authRoutes, { prefix: "/auth" });
+  await app.register(accountRoutes, { prefix: "/account" });
+  await app.register(addressRoutes, { prefix: "/account/addresses" });
+  await app.register(adminRoutes, { prefix: "/admin" });
+  await app.register(catalogRoutes);
+  await app.register(newsletterRoutes);
+  await app.register(checkoutRoutes);
+  await app.register(orderAdminRoutes, { prefix: "/admin/orders" });
+  await app.register(inventoryRoutes, { prefix: "/admin/inventory" });
 
   return app;
 }
