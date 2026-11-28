@@ -52,49 +52,6 @@ function openCountryGate(){
  }
  $("#countryContinue").focus({preventScroll:true});
 }
-/* WA Frequency: turn the brand attitude into a real product-discovery interaction */
-const frequencyChoices={
- quiet:{query:"sweatshirt",title:"LOWKEY MODE: ON.",copy:"Easy layers. Relaxed energy. Start with the pieces that do the most without saying too much.",link:"SHOW ME THE OFF-DUTY FITS"},
- bold:{query:"tee",title:"NO BLENDING IN.",copy:"A statement without trying too hard. Find the pieces that let your presence do the talking.",link:"FIND MY STATEMENT PIECE"},
- form:{query:"trouser",title:"CLEAN. CONSIDERED. YOU.",copy:"Strong silhouettes, clean lines, no unnecessary noise. Build your rotation around the fit.",link:"BUILD MY ROTATION"}
-};
-const frequencyResult=$("#frequencyResult");
-$$("[data-frequency]").forEach(card=>card.addEventListener("click",()=>{
- const choice=frequencyChoices[card.dataset.frequency];
- $$("[data-frequency]").forEach(other=>other.setAttribute("aria-pressed",String(other===card)));
- frequencyResult.querySelector("span").textContent=choice.title;
- frequencyResult.querySelector("p").textContent=choice.copy;
- const link=frequencyResult.querySelector("a");link.textContent=choice.link+" ↓";
- query=choice.query;$("#searchInput").value="";
- activeFilter="All";$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));
- renderProducts();
- $("#shop").scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
-}));
-
-
-/* Reliable landing campaign CTA navigation */
-const campaignLink=document.querySelector(".drop-intro-link");
-if(campaignLink){
- campaignLink.addEventListener("click",function(event){
-  event.preventDefault();
-  const destination=document.getElementById("lookbook");
-  if(destination) destination.scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
- });
-}
-/* Lookbook frames act like a campaign navigation, not static decoration */
-const lookbookSearch={quiet:"sweatshirt",bold:"tee",form:"trouser"};
-$$("[data-look]").forEach(frame=>frame.addEventListener("click",()=>{
- const look=frame.dataset.look;
- query=lookbookSearch[look]||"";$("#searchInput").value="";
- activeFilter="All";$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="All"));
- renderProducts();
- $("#shop").scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
- toast("LOOKBOOK / "+look.toUpperCase()+" — pieces selected");
-}));
-/* Tiny progress line gives the long editorial page a tactile, app-like feel */
-const progress=document.createElement("div");progress.className="wa-scroll-progress";progress.setAttribute("aria-hidden","true");document.body.appendChild(progress);
-const updateProgress=()=>{const max=document.documentElement.scrollHeight-window.innerHeight;progress.style.transform="scaleX("+ (max>0?window.scrollY/max:0) +")"};
-window.addEventListener("scroll",updateProgress,{passive:true});window.addEventListener("resize",updateProgress);updateProgress();
 renderProducts();renderBag();
 $("#countrySwitch").addEventListener("click",()=>location.assign("./"));
 function renderProducts(){
@@ -103,24 +60,23 @@ function renderProducts(){
  if(sort==="low")list.sort((a,b)=>a.price-b.price);
  if(sort==="high")list.sort((a,b)=>b.price-a.price);
  if(sort==="name")list.sort((a,b)=>a.name.localeCompare(b.name));
- $("#productTotal").textContent=String(list.length).padStart(2,"0")+" pieces";
+ $("#productTotal").textContent=list.length+(list.length===1?" piece":" pieces");
  $("#productGrid").innerHTML=list.map((p,index)=>`<article class="product-card" style="--card-index:${index}">
   <div class="product-image-wrap">
    <img class="product-image" src="${escapeTestHtml(p.image)}" alt="${escapeTestHtml(p.name)} — campaign reference" loading="lazy">
-   <span class="product-badge">${p.badge}</span>
-   <button class="quick-add" type="button" data-add="${escapeTestHtml(p.id)}" aria-label="View ${escapeTestHtml(p.name)} details">Explore piece <span>↗</span></button>
-   <span class="product-image-index">WA / ${escapeTestHtml(String(p.id).padStart(2,"0"))}</span>
+   <button class="quick-add" type="button" data-add="${escapeTestHtml(p.id)}" aria-label="View ${escapeTestHtml(p.name)} details">Choose options <span aria-hidden="true">↗</span></button>
   </div>
   <div class="product-meta">
-   <div class="product-category">${escapeTestHtml(p.category)} / WA EDIT</div>
+   <div class="product-category">${escapeTestHtml(p.category)}</div>
    <div class="product-title-row"><h3 class="product-title">${escapeTestHtml(p.name)}</h3><span class="product-price">${money(p.price)}</span></div>
    <div class="product-colors" aria-label="Choose a colour to view product options">
     ${p.colors.map((c,i)=>`<button class="swatch-button ${i===0?"is-default":""}" type="button" data-swatch-product="${escapeTestHtml(p.id)}" data-swatch-color="${escapeTestHtml(c[0])}" aria-label="View ${escapeTestHtml(p.name)} in ${escapeTestHtml(c[0])}" title="${escapeTestHtml(c[0])}" style="--swatch:${c[1]}"><span class="swatch"></span></button>`).join("")}
     <span class="color-count">${p.colors.length} colours</span>
    </div>
-   <div class="product-sizes">S · M · L · XL</div>
+   <div class="product-sizes">${escapeTestHtml(p.sizes.join(" · "))}</div>
   </div>
- </article>`).join("")||'<p class="shop-empty">No pieces found. Try another search.</p>';
+ </article>`).join("")||'<div class="shop-empty"><p>No pieces match your filters.</p><button type="button" id="clearCollection">Clear filters</button></div>';
+ $("#clearCollection")?.addEventListener("click",()=>{setCollectionSearch("");setCollectionFilter("All");$("#collectionSearch").focus();});
  $$("#productGrid [data-add]").forEach(button=>button.addEventListener("click",()=>openProductOptions(button.dataset.add)));
  $$("#productGrid [data-swatch-product]").forEach(button=>button.addEventListener("click",()=>openProductOptions(button.dataset.swatchProduct,button.dataset.swatchColor)));
 }
@@ -128,10 +84,13 @@ function saveBag(){storage.setItem("wa-preview-bag",JSON.stringify(bag));renderB
 let optionProduct=null,optionColor="",optionSize="M";
 function openProductOptions(id, initialColor=null){
  const p=products.find(x=>String(x.id)===String(id));if(!p)return;
- optionProduct=p;optionColor=p.colors.some(c=>c[0]===initialColor)?initialColor:p.colors[0][0];optionSize="M";
+ optionProduct=p;
+ optionColor=p.colors.some(c=>c[0]===initialColor)?initialColor:p.colors[0][0];
+ const sizes=p.variants?.length?p.sizes.filter(size=>p.variants.some(variant=>variant.colour===optionColor&&variant.size===size&&variant.available)):p.sizes;
+ optionSize=sizes.includes("M")?"M":sizes[0]||"";
  const gallery=editorialReferences(p);
  const details=productDetails[p.id]||{intro:p.description||'A considered piece from the WA collection.',design:'Available in selected colours and sizes.',brand:'People not trends.'};
- $("#productOptionsContent").innerHTML=`<div class="options-visual"><img class="options-product-image" id="activeProductImage" src="${escapeTestHtml(gallery[0])}" alt="${escapeTestHtml(p.name)} — editorial reference"><div class="options-gallery-thumbs">${gallery.map((src,i)=>`<button type="button" class="options-gallery-thumb ${i===0?"selected":""}" data-gallery-image="${escapeTestHtml(src)}" aria-label="Show reference image ${i+1}" aria-pressed="${i===0}"><img src="${escapeTestHtml(src)}" alt="" loading="lazy"></button>`).join("")}</div><span class="options-image-note">${p.galleryImages?.length?"PRODUCT PHOTOGRAPHY":"EDITORIAL IMAGE REFERENCES · NOT FINAL PRODUCT PHOTOGRAPHY"}</span></div><div class="options-product-info"><p class="eyebrow">${escapeTestHtml(p.category)} / WA EDIT</p><h2 id="productOptionsTitle">${escapeTestHtml(p.name)}</h2><p class="options-price">${money(p.price)}</p><p class="options-description">${escapeTestHtml(details.intro)}</p><div class="options-detail-block"><span>DESIGN NOTES</span><p>${escapeTestHtml(details.design)}</p></div><div class="options-detail-block"><span>THE WA DETAIL</span><p>${escapeTestHtml(details.brand)}</p></div><fieldset class="option-field"><legend>Colour: <strong id="selectedColour">${escapeTestHtml(optionColor)}</strong></legend><div class="option-swatches">${p.colors.map((c,i)=>`<button type="button" class="option-swatch ${c[0]===optionColor?"selected":""}" data-option-color="${escapeTestHtml(c[0])}" aria-label="${escapeTestHtml(c[0])}" aria-pressed="${c[0]===optionColor}" title="${escapeTestHtml(c[0])}" style="--swatch:${c[1]}"></button>`).join("")}</div></fieldset><fieldset class="option-field"><legend>Size</legend><div class="option-sizes">${p.sizes.map((s,i)=>{const available=!p.variants?.length||p.variants.some(v=>v.colour===optionColor&&v.size===s&&v.available);return `<button type="button" class="option-size ${s===optionSize?"selected":""}" data-option-size="${escapeTestHtml(s)}" aria-pressed="${s===optionSize}" ${available?"":"disabled"}>${escapeTestHtml(s)}</button>`}).join("")}</div></fieldset><button type="button" class="button button-burgundy options-add-button" id="confirmAddToBag">Add to bag <span>↗</span></button><details class="options-size-guide"><summary>Size guide & fit</summary><p>Available sizes: S, M, L and XL. The measurement chart for this piece will be added before the store opens. Contact us for fit guidance.</p><a href="mailto:info@waqaralanabi.com?subject=Size%20and%20Fit">Ask us about your size ↗</a></details><p class="options-size-note">Preview collection — final retail prices and stock will be confirmed before ordering opens.</p></div>`;
+ $("#productOptionsContent").innerHTML=`<div class="options-visual"><img class="options-product-image" id="activeProductImage" src="${escapeTestHtml(gallery[0])}" alt="${escapeTestHtml(p.name)} — editorial reference"><div class="options-gallery-thumbs">${gallery.map((src,i)=>`<button type="button" class="options-gallery-thumb ${i===0?"selected":""}" data-gallery-image="${escapeTestHtml(src)}" aria-label="Show reference image ${i+1}" aria-pressed="${i===0}"><img src="${escapeTestHtml(src)}" alt="" loading="lazy"></button>`).join("")}</div><span class="options-image-note">${p.galleryImages?.length?"PRODUCT PHOTOGRAPHY":"EDITORIAL IMAGE REFERENCES · NOT FINAL PRODUCT PHOTOGRAPHY"}</span></div><div class="options-product-info"><p class="eyebrow">${escapeTestHtml(p.category)}</p><h2 id="productOptionsTitle">${escapeTestHtml(p.name)}</h2><p class="options-price">${money(p.price)}</p><p class="options-description">${escapeTestHtml(details.intro)}</p><div class="options-detail-block"><span>DESIGN NOTES</span><p>${escapeTestHtml(details.design)}</p></div><div class="options-detail-block"><span>THE WA DETAIL</span><p>${escapeTestHtml(details.brand)}</p></div><fieldset class="option-field"><legend>Colour: <strong id="selectedColour">${escapeTestHtml(optionColor)}</strong></legend><div class="option-swatches">${p.colors.map((c,i)=>`<button type="button" class="option-swatch ${c[0]===optionColor?"selected":""}" data-option-color="${escapeTestHtml(c[0])}" aria-label="${escapeTestHtml(c[0])}" aria-pressed="${c[0]===optionColor}" title="${escapeTestHtml(c[0])}" style="--swatch:${c[1]}"></button>`).join("")}</div></fieldset><fieldset class="option-field"><legend>Size</legend><div class="option-sizes">${p.sizes.map((s,i)=>{const available=!p.variants?.length||p.variants.some(v=>v.colour===optionColor&&v.size===s&&v.available);return `<button type="button" class="option-size ${s===optionSize?"selected":""}" data-option-size="${escapeTestHtml(s)}" aria-pressed="${s===optionSize}" ${available?"":"disabled"}>${escapeTestHtml(s)}</button>`}).join("")}</div></fieldset><button type="button" class="button button-burgundy options-add-button" id="confirmAddToBag">Add to bag <span>↗</span></button><details class="options-size-guide"><summary>Size guide & fit</summary><p>Available sizes: S, M, L and XL. The measurement chart for this piece will be added before the store opens. Contact us for fit guidance.</p><a href="mailto:info@waqaralanabi.com?subject=Size%20and%20Fit">Ask us about your size ↗</a></details><p class="options-size-note">Preview collection — final retail prices and stock will be confirmed before ordering opens.</p></div>`;
  $("#productOptionsModal").classList.add("open");$("#productOptionsBackdrop").classList.add("open");$("#productOptionsModal").setAttribute("aria-hidden","false");document.body.style.overflow="hidden";
 }
 function closeProductOptions(){$("#productOptionsModal").classList.remove("open");$("#productOptionsBackdrop").classList.remove("open");$("#productOptionsModal").setAttribute("aria-hidden","true");if(!$("#bagDrawer").classList.contains("open"))document.body.style.overflow="";optionProduct=null;applyPendingCatalogue()}
@@ -318,14 +277,49 @@ function setMobileMenu(open){
 }
 function openBag(){setMobileMenu(false);$("#searchBar").classList.remove("open");$("#bagDrawer").classList.add("open");$("#drawerBackdrop").classList.add("open");$("#bagDrawer").setAttribute("aria-hidden","false");document.body.style.overflow="hidden"}function closeBag(){$("#bagDrawer").classList.remove("open");$("#drawerBackdrop").classList.remove("open");$("#bagDrawer").setAttribute("aria-hidden","true");document.body.style.overflow="";}
 let toastTimer;function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),2600)}
-$("#filters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;activeFilter=b.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts()});$$(".desktop-nav [data-filter],.mobile-menu [data-filter],.category-tile[data-filter],.footer-column [data-filter]").forEach(a=>a.addEventListener("click",()=>{activeFilter=a.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts();setMobileMenu(false)}));$("#sortSelect").onchange=renderProducts;$("#bagOpen").onclick=openBag;$("#bagContinue").onclick=closeBag;$("#bagClose").onclick=closeBag;$("#drawerBackdrop").onclick=closeBag;$("#checkoutButton").onclick=openCheckoutPreview;$("#checkoutPreviewClose").onclick=closeCheckoutPreview;$("#checkoutPreviewBackdrop").onclick=closeCheckoutPreview;$("#menuToggle").onclick=()=>{
+function setCollectionFilter(category){
+ activeFilter=category;
+ $$("#filters [data-filter]").forEach(button=>{
+  const selected=button.dataset.filter===category;
+  button.classList.toggle("active",selected);
+  button.setAttribute("aria-pressed",String(selected));
+ });
+ renderProducts();
+}
+function setCollectionSearch(value){
+ query=value.trim();
+ if($("#searchInput").value!==value)$("#searchInput").value=value;
+ if($("#collectionSearch").value!==value)$("#collectionSearch").value=value;
+ renderProducts();
+}
+$("#filters").addEventListener("click",event=>{
+ const button=event.target.closest("[data-filter]");
+ if(button)setCollectionFilter(button.dataset.filter);
+});
+$$("a[data-filter]").forEach(link=>link.addEventListener("click",()=>{
+ setCollectionSearch("");
+ setCollectionFilter(link.dataset.filter);
+ setMobileMenu(false);
+}));
+$("#collectionSearch").addEventListener("input",event=>setCollectionSearch(event.target.value));
+$("#sortSelect").onchange=renderProducts;$("#bagOpen").onclick=openBag;$("#bagContinue").onclick=closeBag;$("#bagClose").onclick=closeBag;$("#drawerBackdrop").onclick=closeBag;$("#checkoutButton").onclick=openCheckoutPreview;$("#checkoutPreviewClose").onclick=closeCheckoutPreview;$("#checkoutPreviewBackdrop").onclick=closeCheckoutPreview;$("#menuToggle").onclick=()=>{
  $("#searchBar").classList.remove("open");
  setMobileMenu(!$("#mobileMenu").classList.contains("open"));
 };
 $("#mobileMenu").addEventListener("click",event=>{if(event.target.closest("a"))setMobileMenu(false);});
 document.addEventListener("pointerdown",event=>{
  if(!event.target.closest("#mobileMenu,#menuToggle"))setMobileMenu(false);
-});$("#searchToggle").onclick=()=>{$("#searchBar").classList.toggle("open");if($("#searchBar").classList.contains("open"))$("#searchInput").focus()};$("#searchClose").onclick=()=>{$("#searchBar").classList.remove("open");query="";$("#searchInput").value="";renderProducts()};$("#searchInput").oninput=e=>{query=e.target.value;renderProducts()};$("#newsletterForm").onsubmit=async e=>{e.preventDefault();const form=e.currentTarget,email=form.elements.email.value.trim(),consent=form.elements.consent.checked,website=form.elements.website.value,button=form.querySelector("button[type=submit]"),message=$("#newsletterMessage");if(!consent){message.textContent="Please confirm consent to receive updates.";return;}button.disabled=true;button.textContent="Joining…";message.textContent="Adding you to the WA list…";try{const response=await fetch((window.WA_API_BASE||"http://127.0.0.1:4000")+"/newsletter",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({email,consent,website})});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.message||"We could not save your signup. Please try again.");message.textContent="You’re on the list. Thank you for joining the WA world.";form.reset();toast("You’re on the WA list.");}catch(error){message.textContent=error.message||"Signup is temporarily unavailable. Please try again.";toast("We couldn’t complete your signup.");}finally{button.disabled=false;button.textContent="Join us ↗";}};$("#backTop").onclick=e=>{e.preventDefault();window.scrollTo({top:0,behavior:"smooth"})};document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBag()});renderProducts();renderBag();
+});$("#searchToggle").onclick=()=>{$("#searchBar").classList.toggle("open");if($("#searchBar").classList.contains("open"))$("#searchInput").focus()};$("#searchClose").onclick=()=>$("#searchBar").classList.remove("open");
+$("#searchInput").oninput=event=>setCollectionSearch(event.target.value);
+$("#searchInput").addEventListener("keydown",event=>{
+ if(event.key==="Enter"){
+  event.preventDefault();
+  $("#searchBar").classList.remove("open");
+  $("#searchInput").blur();
+  $("#shop").scrollIntoView();
+ }
+});
+$("#newsletterForm").onsubmit=async e=>{e.preventDefault();const form=e.currentTarget,email=form.elements.email.value.trim(),consent=form.elements.consent.checked,website=form.elements.website.value,button=form.querySelector("button[type=submit]"),message=$("#newsletterMessage");if(!consent){message.textContent="Please confirm consent to receive updates.";return;}button.disabled=true;button.textContent="Joining…";message.textContent="Adding you to the WA list…";try{const response=await fetch(WA_API_BASE+"/newsletter",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({email,consent,website})});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.message||"We could not save your signup. Please try again.");message.textContent="You’re on the list. Thank you for joining the WA world.";form.reset();toast("You’re on the WA list.");}catch(error){message.textContent=error.message||"Signup is temporarily unavailable. Please try again.";toast("We couldn’t complete your signup.");}finally{button.disabled=false;button.textContent="Join us ↗";}};$("#backTop").onclick=e=>{e.preventDefault();window.scrollTo({top:0,behavior:"smooth"})};document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBag()});renderProducts();renderBag();
 
 /* Mobile app navigation actions and active destination state */
 const mobileSearchAction=$("#mobileSearchAction"),mobileBagAction=$("#mobileBagAction"),mobileBagCount=$("#mobileBagCount");
@@ -350,16 +344,6 @@ if("IntersectionObserver" in window){
  mobileNavSections.forEach(([selector])=>{const section=document.querySelector(selector);if(section)navObserver.observe(section);});
 }
 
-/* Storefront motion system: progressive reveals and restrained scroll feedback */
-document.documentElement.classList.add("wa-motion-ready");
-const revealTargets=[".intro",".wa-frequency",".category-editorial",".wa-lookbook",".shop-section",".manifesto",".service-strip",".newsletter",".footer-main"];
-revealTargets.forEach(selector=>{const el=document.querySelector(selector);if(el)el.classList.add("wa-scroll-reveal");});
-if("IntersectionObserver" in window&&!window.matchMedia("(prefers-reduced-motion: reduce)").matches){
- const revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
-  if(entry.isIntersecting){entry.target.classList.add("wa-visible");revealObserver.unobserve(entry.target);}
- }),{threshold:.12,rootMargin:"0px 0px -45px 0px"});
- document.querySelectorAll(".wa-scroll-reveal").forEach(el=>revealObserver.observe(el));
-}else{document.querySelectorAll(".wa-scroll-reveal").forEach(el=>el.classList.add("wa-visible"));}
 const mainHeader=document.querySelector(".site-header");
 const syncHeaderDepth=()=>{if(mainHeader)mainHeader.classList.toggle("wa-scrolled",window.scrollY>12);};
 window.addEventListener("scroll",syncHeaderDepth,{passive:true});syncHeaderDepth();
