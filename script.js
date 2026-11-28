@@ -77,7 +77,9 @@ function renderProducts(){
   </div>
  </article>`).join("")||'<div class="shop-empty"><p>No pieces match your filters.</p><button type="button" id="clearCollection">Clear filters</button></div>';
  $("#clearCollection")?.addEventListener("click",()=>{setCollectionSearch("");setCollectionFilter("All");$("#collectionSearch").focus();});
- $$("#productGrid [data-add]").forEach(button=>button.addEventListener("click",()=>openProductOptions(button.dataset.add)));
+ $$("#productGrid [data-add]").forEach(button=>{
+  button.closest(".product-image-wrap").addEventListener("click",()=>openProductOptions(button.dataset.add));
+ });
  $$("#productGrid [data-swatch-product]").forEach(button=>button.addEventListener("click",()=>openProductOptions(button.dataset.swatchProduct,button.dataset.swatchColor)));
 }
 function saveBag(){storage.setItem("wa-preview-bag",JSON.stringify(bag));renderBag()}
@@ -319,7 +321,7 @@ $("#searchInput").addEventListener("keydown",event=>{
   $("#shop").scrollIntoView();
  }
 });
-$("#newsletterForm").onsubmit=async e=>{e.preventDefault();const form=e.currentTarget,email=form.elements.email.value.trim(),consent=form.elements.consent.checked,website=form.elements.website.value,button=form.querySelector("button[type=submit]"),message=$("#newsletterMessage");if(!consent){message.textContent="Please confirm consent to receive updates.";return;}button.disabled=true;button.textContent="Joining…";message.textContent="Adding you to the WA list…";try{const response=await fetch(WA_API_BASE+"/newsletter",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({email,consent,website})});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.message||"We could not save your signup. Please try again.");message.textContent="You’re on the list. Thank you for joining the WA world.";form.reset();toast("You’re on the WA list.");}catch(error){message.textContent=error.message||"Signup is temporarily unavailable. Please try again.";toast("We couldn’t complete your signup.");}finally{button.disabled=false;button.textContent="Join us ↗";}};$("#backTop").onclick=e=>{e.preventDefault();window.scrollTo({top:0,behavior:"smooth"})};document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBag()});renderProducts();renderBag();
+$("#newsletterForm").onsubmit=async e=>{e.preventDefault();const form=e.currentTarget,email=form.elements.email.value.trim(),consent=form.elements.consent.checked,website=form.elements.website.value,button=form.querySelector("button[type=submit]"),message=$("#newsletterMessage");if(!consent){message.textContent="Please confirm consent to receive updates.";return;}button.disabled=true;button.textContent="Joining…";message.textContent="Saving your signup…";try{const response=await fetch(WA_API_BASE+"/newsletter",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({email,consent,website})});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.message||"We could not save your signup. Please try again.");message.textContent="You’re signed up for collection updates.";form.reset();toast("You’re on the WA list.");}catch(error){message.textContent=error.message||"Signup is temporarily unavailable. Please try again.";toast("We couldn’t complete your signup.");}finally{button.disabled=false;button.textContent="Sign up ↗";}};$("#backTop").onclick=e=>{e.preventDefault();window.scrollTo({top:0,behavior:"smooth"})};document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBag()});renderProducts();renderBag();
 
 /* Mobile app navigation actions and active destination state */
 const mobileSearchAction=$("#mobileSearchAction"),mobileBagAction=$("#mobileBagAction"),mobileBagCount=$("#mobileBagCount");

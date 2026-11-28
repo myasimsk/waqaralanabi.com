@@ -155,7 +155,7 @@
 }
 
 #shop .product-card { animation: none; }
-#shop .product-image-wrap { border-radius: 4px; }
+#shop .product-image-wrap { border-radius: 4px; cursor: pointer; }
 #shop .product-card .quick-add {
   display: flex;
   justify-content: space-between;
@@ -229,6 +229,7 @@
   #shop .filter { flex: 1 1 auto; }
   .storefront-catalogue-inputs { width: 100%; }
   .storefront-catalogue-inputs :is(input, select) { font-size: 16px; }
+  .newsletter input[type="email"] { font-size: 16px; }
   #shop .product-colors .swatch-button { width: 27px; height: 27px; }
   #shop .product-colors .color-count { display: none; }
 }
