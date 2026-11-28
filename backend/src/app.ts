@@ -12,6 +12,7 @@ import { adminRoutes } from "./routes/admin.js";
 import { catalogRoutes, inventoryRoutes } from "./routes/catalog.js";
 import { newsletterRoutes } from "./routes/newsletter.js";
 import { checkoutRoutes, orderAdminRoutes } from "./routes/checkout.js";
+import { customerReturnRoutes, adminReturnRoutes } from "./routes/returns.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -116,6 +117,11 @@ export async function buildApp() {
   await app.register(checkoutRoutes);
   await app.register(orderAdminRoutes, { prefix: "/admin/orders" });
   await app.register(inventoryRoutes, { prefix: "/admin/inventory" });
+
+  if (env.PREVIEW_CHECKOUT_ENABLED) {
+    await app.register(customerReturnRoutes, { prefix: "/account/returns" });
+    await app.register(adminReturnRoutes, { prefix: "/admin/returns" });
+  }
 
   return app;
 }

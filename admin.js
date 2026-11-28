@@ -23,12 +23,13 @@ function setView(name) {
   state.currentView=name;
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+name));
   document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
-  const titles={overview:"Overview",customers:"Customers",inventory:"Inventory",orders:"Orders","activity":"Activity log",newsletter:"Newsletter"};
+  const titles={overview:"Overview",customers:"Customers",inventory:"Inventory",orders:"Orders",returns:"Returns & exchanges","activity":"Activity log",newsletter:"Newsletter"};
   $("#pageTitle").textContent=titles[name] || "Overview";
   notice("");
   if(name==="inventory") loadInventory();
   if(name==="customers") loadCustomers();
   if(name==="orders") loadOrders();
+  if(name==="returns") void loadReturns();
   if(name==="activity") loadActivity();
   if(name==="newsletter") loadNewsletter();
 }
@@ -144,6 +145,46 @@ async function loadOrderDetail(orderNumber) {
     panel.querySelectorAll("[data-order-status]").forEach(action=>action.addEventListener("click",async()=>{const next=action.dataset.orderStatus;const promptText=next==="cancelled"?"Reason for cancelling this order:":"Operational note for this status change:";const reason=window.prompt(promptText);if(!reason||reason.trim().length<5)return;action.disabled=true;try{await api("/admin/orders/"+encodeURIComponent(orderNumber)+"/status",{method:"PATCH",body:JSON.stringify({status:next,reason:reason.trim()})});notice(next==="shipped"?"Order marked shipped. COD stock has been deducted from available inventory.":next==="cancelled"?"Order cancelled and reserved stock released.":"Order status updated.");await loadOrders();await loadOrderDetail(orderNumber);if(state.currentView==="inventory")await loadInventory();}catch(error){notice(error.message);}finally{action.disabled=false;}}));
     for(const [id,decision] of [["approveTransfer","approve"],["rejectTransfer","reject"]]){const action=$("#"+id);if(action)action.addEventListener("click",async()=>{const reason=window.prompt(decision==="approve"?"Enter the bank transaction reference or verification note:":"Enter the reason for rejecting this receipt:");if(!reason||reason.trim().length<5)return;action.disabled=true;try{await api("/admin/orders/"+encodeURIComponent(orderNumber)+"/bank-transfer-review",{method:"PATCH",body:JSON.stringify({decision,reason:reason.trim()})});notice(decision==="approve"?"Payment approved and inventory committed.":"Receipt rejected. The customer can submit a replacement.");await loadOrders();await loadOrderDetail(orderNumber);}catch(error){notice(error.message);}finally{action.disabled=false;}});}
   } catch(e) { panel.innerHTML='<p class="empty-cell">'+escapeHtml(e.message)+'</p>'; }
+}
+async function loadReturns(){
+  const panel=$("#returnRequests");
+  panel.textContent="Loading requests…";
+  try{
+    const {requests}=await api("/admin/returns");
+    panel.innerHTML=requests.length?requests.map(item=>{
+      const exchange=item.kind==="exchange";
+      const editable=["owner","manager"].includes(state.admin?.role);
+      const available={requested:["approve","decline"],approved:["receive"],received:["complete"]}[item.status]||[];
+      const labels={approve:exchange?"Approve and create replacement":"Approve return",decline:"Decline request",receive:"Mark item received",complete:exchange?"Complete exchange":"Record simulated refund"};
+      const products=item.items.map(line=>'<li>'+escapeHtml(line.name+' · '+(line.colour||"")+' '+(line.size||"")+' × '+line.quantity)+' · '+money(line.creditMinor)+'</li>').join("");
+      const replacements=item.replacement_items.map(line=>'<li>'+escapeHtml(line.name+' · '+line.colour+' '+line.size+' × '+line.quantity)+' · '+money(Number(line.price_minor)*line.quantity)+'</li>').join("");
+      return '<article class="return-request"><h3>'+escapeHtml(exchange?"Exchange":"Refund")+' · '+escapeHtml(item.order_number)+'</h3><p>'+status(item.status)+' · Item credit '+money(item.credit_minor)+'</p><ul>'+products+'</ul><p>'+escapeHtml(item.reason)+'</p>'+
+        (replacements?'<h4>Replacement items</h4><ul>'+replacements+'</ul>':"")+
+        (item.replacement_order_number?'<p>Replacement '+escapeHtml(item.replacement_order_number)+' · '+money(item.replacement_total_minor)+' due including '+money(item.shipping_minor)+' shipping.</p>':"")+
+        (Number(item.refund_minor)>0?'<p>Refund amount: '+money(item.refund_minor)+'</p>':"")+
+        (item.admin_note?'<p>'+escapeHtml(item.admin_note)+'</p>':"")+
+        (editable&&available.length?'<form data-return-review="'+escapeHtml(item.id)+'"><label>Action<select name="action">'+available.map(action=>'<option value="'+action+'">'+escapeHtml(labels[action])+'</option>').join("")+'</select></label>'+
+          (exchange&&item.status==="requested"?'<label data-return-shipping>Exchange shipping charge (PKR)<input name="shipping" type="number" min="0" max="10000" step="0.01" required></label>':"")+
+          '<label>Note for customer<input name="note" minlength="5" maxlength="500" required></label><button class="row-action" type="submit">Save review</button><p role="status"></p></form>':"")+'</article>';
+    }).join(""):"<p>No return or exchange requests yet.</p>";
+    panel.querySelectorAll("[data-return-review]").forEach(form=>{
+      const action=form.elements.action,shipping=form.elements.shipping;
+      if(shipping)action.onchange=()=>{shipping.disabled=action.value!=="approve";shipping.closest("label").hidden=shipping.disabled;};
+      form.addEventListener("submit",async event=>{
+        event.preventDefault();
+        const fields=new FormData(form),button=form.querySelector("button"),report=form.querySelector("[role=status]");
+        button.disabled=true;
+        try{
+          await api("/admin/returns/"+encodeURIComponent(form.dataset.returnReview),{method:"PATCH",body:JSON.stringify({
+            action:fields.get("action"),note:fields.get("note"),
+            shippingMinor:fields.has("shipping")?Math.round(Number(fields.get("shipping"))*100):undefined
+          })});
+          await loadReturns();
+          notice("Request updated.");
+        }catch(error){report.textContent=error.message;button.disabled=false;}
+      });
+    });
+  }catch(error){panel.textContent=error.message;}
 }
 async function loadNewsletter(){
   $("#newsletterRows").innerHTML='<tr><td colspan="3" class="empty-cell">Loading subscribers…</td></tr>';

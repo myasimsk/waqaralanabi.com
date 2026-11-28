@@ -372,6 +372,22 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
       if(next==="cancelled" && order.payment_status!=="pending"){
         await client.query("ROLLBACK");return reply.code(409).send({error:"REFUND_REQUIRED",message:"This order has a recorded payment. Use the refund process before cancelling it."});
       }
+      if (next === "cancelled" && env.PREVIEW_CHECKOUT_ENABLED) {
+        const linked = await client.query<{ id: string; status: string }>(
+          "SELECT id,status FROM order_return_requests WHERE replacement_order_id=$1 FOR UPDATE", [order.id],
+        );
+        const exchange = linked.rows[0];
+        if (exchange && exchange.status !== "approved") {
+          await client.query("ROLLBACK");
+          return reply.code(409).send({ error: "EXCHANGE_ALREADY_RECEIVED", message: "Review the linked exchange before cancelling the replacement." });
+        }
+        if (exchange) {
+          await client.query(
+            "UPDATE order_return_requests SET status='declined', refund_minor=NULL, admin_note=$2, updated_at=now() WHERE id=$1",
+            [exchange.id, parsed.data.reason],
+          );
+        }
+      }
       if(next==="cancelled"){
         await client.query(
           "UPDATE bank_transfer_proofs SET review_status='rejected',review_reason='Order cancelled before payment review.',reviewed_by_admin_id=$2,reviewed_at=now() WHERE order_id=$1 AND review_status='pending'",
@@ -437,7 +453,7 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
           [account.rows[0]!.id, order.id, points, admin.id],
         );
       }
-      await client.query("UPDATE orders SET status=$1,updated_at=now() WHERE id=$2",[next,order.id]);
+      await client.query("UPDATE orders SET status=$1, delivered_at=CASE WHEN $1=\x27delivered\x27 THEN now() ELSE delivered_at END, updated_at=now() WHERE id=$2",[next,order.id]);
       await client.query(
         "INSERT INTO admin_audit_logs(admin_user_id,action,entity_type,entity_id,reason,metadata) VALUES($1,$2,'order',$3,$4,$5::jsonb)",
         [admin.id,"order.status_"+next,order.id,parsed.data.reason,JSON.stringify({orderNumber:number,previousStatus:order.status,newStatus:next,paymentMethod:order.payment_method})]);

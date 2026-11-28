@@ -166,6 +166,71 @@ test("preview checkout advertises test mode and rejects real contact and payment
       assert.equal((await review("approve")).statusCode, 200);
       const approved = await db.query("SELECT status, payment_status FROM orders WHERE order_number=$1", [bankNumber]);
       assert.deepEqual(approved.rows[0], { status: "confirmed", payment_status: "paid" });
+
+      const products = catalogue.json().products;
+      const originalVariants = [products[0].variants[1], products[1].variants[0]];
+      const mixed = await app.inject({
+        method: "POST", url: "/checkout/orders", cookies: customerCookies,
+        payload: { ...payload, idempotencyKey: randomUUID(), items: originalVariants.map((item) => ({ variantId: item.id, quantity: 1 })) },
+      });
+      assert.equal(mixed.statusCode, 201);
+      const originalNumber = mixed.json().order.orderNumber;
+      for (const status of ["processing", "shipped", "delivered"]) {
+        const updated = await app.inject({
+          method: "PATCH", url: "/admin/orders/" + originalNumber + "/status", cookies: adminCookies,
+          payload: { status, reason: "Synthetic returns test" },
+        });
+        assert.equal(updated.statusCode, 200);
+      }
+
+      const eligible = await app.inject({ url: "/account/returns", cookies: customerCookies });
+      const original = eligible.json().orders.find((item) => item.order_number === originalNumber);
+      assert.equal(original.items.length, 2);
+      const exchangeItem = original.items[0], refundItem = original.items[1];
+      const replacementVariant = products.at(-1).variants[0];
+      const request = {
+        requestId: randomUUID(), orderId: original.id, kind: "exchange",
+        reason: "Trying another fit", eligibleCondition: true,
+        items: [{ id: exchangeItem.id, quantity: 1 }],
+        replacement: [{ id: replacementVariant.id, quantity: 1 }],
+      };
+      const createRequest = (payload, cookies = customerCookies) => app.inject({
+        method: "POST", url: "/account/returns", cookies, payload,
+      });
+      assert.equal((await createRequest(request, {})).statusCode, 401);
+      await db.query("UPDATE orders SET delivered_at=now()-interval '8 days' WHERE id=$1", [original.id]);
+      assert.equal((await createRequest(request)).statusCode, 409);
+      await db.query("UPDATE orders SET delivered_at=now() WHERE id=$1", [original.id]);
+
+      const exchange = await createRequest(request);
+      assert.equal(exchange.statusCode, 201);
+      assert.equal(exchange.json().creditMinor, exchangeItem.remainingMinor);
+      assert.equal((await createRequest(request)).statusCode, 200);
+      assert.equal((await createRequest({ ...request, requestId: randomUUID() })).statusCode, 409);
+
+      const refund = { ...request, requestId: randomUUID(), kind: "refund", items: [{ id: refundItem.id, quantity: 1 }], replacement: [] };
+      const filed = await createRequest(refund);
+      assert.equal(filed.statusCode, 201);
+      assert.equal(filed.json().creditMinor, refundItem.remainingMinor);
+      const operate = (id, action, shippingMinor, cookies = adminCookies) => app.inject({
+        method: "PATCH", url: "/admin/returns/" + id, cookies,
+        payload: { action, shippingMinor, note: "Synthetic return review" },
+      });
+      assert.equal((await operate(refund.requestId, "approve", undefined, customerCookies)).statusCode, 401);
+      const replacementOrder = await operate(request.requestId, "approve", 25000);
+      assert.equal(replacementOrder.statusCode, 200);
+      assert.equal((await operate(request.requestId, "approve", 25000)).statusCode, 409);
+      const replacementPrice = Number(products.at(-1).price_minor);
+      const originalCredit = Number(exchangeItem.remainingMinor);
+      const totals = await db.query("SELECT subtotal_minor, discount_minor, shipping_minor, total_minor FROM orders WHERE id=$1", [replacementOrder.json().replacementOrderId]);
+      assert.deepEqual(totals.rows[0], {
+        subtotal_minor: String(replacementPrice), discount_minor: String(Math.min(replacementPrice, originalCredit)),
+        shipping_minor: "25000", total_minor: String(Math.max(0, replacementPrice-originalCredit)+25000),
+      });
+      assert.equal((await operate(refund.requestId, "complete")).statusCode, 409);
+      for (const action of ["approve", "receive", "complete"]) assert.equal((await operate(refund.requestId, action)).statusCode, 200);
+      const refundDetails = await db.query("SELECT status, refund_minor FROM order_return_requests WHERE id=$1", [refund.requestId]);
+      assert.deepEqual(refundDetails.rows[0], { status: "completed", refund_minor: refundItem.remainingMinor });
     }
   } finally {
     await app.close();

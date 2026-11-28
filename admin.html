@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin.css?v=commerce-scorecard-1">
+<link rel="stylesheet" href="returns.css?v=returns-1">
 </head>
 <body>
 <div class="admin-shell">
@@ -20,6 +21,7 @@
       <button class="nav-item" data-view="customers"><span>♙</span>Customers</button>
       <button class="nav-item" data-view="inventory"><span>▦</span>Inventory</button>
       <button class="nav-item" data-view="orders"><span>▤</span>Orders</button>
+      <button class="nav-item" data-view="returns"><span aria-hidden="true">↶</span>Returns &amp; exchanges</button>
       <button class="nav-item" data-view="activity"><span>◷</span>Activity log</button>
       <button class="nav-item" data-view="newsletter"><span>✉</span>Newsletter</button>
     </nav>
@@ -82,6 +84,9 @@
       <div class="panel"><div class="panel-heading"><div><p class="eyebrow">OPT-IN REGISTER</p><h3>Subscribers</h3></div><button class="text-action" id="refreshNewsletter" type="button">Refresh ↻</button></div><div class="table-wrap"><table><thead><tr><th>EMAIL</th><th>CONSENT RECORDED</th><th>JOINED</th></tr></thead><tbody id="newsletterRows"><tr><td colspan="3" class="empty-cell">Loading subscribers…</td></tr></tbody></table></div><div class="pagination"><span id="newsletterPageInfo">—</span><div><button id="newsletterPrev" disabled>Previous</button><button id="newsletterNext" disabled>Next</button></div></div></div>
       <p class="table-subline">Email delivery and unsubscribe management will be connected before marketing campaigns begin.</p>
     </section>
+    <section class="view" id="view-returns">
+      <div class="panel"><h2>Returns &amp; exchanges</h2><p>Preview requests only. Refund completion records a test result.</p><div id="returnRequests" class="return-requests" aria-live="polite"></div></div>
+    </section>
     <section class="view" id="view-activity">
       <div class="section-intro"><div><p class="eyebrow">ACCOUNTABILITY</p><h2>Activity log</h2><p>Review administrative actions recorded by the system.</p></div></div>
       <div class="panel"><div class="table-wrap"><table><thead><tr><th>TIME</th><th>ADMIN</th><th>ACTION</th><th>REASON</th></tr></thead><tbody id="activityRows"><tr><td colspan="4" class="empty-cell">Loading activity…</td></tr></tbody></table></div></div>
@@ -98,6 +103,6 @@
     <p class="login-feedback" id="loginFeedback" aria-live="polite"></p><small class="login-foot">WAQAR AL ANABI · PEOPLE NOT TRENDS</small>
   </form>
 </section>
-<script src="admin.js?v=transfer-proof-1"></script>
+<script src="admin.js?v=returns-1"></script>
 </body>
 </html>

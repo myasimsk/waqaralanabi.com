@@ -9,7 +9,7 @@ function hashToken(token: string): string {
   return createHash("sha256").update(token, "utf8").digest("hex");
 }
 
-async function requireCustomer(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
+export async function requireCustomer(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   const token = request.cookies[SESSION_COOKIE];
   if (!token) {
     reply.code(401).send({ error: "AUTHENTICATION_REQUIRED", message: "Please sign in to view your account." });

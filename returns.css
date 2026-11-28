@@ -1,0 +1,57 @@
+#waReturnOrder,
+#waReturnForm select,
+#waReturnForm textarea,
+#waReturnForm input[type="number"],
+.return-request form :is(select, input) {
+  min-height: 44px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line, #d9d1cb);
+  border-radius: 4px;
+  color: var(--ink, #201a19);
+  background: var(--paper, #fffdf9);
+  font: inherit;
+  box-sizing: border-box;
+}
+
+#waReturnForm fieldset {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  margin: 8px 0 0;
+  padding: 10px;
+  min-width: 0;
+}
+
+#waReturnEstimate {
+  padding: 12px;
+  background: var(--cream);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.wa-return-replacement,
+.return-request form {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+#waReplacement button,
+.return-request form button {
+  width: fit-content;
+  min-height: 40px;
+}
+
+.return-requests { display: grid; gap: 16px; }
+.return-request { border: 1px solid var(--line, #d9d1cb); padding: 16px; }
+.return-request h3 { margin-top: 0; }
+
+@media (max-width: 700px) {
+  .wa-account-tabs.has-returns:not([hidden]) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  #waReturnOrder, #waReturnForm :is(select, textarea, input) {
+    font-size: 16px;
+  }
+}

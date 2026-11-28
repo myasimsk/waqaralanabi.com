@@ -33,6 +33,7 @@ test("real checkout HTTP routes reserve stock, enforce idempotency, accept bank 
         "007_checkout_orders.sql",
         "008_checkout_payment_hardening.sql",
         "009_one_payment_per_order.sql",
+        "010_order_returns.sql",
       ];
       for (const migration of migrations) {
         const sql = await readFile(new URL("../database/migrations/" + migration, import.meta.url), "utf8");

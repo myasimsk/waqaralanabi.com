@@ -19,7 +19,7 @@
   }
   const root=document.createElement("div");
   root.id="waAccountRoot";
-  root.innerHTML='<div class="wa-account-backdrop" data-account-close></div><section class="wa-account-panel" role="dialog" aria-modal="true" aria-labelledby="waAccountTitle" aria-hidden="true"><header class="wa-account-head"><div><p class="eyebrow">YOUR WA WORLD</p><h2 id="waAccountTitle">My account</h2></div><div class="wa-account-head-actions"><button type="button" class="wa-account-signout" id="waSignOut" hidden>Sign out</button><button type="button" class="wa-account-close" aria-label="Close account" data-account-close>×</button></div></header><div class="wa-account-preview" id="waAccountNotice">YOUR WA ACCOUNT · SECURE CUSTOMER ACCESS</div><div class="wa-account-layout"><nav class="wa-account-tabs" id="waAccountTabs" aria-label="Account sections" hidden><button type="button" data-tab="profile">Profile</button><button type="button" data-tab="orders">Orders</button><button type="button" data-tab="addresses">Addresses</button><button type="button" data-tab="loyalty">Loyalty</button></nav><div class="wa-account-content" id="waAccountContent" aria-live="polite"></div></div></section>';
+  root.innerHTML='<div class="wa-account-backdrop" data-account-close></div><section class="wa-account-panel" role="dialog" aria-modal="true" aria-labelledby="waAccountTitle" aria-hidden="true"><header class="wa-account-head"><div><p class="eyebrow">YOUR WA WORLD</p><h2 id="waAccountTitle">My account</h2></div><div class="wa-account-head-actions"><button type="button" class="wa-account-signout" id="waSignOut" hidden>Sign out</button><button type="button" class="wa-account-close" aria-label="Close account" data-account-close>×</button></div></header><div class="wa-account-preview" id="waAccountNotice">YOUR WA ACCOUNT · SECURE CUSTOMER ACCESS</div><div class="wa-account-layout"><nav class="wa-account-tabs" id="waAccountTabs" aria-label="Account sections" hidden><button type="button" data-tab="profile">Profile</button><button type="button" data-tab="orders">Orders</button><button type="button" data-tab="addresses">Addresses</button><button type="button" data-tab="loyalty">Loyalty</button><button type="button" data-tab="returns" hidden>Returns &amp; exchanges</button></nav><div class="wa-account-content" id="waAccountContent" aria-live="polite"></div></div></section>';
   document.body.appendChild(root);
   const panel=$(".wa-account-panel",root), content=$("#waAccountContent",root), tabs=$("#waAccountTabs",root);
   function feedback(message,kind="") { const el=$("#waAccountFeedback",content); if(el){el.textContent=message;el.className="wa-account-feedback"+(kind?" "+kind:"");} }
@@ -82,12 +82,15 @@
   }
   function renderAccount() {
     tabs.hidden=false;$("#waSignOut",root).hidden=false;
+    $('[data-tab="returns"]',root).hidden=!previewEnabled;
+    tabs.classList.toggle("has-returns",previewEnabled);
     $("#waAccountTitle",root).textContent=(state.customer.fullName||"Your")+"’s WA Account";
     $("#waAccountNotice",root).textContent="SIGNED IN · YOUR DETAILS ARE PRIVATE TO YOUR ACCOUNT";
     root.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===state.active));
     if(state.active==="profile") renderProfile();
     else if(state.active==="orders") renderOrders();
     else if(state.active==="addresses") renderAddresses();
+    else if(state.active==="returns")void renderReturns();
     else renderLoyalty();
   }
   function renderProfile() {
@@ -145,6 +148,103 @@
   document.addEventListener("wa-preview-account",event=>{
     previewClaim=event.detail;previewEnabled=true;showPanel();authScreen("preview");
   });
+  async function renderReturns(){
+    content.innerHTML='<h3>Returns & exchanges</h3><p role="status">Loading eligible orders…</p>';
+    try{
+      const data=await api("/account/returns");
+      if(state.active!=="returns")return;
+      const {orders,requests}=data;
+      const requestDetails=requests.map(item=>{
+        const products=item.items.map(line=>safe(line.name)+" × "+safe(line.quantity)).join(", ");
+        const payment=item.replacement_order_number
+          ? '<p>Replacement '+safe(item.replacement_order_number)+' · '+money(item.replacement_total_minor)+' due, including '+money(item.shipping_minor)+' exchange shipping.</p>'
+          : "";
+        const refund=Number(item.refund_minor)>0?'<p>'+ (item.status==="completed"?"Refund recorded: ":"Refund amount: ")+money(item.refund_minor)+'</p>':"";
+        return '<article class="wa-account-order"><b>'+safe(item.kind==="refund"?"Refund":"Exchange")+' · '+safe(item.order_number)+'</b><p>'+products+'</p><p>'+safe(item.status)+' · '+money(item.credit_minor)+' item credit</p>'+payment+refund+(item.admin_note?'<p>'+safe(item.admin_note)+'</p>':"")+'</article>';
+      }).join("");
+      content.innerHTML='<h3>Returns & exchanges</h3><p class="wa-account-muted">Select the items you want to return within 7 days of delivery. Refunds are processed within 7–10 days after WA receives and checks the item.</p>'+
+        (orders.length?'<label>Choose an order<select id="waReturnOrder">'+orders.map(order=>'<option value="'+safe(order.id)+'">'+safe(order.order_number)+' · Delivered '+safe(date(order.delivered_at))+'</option>').join("")+'</select></label><div id="waReturnEditor"></div>':'<p>No delivered, paid orders are eligible right now.</p>')+
+        (requestDetails?'<h4>Your requests</h4>'+requestDetails:"");
+      if(!orders.length)return;
+      const picker=$("#waReturnOrder",content);
+      const editor=$("#waReturnEditor",content);
+      let catalogue=null;
+      async function edit(){
+        const order=orders.find(item=>item.id===picker.value);
+        if(!order)return;
+        const requestId=crypto.randomUUID?.()??Array.from(crypto.getRandomValues(new Uint8Array(16)),(byte,index)=>
+          ((index===6?(byte&15)|64:index===8?(byte&63)|128:byte).toString(16).padStart(2,"0"))
+        ).join("").replace(/^(........)(....)(....)(....)/,"$1-$2-$3-$4-");
+        editor.innerHTML='<form class="wa-account-form" id="waReturnForm"><fieldset><legend>Items to send back</legend>'+order.items.map(item=>'<label>'+safe(item.name)+' · '+safe(item.colour||"")+' '+safe(item.size||"")+'<select data-return-item="'+safe(item.id)+'" aria-label="'+safe(item.name+' '+(item.colour||"")+' '+(item.size||"")+' quantity')+'">'+Array.from({length:Math.min(item.remainingQuantity,10)+1},(_,i)=>'<option value="'+i+'">'+(i===0?"Keep this item":"Return "+i)+'</option>').join("")+'</select></label>').join("")+'</fieldset><label>Request type<select name="kind"><option value="refund">Return for a refund</option><option value="exchange">Exchange for another product</option></select></label><div id="waReplacement" hidden></div><label>Reason<textarea name="reason" minlength="3" maxlength="500" required></textarea></label><label class="wa-account-check"><input type="checkbox" name="condition" required> The selected items are unused and unwashed, with all original tags attached.</label><div id="waReturnEstimate" aria-live="polite"></div><button class="wa-account-primary" type="submit">Submit request ↗</button><p id="waAccountFeedback" role="status"></p></form>';
+        const form=$("#waReturnForm",editor), replacement=$("#waReplacement",form);
+        const selectedItems=()=>Array.from(form.querySelectorAll("[data-return-item]")).map(field=>({id:field.dataset.returnItem,quantity:Number(field.value)})).filter(item=>item.quantity>0);
+        const chosenReplacement=()=>Array.from(replacement.querySelectorAll("[data-replacement-row]")).map(row=>({
+          id:row.querySelector("select").value,quantity:Number(row.querySelector("input").value)
+        })).filter(row=>row.id);
+        const options=()=>catalogue.flatMap(product=>product.variants.filter(variant=>variant.available).map(variant=>({id:variant.id,name:product.name,colour:variant.colour,size:variant.size,price:Number(product.price_minor)})));
+        function estimate(){
+          const credit=selectedItems().reduce((sum,line)=>{
+            const item=order.items.find(item=>item.id===line.id);
+            return sum+Math.floor(Number(item.remainingMinor)*line.quantity/item.remainingQuantity);
+          },0);
+          let summary="Selected item credit: "+money(credit);
+          if(form.elements.kind.value==="exchange"){
+            const chosen=chosenReplacement();
+            if(!chosen.length){
+              $("#waReturnEstimate",form).textContent=summary+" · Choose a replacement to see the difference.";
+              return;
+            }
+            const subtotal=chosen.reduce((sum,line)=>sum+(options().find(item=>item.id===line.id)?.price||0)*line.quantity,0);
+            summary+=" · Replacement total: "+money(subtotal)+" · Difference: "+money(Math.max(0,subtotal-credit))+" before exchange shipping.";
+            if(credit>subtotal)summary+=" Remaining credit for refund: "+money(credit-subtotal)+".";
+          }
+          $("#waReturnEstimate",form).textContent=summary;
+        }
+        function addReplacement(){
+          const row=document.createElement("div");
+          row.className="wa-return-replacement";
+          row.dataset.replacementRow="";
+          row.innerHTML='<label>Replacement option<select required><option value="">Choose a size and colour</option>'+options().map(item=>'<option value="'+safe(item.id)+'">'+safe(item.name+' · '+item.colour+' · '+item.size)+' · '+money(item.price)+'</option>').join("")+'</select></label><label>Quantity<input type="number" min="1" max="10" value="1" required></label><button type="button">Remove</button>';
+          replacement.insertBefore(row,replacement.querySelector("[data-add-replacement]"));
+          row.querySelector("button").onclick=()=>{row.remove();estimate();};
+          estimate();
+        }
+        async function showReplacement(){
+          const exchange=form.elements.kind.value==="exchange";
+          replacement.hidden=!exchange;
+          if(!exchange){replacement.innerHTML="";estimate();return;}
+          if(!replacement.children.length){
+            replacement.textContent="Loading replacement products…";
+            try{catalogue??=(await api("/catalog")).products;}
+            catch(error){replacement.textContent=error.message;return;}
+            if(form.elements.kind.value!=="exchange")return;
+            replacement.innerHTML='<p>Choose the products for your replacement order. WA will confirm stock and the courier charge before approval.</p><button type="button" data-add-replacement>Add another product</button>';
+            replacement.querySelector("button").onclick=addReplacement;
+            addReplacement();
+          }
+        }
+        form.addEventListener("input",estimate);
+        form.elements.kind.addEventListener("change",()=>void showReplacement());
+        form.addEventListener("submit",async event=>{
+          event.preventDefault();
+          const fields=new FormData(form);
+          await run(async()=>{
+            await api("/account/returns",{method:"POST",body:JSON.stringify({
+              requestId,orderId:order.id,kind:fields.get("kind"),reason:fields.get("reason"),
+              eligibleCondition:fields.get("condition")==="on",items:selectedItems(),
+              replacement:fields.get("kind")==="exchange"?chosenReplacement():[],
+            })});
+            await renderReturns();
+          });
+        });
+        estimate();
+      }
+      picker.addEventListener("change",()=>void edit());
+      void edit();
+    }catch(error){
+      if(state.active==="returns")content.innerHTML='<h3>Returns & exchanges</h3><p role="status">'+safe(error.message)+'</p>';
+    }
+  }
   async function open() {
     showPanel();
     const config=await api("/checkout/config").catch(()=>null);
