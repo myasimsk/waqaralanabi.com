@@ -409,7 +409,7 @@ function applyPendingCatalogue(){
 if(new URLSearchParams(location.search).get("store")!=="pk")openCountryGate();
 connectLiveCatalogue();
 /* Footer navigation: open the selected policy panel before scrolling to it */
-$('.footer-column a[href^="#footer-policy-"], a[data-open-policy]').forEach(link=>link.addEventListener("click",()=>{
+$$('.footer-column a[href^="#footer-policy-"], a[data-open-policy]').forEach(link=>link.addEventListener("click",()=>{
  const panel=document.querySelector(link.getAttribute("href"));
  if(panel&&panel.tagName.toLowerCase()==="details")panel.open=true;
 }));
