@@ -164,10 +164,21 @@ function renderTestOrders(){
  const orders=readTestOrders();
  target.innerHTML=orders.length?orders.map(order=>'<article class="wa-test-order-card"><div><strong>'+escapeTestHtml(order.orderNumber)+'</strong><small>'+new Date(order.createdAt).toLocaleString()+'</small></div><p>'+escapeTestHtml(order.customer.fullName)+' · '+escapeTestHtml(order.customer.city)+'</p><p>'+order.items.map(item=>escapeTestHtml(item.productName)+' — '+escapeTestHtml(item.colour)+' / '+escapeTestHtml(item.size)+' × '+item.quantity).join('<br>')+'</p><b>'+money(order.total)+'</b><small>TEST ONLY · PAYMENT NOT COLLECTED</small></article>').join(""):'<p class="wa-test-empty">No test orders have been placed in this browser yet.</p>';
 }
-function showTestCheckoutResult(order, databaseBacked=false){
+function showTestCheckoutResult(order, databaseBacked=false, claim=null){
  const form=$("#waCheckoutForm"),result=$("#waCheckoutResult");
  form.hidden=true;result.hidden=false;
  result.innerHTML='<p class="eyebrow">TEST ORDER / NOT REAL</p><h3>Test order<br><em>recorded.</em></h3><p class="wa-order-number">TEST ORDER NUMBER <strong>'+escapeTestHtml(order.orderNumber)+'</strong></p><div class="wa-order-summary"><div><span>Merchandise subtotal</span><strong>'+money(order.subtotal)+'</strong></div><div><span>Shipping simulation</span><strong>FREE</strong></div><div class="wa-order-total"><span>Payment</span><strong>NOT COLLECTED</strong></div></div><p class="wa-test-mode-warning">'+(databaseBacked?"This test order was saved to the preview database. No payment or delivery will occur.":"This order was saved in this browser. No payment or delivery will occur.")+'</p><button type="button" class="button button-burgundy" id="waFinishCheckout">Continue exploring</button>';
+ if(claim){
+  const claimButton=document.createElement("button");
+  claimButton.type="button";
+  claimButton.className="button button-burgundy";
+  claimButton.textContent="Create preview account";
+  result.appendChild(claimButton);
+  claimButton.onclick=()=>{
+   closeCheckoutPreview();closeBag();
+   document.dispatchEvent(new CustomEvent("wa-preview-account",{detail:claim}));
+  };
+ }
  activeCheckoutOrder=null;
  bag=[];saveBag();
  $("#waFinishCheckout").onclick=()=>{bag=[];saveBag();closeCheckoutPreview();closeBag();};
@@ -219,7 +230,7 @@ $("#waCheckoutForm").addEventListener("submit",async event=>{
    showTestCheckoutResult(order);
   }else{
    const items=checkoutVariantItems();
-   const body={fullName:String(data.get("fullName")).trim(),email:String(data.get("email")).trim(),phone:String(data.get("phone")).trim(),addressLine1:String(data.get("addressLine1")).trim(),addressLine2:String(data.get("addressLine2")).trim(),city:String(data.get("city")).trim(),region:String(data.get("region")).trim(),postalCode:String(data.get("postalCode")).trim(),countryCode:"PK",paymentMethod:"cod",items};
+   const body={fullName:String(data.get("fullName")).trim(),email:String(data.get("email")).trim(),phone:String(data.get("phone")).trim(),addressLine1:String(data.get("addressLine1")).trim(),addressLine2:String(data.get("addressLine2")).trim(),city:String(data.get("city")).trim(),region:String(data.get("region")).trim(),postalCode:String(data.get("postalCode")).trim(),countryCode:"PK",paymentMethod:String(data.get("paymentMethod")),items};
    const fingerprint=JSON.stringify(body);
    if(previewCheckoutAttempt?.fingerprint!==fingerprint){
     previewCheckoutAttempt={fingerprint,key:crypto.randomUUID()};
@@ -230,7 +241,9 @@ $("#waCheckoutForm").addEventListener("submit",async event=>{
    if(!payload.order?.orderNumber?.startsWith("WAT-"))throw new Error("The preview order response was incomplete. Please retry the same checkout.");
    const total=Number(payload.order.totalMinor)/100;
    previewCheckoutAttempt=null;
-   showTestCheckoutResult({orderNumber:payload.order.orderNumber,subtotal:total},true);
+   const claim=payload.accessToken?{orderNumber:payload.order.orderNumber,email:body.email,accessToken:payload.accessToken}:null;
+   if(claim)document.dispatchEvent(new CustomEvent("wa-preview-order",{detail:claim}));
+   showTestCheckoutResult({orderNumber:payload.order.orderNumber,subtotal:total},true,claim);
   }
  }catch(err){error.textContent=err.message||"Checkout is temporarily unavailable."; }
  finally{button.disabled=false;button.innerHTML='Place order <span>↗</span>';}
@@ -316,8 +329,7 @@ async function connectLiveCatalogue(){
   $("#waCheckoutForm input[name=email]").placeholder="customer@example.test";
   $("#waCheckoutForm input[value=cod]").checked=true;
   const bankOption=$("#waCheckoutForm input[value=bank_transfer]");
-  bankOption.disabled=true;
-  bankOption.closest("label").hidden=true;
+  bankOption.closest("label").querySelector("small").textContent="Test simulation only · an example receipt is sent for admin review.";
   $("#waTestOrdersPanel").hidden=true;
   saveBag();renderProducts();
   console.info("WA live catalogue loaded:",products.length,"products");

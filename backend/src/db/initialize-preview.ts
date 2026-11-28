@@ -1,3 +1,5 @@
+import { randomBytes, scrypt } from "node:crypto";
+import { promisify } from "node:util";
 import { readFile, readdir } from "node:fs/promises";
 import { db } from "./pool.js";
 
@@ -64,4 +66,25 @@ export async function initializePreviewDatabase() {
   } finally {
     client.release();
   }
+}
+
+
+export async function initializePreviewAdmin() {
+  const password = process.env.PREVIEW_ADMIN_PASSWORD;
+  if (!password) return;
+  if (password.length < 16 || password.length > 128) {
+    throw new Error("The preview administrator password must be between 16 and 128 characters.");
+  }
+  const email = "admin@example.test";
+  const existing = await db.query("SELECT 1 FROM admin_users WHERE email=$1", [email]);
+  if (existing.rowCount) return;
+
+  const salt = randomBytes(16);
+  const derive = promisify(scrypt);
+  const key = await derive(password, salt, 64) as Buffer;
+  const passwordHash = `scrypt$16384$8$1$${salt.toString("hex")}$${key.toString("hex")}`;
+  await db.query(
+    "INSERT INTO admin_users (email, password_hash, role) VALUES ($1, $2, 'owner') ON CONFLICT (email) DO NOTHING",
+    [email, passwordHash],
+  );
 }

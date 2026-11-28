@@ -96,6 +96,54 @@ function sessionCookieOptions() {
 }
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
+  if (env.PREVIEW_CHECKOUT_ENABLED) {
+    app.post("/register/preview", { config: { rateLimit: { max: 5, timeWindow: "15 minutes" } } }, async (request, reply) => {
+      const parsed = completeRegistrationSchema.omit({ code: true }).extend({
+        accessToken: z.string().regex(/^[a-f0-9]{64}$/),
+      }).safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: "INVALID_REGISTRATION", message: "Check the registration details and use a password of at least 12 characters." });
+      const { orderNumber, accessToken, fullName, password } = parsed.data;
+      const email = normalizeEmail(parsed.data.email);
+      if (!orderNumber.startsWith("WAT-") || !/^[^@]+@example\.(?:test|invalid)$/.test(email)) {
+        return reply.code(400).send({ error: "PREVIEW_ORDER_REQUIRED", message: "A synthetic preview order is required." });
+      }
+
+      const client = await db.connect();
+      try {
+        await client.query("BEGIN");
+        const order = await client.query<{id: string}>(
+          `SELECT id FROM orders WHERE order_number=$1 AND lower(trim(guest_email))=$2
+           AND checkout_token_hash=$3 AND customer_id IS NULL FOR UPDATE`,
+          [orderNumber, email, hashToken(accessToken)],
+        );
+        if (!order.rows[0]) {
+          await client.query("ROLLBACK");
+          return reply.code(400).send({ error: "PREVIEW_ORDER_REQUIRED", message: "We could not verify this preview order. Use the same browser tab where you checked out." });
+        }
+
+        const customer = await client.query<{id: string}>(
+          `INSERT INTO customers (email, full_name, password_hash, account_activated_at)
+           VALUES ($1, $2, $3, now()) ON CONFLICT (email_normalized) DO NOTHING RETURNING id`,
+          [email, fullName, await hashPassword(password)],
+        );
+        const account = customer.rows[0];
+        if (!account) {
+          await client.query("ROLLBACK");
+          return reply.code(409).send({ error: "ACCOUNT_EXISTS", message: "An account already uses this preview email. Sign in or place a test order with a new synthetic email." });
+        }
+        await client.query("UPDATE orders SET customer_id=$1, checkout_token_hash=NULL, updated_at=now() WHERE id=$2", [account.id, order.rows[0].id]);
+        await client.query("INSERT INTO loyalty_accounts (customer_id) VALUES ($1)", [account.id]);
+        await client.query("COMMIT");
+        return reply.code(201).send({ status: "account_activated" });
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        client.release();
+      }
+    });
+  }
+
   app.post(
     "/register/request-code",
     { config: { rateLimit: { max: 3, timeWindow: "15 minutes" } } },

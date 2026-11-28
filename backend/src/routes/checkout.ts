@@ -52,14 +52,14 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
     const parsed = checkoutSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error:"INVALID_CHECKOUT", message:"Check your contact, delivery and product details.", details:parsed.error.flatten() });
     const input = parsed.data;
-    if (preview && (input.paymentMethod !== "cod" || !/^[^@]+@example\.(?:test|invalid)$/i.test(input.email))) {
+    if (preview && (input.paymentMethod === "card" || !/^[^@]+@example\.(?:test|invalid)$/i.test(input.email))) {
       return reply.code(400).send({
         error: "PREVIEW_CHECKOUT_ONLY",
-        message: "Use a synthetic example.test or example.invalid email and select simulated cash on delivery.",
+        message: "Use a synthetic example.test or example.invalid email and select a simulated payment method.",
       });
     }
     if (input.paymentMethod === "card") return reply.code(503).send({ error:"CARD_GATEWAY_NOT_CONFIGURED", message:"Card payments are coming soon. Please choose cash on delivery or bank transfer." });
-    if (input.paymentMethod === "bank_transfer" && [env.BANK_TRANSFER_ACCOUNT_TITLE, env.BANK_TRANSFER_BANK_NAME, env.BANK_TRANSFER_IBAN, env.BANK_TRANSFER_ACCOUNT_NUMBER, env.BANK_TRANSFER_BRANCH, env.BANK_TRANSFER_CITY].some((value) => !value.trim())) {
+    if (!preview && input.paymentMethod === "bank_transfer" && [env.BANK_TRANSFER_ACCOUNT_TITLE, env.BANK_TRANSFER_BANK_NAME, env.BANK_TRANSFER_IBAN, env.BANK_TRANSFER_ACCOUNT_NUMBER, env.BANK_TRANSFER_BRANCH, env.BANK_TRANSFER_CITY].some((value) => !value.trim())) {
       return reply.code(503).send({ error:"BANK_TRANSFER_NOT_CONFIGURED", message:"Bank transfer checkout is temporarily unavailable. Please choose another available payment method." });
     }
     const customerToken = request.cookies["wa_customer_session"];
@@ -170,6 +170,17 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
         "INSERT INTO payments (order_id,provider,amount_minor,currency,status,idempotency_key) VALUES ($1,$2,$3,'PKR','pending',$4)",
         [order.id,provider,subtotal,input.idempotencyKey],
       );
+      if (preview && method === "bank_transfer") {
+        const receipt = Buffer.from(
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lLsAAAAASUVORK5CYII=",
+          "base64",
+        );
+        await client.query(
+          `INSERT INTO bank_transfer_proofs(order_id,file_name,mime_type,file_bytes)
+           VALUES ($1,'simulated-transfer.png','image/png',$2)`,
+          [order.id, receipt],
+        );
+      }
       await client.query("COMMIT");
       return reply.code(201).send({
         testOnly: preview,
@@ -178,8 +189,8 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
         shipping:{quoteRequired:false,chargeMinor:0,message:preview ? "Test order only. No delivery or payment will occur." : "Free shipping within Pakistan. No delivery fee will be added to this order."},
         payment:{
           status:"pending",
-          bankInstructionsAvailable:method==="bank_transfer",
-          bankTransfer:method==="bank_transfer"?{
+          bankInstructionsAvailable:!preview&&method==="bank_transfer",
+          bankTransfer:!preview&&method==="bank_transfer"?{
             accountTitle:env.BANK_TRANSFER_ACCOUNT_TITLE,
             bankName:env.BANK_TRANSFER_BANK_NAME,
             iban:env.BANK_TRANSFER_IBAN,
@@ -349,8 +360,8 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
     const client=await db.connect();
     try{
       await client.query("BEGIN");
-      const result=await client.query<{id:string;status:string;payment_status:string;payment_method:string}>(
-        "SELECT id,status,payment_status,payment_method FROM orders WHERE order_number=$1 FOR UPDATE",[number]);
+      const result=await client.query<{id:string;status:string;payment_status:string;payment_method:string;customer_id:string|null;total_minor:string}>(
+        "SELECT id,status,payment_status,payment_method,customer_id,total_minor::text FROM orders WHERE order_number=$1 FOR UPDATE",[number]);
       const order=result.rows[0];
       if(!order){await client.query("ROLLBACK");return reply.code(404).send({error:"ORDER_NOT_FOUND"});}
       const next=parsed.data.status;
@@ -396,6 +407,37 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
         if(Number(expected.rows[0]?.linked??0)!==expectedCount || consumed.rowCount!==expectedCount){
           await client.query("ROLLBACK");return reply.code(409).send({error:"INVENTORY_COMMIT_FAILED",message:"Stock could not be safely committed for shipment. Review inventory before retrying."});
         }
+      }
+      const previewDelivery = env.PREVIEW_CHECKOUT_ENABLED && number.startsWith("WAT-") && next === "delivered";
+      if (previewDelivery && order.payment_method === "cod") {
+        const payment = await client.query(
+          "UPDATE payments SET status='paid', paid_at=now() WHERE order_id=$1 AND provider='cod' AND status='pending'",
+          [order.id],
+        );
+        if (payment.rowCount !== 1) {
+          await client.query("ROLLBACK");
+          return reply.code(409).send({ error: "PENDING_PAYMENT_NOT_FOUND", message: "No pending simulated cash payment was found." });
+        }
+        await client.query("UPDATE orders SET payment_status='paid' WHERE id=$1", [order.id]);
+      }
+
+      // Preview rule: one point per PKR 100 of a completed synthetic order.
+      const points = previewDelivery ? Math.floor(Number(order.total_minor) / 10_000) : 0;
+      if (points > 0 && order.customer_id) {
+        const account = await client.query<{ id: string }>(
+          `INSERT INTO loyalty_accounts (customer_id, points_balance, lifetime_earned)
+           VALUES ($1, $2, $2)
+           ON CONFLICT (customer_id) DO UPDATE
+             SET points_balance=loyalty_accounts.points_balance + $2,
+                 lifetime_earned=loyalty_accounts.lifetime_earned + $2, updated_at=now()
+           RETURNING id`,
+          [order.customer_id, points],
+        );
+        await client.query(
+          `INSERT INTO loyalty_transactions (loyalty_account_id, order_id, type, status, points, reason, created_by_admin_id)
+           VALUES ($1, $2, 'earn', 'available', $3, 'Preview order delivery', $4)`,
+          [account.rows[0]!.id, order.id, points, admin.id],
+        );
       }
       await client.query("UPDATE orders SET status=$1,updated_at=now() WHERE id=$2",[next,order.id]);
       await client.query(

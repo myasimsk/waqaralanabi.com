@@ -41,7 +41,6 @@ test("preview checkout advertises test mode and rejects real contact and payment
     };
     for (const override of [
       { email: "preview@example.com" },
-      { paymentMethod: "bank_transfer" },
       { paymentMethod: "card" },
     ]) {
       const response = await app.inject({
@@ -62,7 +61,7 @@ test("preview checkout advertises test mode and rejects real contact and payment
     assert.equal(proof.json().error, "PREVIEW_PAYMENT_DISABLED");
 
     if (setup) {
-      const { initializePreviewDatabase } = await import("../src/db/initialize-preview.ts");
+      const { initializePreviewAdmin, initializePreviewDatabase } = await import("../src/db/initialize-preview.ts");
       await initializePreviewDatabase();
       await initializePreviewDatabase();
       const catalogue = await app.inject("/catalog");
@@ -82,6 +81,64 @@ test("preview checkout advertises test mode and rejects real contact and payment
 
       const stock = await db.query("SELECT reserved_quantity FROM product_variants WHERE id=$1", [variant.id]);
       assert.equal(stock.rows[0].reserved_quantity, 1);
+
+      const customerPassword = randomUUID();
+      const registration = {
+        email: fixture.email, fullName: fixture.fullName, password: customerPassword,
+        orderNumber: order.json().order.orderNumber, accessToken: order.json().accessToken,
+      };
+      const register = (payload) => app.inject({ method: "POST", url: "/auth/register/preview", payload });
+      assert.equal((await register({ ...registration, accessToken: "0".repeat(64) })).statusCode, 400);
+      assert.equal((await register(registration)).statusCode, 201);
+      assert.equal((await register(registration)).statusCode, 400);
+      const customer = await app.inject({
+        method: "POST", url: "/auth/login", payload: { email: fixture.email, password: customerPassword },
+      });
+      assert.equal(customer.statusCode, 200);
+      const customerCookie = customer.cookies.find((cookie) => cookie.name === "wa_customer_session");
+      assert.ok(customerCookie?.httpOnly);
+      const customerCookies = { [customerCookie.name]: customerCookie.value };
+      const history = await app.inject({ url: "/account/orders", cookies: customerCookies });
+      assert.equal(history.statusCode, 200);
+      assert.equal(history.json().orders[0].order_number, registration.orderNumber);
+
+      const adminPassword = randomUUID();
+      process.env.PREVIEW_ADMIN_PASSWORD = adminPassword;
+      await initializePreviewAdmin();
+      await initializePreviewAdmin();
+      delete process.env.PREVIEW_ADMIN_PASSWORD;
+      const signIn = await app.inject({
+        method: "POST", url: "/admin/login", payload: { email: "admin@example.test", password: adminPassword },
+      });
+      assert.equal(signIn.statusCode, 200);
+      const adminCookie = signIn.cookies.find((cookie) => cookie.name === "wa_admin_session");
+      assert.ok(adminCookie?.httpOnly);
+      const adminCookies = { [adminCookie.name]: adminCookie.value };
+      const update = (status) => app.inject({
+        method: "PATCH", url: "/admin/orders/" + registration.orderNumber + "/status", cookies: adminCookies,
+        payload: { status, reason: "Synthetic integration test" },
+      });
+      for (const state of ["processing", "shipped", "delivered"]) assert.equal((await update(state)).statusCode, 200);
+      assert.equal((await update("delivered")).statusCode, 409);
+
+      const loyalty = await app.inject({ url: "/account/loyalty", cookies: customerCookies });
+      assert.equal(loyalty.statusCode, 200);
+      assert.equal(Number(loyalty.json().loyalty.balance), Math.floor(Number(order.json().order.totalMinor) / 10_000));
+      const payment = await db.query("SELECT payment_status FROM orders WHERE order_number=$1", [registration.orderNumber]);
+      assert.equal(payment.rows[0].payment_status, "paid");
+
+      const bankOrder = await app.inject({
+        method: "POST", url: "/checkout/orders", payload: { ...payload, paymentMethod: "bank_transfer", idempotencyKey: randomUUID() },
+      });
+      assert.equal(bankOrder.statusCode, 201);
+      assert.equal(bankOrder.json().payment.bankInstructionsAvailable, false);
+      assert.equal(bankOrder.json().payment.bankTransfer, undefined);
+      const bankNumber = bankOrder.json().order.orderNumber;
+      const approve = await app.inject({
+        method: "PATCH", url: "/admin/orders/" + bankNumber + "/bank-transfer-review", cookies: adminCookies,
+        payload: { decision: "approve", reason: "Synthetic transfer review" },
+      });
+      assert.equal(approve.statusCode, 200);
     }
   } finally {
     await app.close();
