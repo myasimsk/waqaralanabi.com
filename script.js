@@ -32,6 +32,7 @@ function readBag(){
  }catch{return [];}
 }
 let activeFilter="All",query="",bag=readBag();
+let pendingCatalogue=null;
 const countries={PK:{name:"Pakistan",currency:"PKR",flag:"🇵🇰",available:true},US:{name:"United States",currency:"USD",flag:"🇺🇸",available:false},AU:{name:"Australia",currency:"AUD",flag:"🇦🇺",available:false},GB:{name:"United Kingdom",currency:"GBP",flag:"🇬🇧",available:false},AE:{name:"United Arab Emirates",currency:"AED",flag:"🇦🇪",available:false}};
 const previousCountry=storage.getItem("wa-country");
 let selectedCountry="PK";
@@ -132,7 +133,7 @@ function openProductOptions(id, initialColor=null){
  $("#productOptionsContent").innerHTML=`<div class="options-visual"><img class="options-product-image" id="activeProductImage" src="${escapeTestHtml(gallery[0])}" alt="${escapeTestHtml(p.name)} — editorial reference"><div class="options-gallery-thumbs">${gallery.map((src,i)=>`<button type="button" class="options-gallery-thumb ${i===0?"selected":""}" data-gallery-image="${escapeTestHtml(src)}" aria-label="Show reference image ${i+1}" aria-pressed="${i===0}"><img src="${escapeTestHtml(src)}" alt="" loading="lazy"></button>`).join("")}</div><span class="options-image-note">${p.galleryImages?.length?"PRODUCT PHOTOGRAPHY":"EDITORIAL IMAGE REFERENCES · NOT FINAL PRODUCT PHOTOGRAPHY"}</span></div><div class="options-product-info"><p class="eyebrow">${escapeTestHtml(p.category)} / WA EDIT</p><h2 id="productOptionsTitle">${escapeTestHtml(p.name)}</h2><p class="options-price">${money(p.price)}</p><p class="options-description">${escapeTestHtml(details.intro)}</p><div class="options-detail-block"><span>DESIGN NOTES</span><p>${escapeTestHtml(details.design)}</p></div><div class="options-detail-block"><span>THE WA DETAIL</span><p>${escapeTestHtml(details.brand)}</p></div><fieldset class="option-field"><legend>Colour: <strong id="selectedColour">${escapeTestHtml(optionColor)}</strong></legend><div class="option-swatches">${p.colors.map((c,i)=>`<button type="button" class="option-swatch ${c[0]===optionColor?"selected":""}" data-option-color="${escapeTestHtml(c[0])}" aria-label="${escapeTestHtml(c[0])}" aria-pressed="${c[0]===optionColor}" title="${escapeTestHtml(c[0])}" style="--swatch:${c[1]}"></button>`).join("")}</div></fieldset><fieldset class="option-field"><legend>Size</legend><div class="option-sizes">${p.sizes.map((s,i)=>{const available=!p.variants?.length||p.variants.some(v=>v.colour===optionColor&&v.size===s&&v.available);return `<button type="button" class="option-size ${s===optionSize?"selected":""}" data-option-size="${escapeTestHtml(s)}" aria-pressed="${s===optionSize}" ${available?"":"disabled"}>${escapeTestHtml(s)}</button>`}).join("")}</div></fieldset><button type="button" class="button button-burgundy options-add-button" id="confirmAddToBag">Add to bag <span>↗</span></button><details class="options-size-guide"><summary>Size guide & fit</summary><p>Available sizes: S, M, L and XL. The measurement chart for this piece will be added before the store opens. Contact us for fit guidance.</p><a href="mailto:info@waqaralanabi.com?subject=Size%20and%20Fit">Ask us about your size ↗</a></details><p class="options-size-note">Preview collection — final retail prices and stock will be confirmed before ordering opens.</p></div>`;
  $("#productOptionsModal").classList.add("open");$("#productOptionsBackdrop").classList.add("open");$("#productOptionsModal").setAttribute("aria-hidden","false");document.body.style.overflow="hidden";
 }
-function closeProductOptions(){$("#productOptionsModal").classList.remove("open");$("#productOptionsBackdrop").classList.remove("open");$("#productOptionsModal").setAttribute("aria-hidden","true");if(!$("#bagDrawer").classList.contains("open"))document.body.style.overflow="";optionProduct=null}
+function closeProductOptions(){$("#productOptionsModal").classList.remove("open");$("#productOptionsBackdrop").classList.remove("open");$("#productOptionsModal").setAttribute("aria-hidden","true");if(!$("#bagDrawer").classList.contains("open"))document.body.style.overflow="";optionProduct=null;applyPendingCatalogue()}
 $("#productOptionsClose").addEventListener("click",closeProductOptions);
 $("#productOptionsBackdrop").addEventListener("click",closeProductOptions);
 $("#productOptionsContent").addEventListener("click",e=>{
@@ -176,6 +177,7 @@ function closeCheckoutPreview(){
  $("#checkoutPreviewModal").classList.remove("open");
  $("#checkoutPreviewBackdrop").classList.remove("open");
  $("#checkoutPreviewModal").setAttribute("aria-hidden","true");
+ applyPendingCatalogue();
 }
 function checkoutVariantItems(){
  return bag.map(item=>{
@@ -347,36 +349,42 @@ async function connectLiveCatalogue(){
   if(!response.ok)throw new Error("Catalogue API returned "+response.status);
   const payload=await response.json();
   if(!Array.isArray(payload.products)||payload.products.length===0){console.info("WA catalogue is empty; keeping editorial preview products.");return;}
-  if(optionProduct||$("#checkoutPreviewModal").classList.contains("open"))return;
-  const previousProducts=products;
-  const previousBag=bag;
-  products=payload.products.map(item=>{
-   const variants=Array.isArray(item.variants)?item.variants:[];
-   const colours=[...new Set(variants.map(v=>v.colour))],sizes=[...new Set(variants.map(v=>v.size))];
-   const reference=products.find(p=>p.name.toLowerCase()===String(item.name).toLowerCase());
-   const galleryImages=(Array.isArray(item.image_urls)&&item.image_urls.length?item.image_urls:[item.image_url])
-    .filter(url=>typeof url==="string"&&/^https:\/\//i.test(url));
-   const image=galleryImages[0]||reference?.image||"https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=82";
-   return {id:String(item.id),name:item.name,category:item.category,price:Number(item.price_minor)/100,description:item.description||"",image,galleryImages,badge:"WA EDIT",colors:(colours.length?colours:["Black"]).map(name=>[name,colourHex[name]||"#B8A99A"]),sizes:sizes.length?sizes:["S","M","L","XL"],variants};
-  });
-  bag=previousBag.flatMap(item=>{
-   const previous=previousProducts.find(p=>String(p.id)===String(item.id));
-   const current=products.find(p=>String(p.id)===String(item.id)||p.name===previous?.name);
-   return current?.variants.some(v=>v.colour===item.color&&v.size===item.size&&v.available)
-    ? [{...item,id:current.id}] : [];
-  });
-  WA_DATABASE_PREVIEW=true;
-  $("#bagDrawer .wa-test-mode-warning").textContent="TEST MODE · Preview orders are saved for testing. No payment is collected.";
-  $("#checkoutPreviewModal .wa-test-mode-banner").textContent="TEST MODE ACTIVE · Use an example.test or example.invalid email. Orders are saved to the preview database.";
-  $("#waCheckoutForm .wa-checkout-legal").textContent="TEST ONLY · No payment will be collected and no delivery will occur.";
-  $("#waCheckoutForm input[name=email]").placeholder="customer@example.test";
-  $("#waCheckoutForm input[value=cod]").checked=true;
-  const bankOption=$("#waCheckoutForm input[value=bank_transfer]");
-  bankOption.closest("label").querySelector("small").textContent="Test simulation only · an example receipt is sent for admin review.";
-  $("#waTestOrdersPanel").hidden=true;
-  saveBag();renderProducts();
-  console.info("WA live catalogue loaded:",products.length,"products");
+  pendingCatalogue=payload.products;
+  applyPendingCatalogue();
  }catch(error){console.warn("WA live catalogue unavailable; using preview catalogue.",error);}
+}
+function applyPendingCatalogue(){
+ if(!pendingCatalogue||optionProduct||$("#checkoutPreviewModal").classList.contains("open"))return;
+ const availableProducts=pendingCatalogue;
+ pendingCatalogue=null;
+ const previousProducts=products;
+ const previousBag=bag;
+ products=availableProducts.map(item=>{
+  const variants=Array.isArray(item.variants)?item.variants:[];
+  const colours=[...new Set(variants.map(v=>v.colour))],sizes=[...new Set(variants.map(v=>v.size))];
+  const reference=products.find(p=>p.name.toLowerCase()===String(item.name).toLowerCase());
+  const galleryImages=(Array.isArray(item.image_urls)&&item.image_urls.length?item.image_urls:[item.image_url])
+   .filter(url=>typeof url==="string"&&/^https:\/\//i.test(url));
+  const image=galleryImages[0]||reference?.image||"https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=82";
+  return {id:String(item.id),name:item.name,category:item.category,price:Number(item.price_minor)/100,description:item.description||"",image,galleryImages,badge:"WA EDIT",colors:(colours.length?colours:["Black"]).map(name=>[name,colourHex[name]||"#B8A99A"]),sizes:sizes.length?sizes:["S","M","L","XL"],variants};
+ });
+ bag=previousBag.flatMap(item=>{
+  const previous=previousProducts.find(p=>String(p.id)===String(item.id));
+  const current=products.find(p=>String(p.id)===String(item.id)||p.name===previous?.name);
+  return current?.variants.some(v=>v.colour===item.color&&v.size===item.size&&v.available)
+   ? [{...item,id:current.id}] : [];
+ });
+ WA_DATABASE_PREVIEW=true;
+ $("#bagDrawer .wa-test-mode-warning").textContent="TEST MODE · Preview orders are saved for testing. No payment is collected.";
+ $("#checkoutPreviewModal .wa-test-mode-banner").textContent="TEST MODE ACTIVE · Use an example.test or example.invalid email. Orders are saved to the preview database.";
+ $("#waCheckoutForm .wa-checkout-legal").textContent="TEST ONLY · No payment will be collected and no delivery will occur.";
+ $("#waCheckoutForm input[name=email]").placeholder="customer@example.test";
+ $("#waCheckoutForm input[value=cod]").checked=true;
+ const bankOption=$("#waCheckoutForm input[value=bank_transfer]");
+ bankOption.closest("label").querySelector("small").textContent="Test simulation only · an example receipt is sent for admin review.";
+ $("#waTestOrdersPanel").hidden=true;
+ saveBag();renderProducts();
+ console.info("WA live catalogue loaded:",products.length,"products");
 }
 if(previousCountry!=="PK")openCountryGate();
 connectLiveCatalogue();
