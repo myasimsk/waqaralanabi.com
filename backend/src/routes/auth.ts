@@ -108,11 +108,17 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         });
       }
 
+      if (env.NODE_ENV !== "development") {
+        request.log.error("Account verification email provider is not configured.");
+        return reply.code(503).send({
+          error: "EMAIL_DELIVERY_UNAVAILABLE",
+          message: "Account registration is temporarily unavailable. Please try again later.",
+        });
+      }
+
       const email = normalizeEmail(parsed.data.email);
       const { orderNumber } = parsed.data;
 
-      // Fail closed before account/order lookups so this endpoint does not
-      // reveal whether an email or guest order exists while mail is offline.
       const eligibleOrder = await db.query(
         `SELECT o.id
            FROM orders o
@@ -130,14 +136,6 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
       if (eligibleOrder.rowCount !== 1 || existingCustomer.rowCount !== 0) {
         return reply.code(202).send({ message: genericRequestMessage });
-      }
-
-      if (env.NODE_ENV !== "development") {
-        request.log.error("Account verification email provider is not configured.");
-        return reply.code(503).send({
-          error: "EMAIL_DELIVERY_UNAVAILABLE",
-          message: "Account registration is temporarily unavailable. Please try again later.",
-        });
       }
 
       const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
@@ -454,10 +452,16 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         });
       }
 
+      if (env.NODE_ENV !== "development") {
+        request.log.error("Password reset email provider is not configured.");
+        return reply.code(503).send({
+          error: "EMAIL_DELIVERY_UNAVAILABLE",
+          message: "Password reset is temporarily unavailable. Please try again later.",
+        });
+      }
+
       const email = normalizeEmail(parsed.data.email);
 
-      // Return the same service state for every address while email delivery
-      // is unavailable; do not reveal whether a customer account exists.
       const customer = await db.query<{ id: string; status: string }>(
         "SELECT id, status FROM customers WHERE email_normalized = $1 LIMIT 1",
         [email],
@@ -467,14 +471,6 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       if (customer.rowCount !== 1 || customer.rows[0]?.status !== "active") {
         return reply.code(202).send({
           message: "If an active account exists for this email, password reset instructions will be sent.",
-        });
-      }
-
-      if (env.NODE_ENV !== "development") {
-        request.log.error("Password reset email provider is not configured.");
-        return reply.code(503).send({
-          error: "EMAIL_DELIVERY_UNAVAILABLE",
-          message: "Password reset is temporarily unavailable. Please try again later.",
         });
       }
 
