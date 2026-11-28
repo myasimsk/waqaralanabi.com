@@ -19,7 +19,7 @@ test("preview checkout advertises test mode and rejects real contact and payment
     PREVIEW_CHECKOUT_ENABLED: "true",
     COMMERCE_LAUNCH_READY: "false",
     STOREFRONT_ORIGIN: "https://waqar-al-anabi-preview.pages.dev",
-    LOG_LEVEL: "silent",
+    LOG_LEVEL: "error",
   });
   const { buildApp } = await import("../src/app.ts");
   const { db } = await import("../src/db/pool.ts");

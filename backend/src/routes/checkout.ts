@@ -453,7 +453,7 @@ export async function orderAdminRoutes(app: FastifyInstance): Promise<void> {
           [account.rows[0]!.id, order.id, points, admin.id],
         );
       }
-      await client.query("UPDATE orders SET status=$1, delivered_at=CASE WHEN $1=\x27delivered\x27 THEN now() ELSE delivered_at END, updated_at=now() WHERE id=$2",[next,order.id]);
+      await client.query("UPDATE orders SET status=$1, delivered_at=CASE WHEN $3::boolean THEN now() ELSE delivered_at END, updated_at=now() WHERE id=$2",[next,order.id,next==="delivered"]);
       await client.query(
         "INSERT INTO admin_audit_logs(admin_user_id,action,entity_type,entity_id,reason,metadata) VALUES($1,$2,'order',$3,$4,$5::jsonb)",
         [admin.id,"order.status_"+next,order.id,parsed.data.reason,JSON.stringify({orderNumber:number,previousStatus:order.status,newStatus:next,paymentMethod:order.payment_method})]);
