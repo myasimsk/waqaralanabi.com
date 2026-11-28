@@ -96,7 +96,7 @@ const progress=document.createElement("div");progress.className="wa-scroll-progr
 const updateProgress=()=>{const max=document.documentElement.scrollHeight-window.innerHeight;progress.style.transform="scaleX("+ (max>0?window.scrollY/max:0) +")"};
 window.addEventListener("scroll",updateProgress,{passive:true});window.addEventListener("resize",updateProgress);updateProgress();
 renderProducts();renderBag();
-$("#countrySwitch").addEventListener("click",openCountryGate);
+$("#countrySwitch").addEventListener("click",()=>location.assign("./"));
 function renderProducts(){
  let list=products.filter(p=>(activeFilter==="All"||p.category===activeFilter)&&(p.name.toLowerCase().includes(query.toLowerCase())||p.category.toLowerCase().includes(query.toLowerCase())));
  const sort=$("#sortSelect").value;
