@@ -82,16 +82,16 @@ function renderProducts(){
  $("#productTotal").textContent=String(list.length).padStart(2,"0")+" pieces";
  $("#productGrid").innerHTML=list.map((p,index)=>`<article class="product-card" style="--card-index:${index}">
   <div class="product-image-wrap">
-   <img class="product-image" src="${p.image}" alt="${p.name} — campaign reference" loading="lazy">
+   <img class="product-image" src="${escapeTestHtml(p.image)}" alt="${escapeTestHtml(p.name)} — campaign reference" loading="lazy">
    <span class="product-badge">${p.badge}</span>
-   <button class="quick-add" type="button" data-add="${p.id}" aria-label="View ${p.name} details">Explore piece <span>↗</span></button>
-   <span class="product-image-index">WA / ${String(p.id).padStart(2,"0")}</span>
+   <button class="quick-add" type="button" data-add="${escapeTestHtml(p.id)}" aria-label="View ${escapeTestHtml(p.name)} details">Explore piece <span>↗</span></button>
+   <span class="product-image-index">WA / ${escapeTestHtml(String(p.id).padStart(2,"0"))}</span>
   </div>
   <div class="product-meta">
-   <div class="product-category">${p.category} / WA EDIT</div>
-   <div class="product-title-row"><h3 class="product-title">${p.name}</h3><span class="product-price">${money(p.price)}</span></div>
+   <div class="product-category">${escapeTestHtml(p.category)} / WA EDIT</div>
+   <div class="product-title-row"><h3 class="product-title">${escapeTestHtml(p.name)}</h3><span class="product-price">${money(p.price)}</span></div>
    <div class="product-colors" aria-label="Choose a colour to view product options">
-    ${p.colors.map((c,i)=>`<button class="swatch-button ${i===0?"is-default":""}" type="button" data-swatch-product="${p.id}" data-swatch-color="${c[0]}" aria-label="View ${p.name} in ${c[0]}" title="${c[0]}" style="--swatch:${c[1]}"><span class="swatch"></span></button>`).join("")}
+    ${p.colors.map((c,i)=>`<button class="swatch-button ${i===0?"is-default":""}" type="button" data-swatch-product="${escapeTestHtml(p.id)}" data-swatch-color="${escapeTestHtml(c[0])}" aria-label="View ${escapeTestHtml(p.name)} in ${escapeTestHtml(c[0])}" title="${escapeTestHtml(c[0])}" style="--swatch:${c[1]}"><span class="swatch"></span></button>`).join("")}
     <span class="color-count">${p.colors.length} colours</span>
    </div>
    <div class="product-sizes">S · M · L · XL</div>
@@ -107,7 +107,7 @@ function openProductOptions(id, initialColor=null){
  optionProduct=p;optionColor=p.colors.some(c=>c[0]===initialColor)?initialColor:p.colors[0][0];optionSize="M";
  const gallery=editorialReferences(p);
  const details=productDetails[p.id]||{intro:p.description||'A considered piece from the WA collection.',design:'Available in selected colours and sizes.',brand:'People not trends.'};
- $("#productOptionsContent").innerHTML=`<div class="options-visual"><img class="options-product-image" id="activeProductImage" src="${gallery[0]}" alt="${p.name} — editorial reference"><div class="options-gallery-thumbs">${gallery.map((src,i)=>`<button type="button" class="options-gallery-thumb ${i===0?"selected":""}" data-gallery-image="${src}" aria-label="Show reference image ${i+1}" aria-pressed="${i===0}"><img src="${src}" alt="" loading="lazy"></button>`).join("")}</div><span class="options-image-note">${p.galleryImages?.length?"PRODUCT PHOTOGRAPHY":"EDITORIAL IMAGE REFERENCES · NOT FINAL PRODUCT PHOTOGRAPHY"}</span></div><div class="options-product-info"><p class="eyebrow">${p.category} / WA EDIT</p><h2 id="productOptionsTitle">${p.name}</h2><p class="options-price">${money(p.price)}</p><p class="options-description">${details.intro}</p><div class="options-detail-block"><span>DESIGN NOTES</span><p>${details.design}</p></div><div class="options-detail-block"><span>THE WA DETAIL</span><p>${details.brand}</p></div><fieldset class="option-field"><legend>Colour: <strong id="selectedColour">${optionColor}</strong></legend><div class="option-swatches">${p.colors.map((c,i)=>`<button type="button" class="option-swatch ${c[0]===optionColor?"selected":""}" data-option-color="${c[0]}" aria-label="${c[0]}" aria-pressed="${c[0]===optionColor}" title="${c[0]}" style="--swatch:${c[1]}"></button>`).join("")}</div></fieldset><fieldset class="option-field"><legend>Size</legend><div class="option-sizes">${p.sizes.map((s,i)=>{const available=!p.variants?.length||p.variants.some(v=>v.colour===optionColor&&v.size===s&&v.available);return `<button type="button" class="option-size ${s===optionSize?"selected":""}" data-option-size="${s}" aria-pressed="${s===optionSize}" ${available?"":"disabled"}>${s}</button>`}).join("")}</div></fieldset><button type="button" class="button button-burgundy options-add-button" id="confirmAddToBag">Add to bag <span>↗</span></button><details class="options-size-guide"><summary>Size guide & fit</summary><p>Available sizes: S, M, L and XL. The measurement chart for this piece will be added before the store opens. Contact us for fit guidance.</p><a href="mailto:info@waqaralanabi.com?subject=Size%20and%20Fit">Ask us about your size ↗</a></details><p class="options-size-note">Preview collection — final retail prices and stock will be confirmed before ordering opens.</p></div>`;
+ $("#productOptionsContent").innerHTML=`<div class="options-visual"><img class="options-product-image" id="activeProductImage" src="${escapeTestHtml(gallery[0])}" alt="${escapeTestHtml(p.name)} — editorial reference"><div class="options-gallery-thumbs">${gallery.map((src,i)=>`<button type="button" class="options-gallery-thumb ${i===0?"selected":""}" data-gallery-image="${escapeTestHtml(src)}" aria-label="Show reference image ${i+1}" aria-pressed="${i===0}"><img src="${escapeTestHtml(src)}" alt="" loading="lazy"></button>`).join("")}</div><span class="options-image-note">${p.galleryImages?.length?"PRODUCT PHOTOGRAPHY":"EDITORIAL IMAGE REFERENCES · NOT FINAL PRODUCT PHOTOGRAPHY"}</span></div><div class="options-product-info"><p class="eyebrow">${escapeTestHtml(p.category)} / WA EDIT</p><h2 id="productOptionsTitle">${escapeTestHtml(p.name)}</h2><p class="options-price">${money(p.price)}</p><p class="options-description">${escapeTestHtml(details.intro)}</p><div class="options-detail-block"><span>DESIGN NOTES</span><p>${escapeTestHtml(details.design)}</p></div><div class="options-detail-block"><span>THE WA DETAIL</span><p>${escapeTestHtml(details.brand)}</p></div><fieldset class="option-field"><legend>Colour: <strong id="selectedColour">${escapeTestHtml(optionColor)}</strong></legend><div class="option-swatches">${p.colors.map((c,i)=>`<button type="button" class="option-swatch ${c[0]===optionColor?"selected":""}" data-option-color="${escapeTestHtml(c[0])}" aria-label="${escapeTestHtml(c[0])}" aria-pressed="${c[0]===optionColor}" title="${escapeTestHtml(c[0])}" style="--swatch:${c[1]}"></button>`).join("")}</div></fieldset><fieldset class="option-field"><legend>Size</legend><div class="option-sizes">${p.sizes.map((s,i)=>{const available=!p.variants?.length||p.variants.some(v=>v.colour===optionColor&&v.size===s&&v.available);return `<button type="button" class="option-size ${s===optionSize?"selected":""}" data-option-size="${escapeTestHtml(s)}" aria-pressed="${s===optionSize}" ${available?"":"disabled"}>${escapeTestHtml(s)}</button>`}).join("")}</div></fieldset><button type="button" class="button button-burgundy options-add-button" id="confirmAddToBag">Add to bag <span>↗</span></button><details class="options-size-guide"><summary>Size guide & fit</summary><p>Available sizes: S, M, L and XL. The measurement chart for this piece will be added before the store opens. Contact us for fit guidance.</p><a href="mailto:info@waqaralanabi.com?subject=Size%20and%20Fit">Ask us about your size ↗</a></details><p class="options-size-note">Preview collection — final retail prices and stock will be confirmed before ordering opens.</p></div>`;
  $("#productOptionsModal").classList.add("open");$("#productOptionsBackdrop").classList.add("open");$("#productOptionsModal").setAttribute("aria-hidden","false");document.body.style.overflow="hidden";
 }
 function closeProductOptions(){$("#productOptionsModal").classList.remove("open");$("#productOptionsBackdrop").classList.remove("open");$("#productOptionsModal").setAttribute("aria-hidden","true");if(!$("#bagDrawer").classList.contains("open"))document.body.style.overflow="";optionProduct=null}
@@ -126,13 +126,13 @@ $("#productOptionsContent").addEventListener("click",e=>{
  }
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeCheckoutPreview();closeProductOptions();closeBag()}});
-function renderBag(){const count=bag.reduce((n,x)=>n+x.qty,0);const subtotal=bag.reduce((n,x)=>n+(products.find(p=>String(p.id)===String(x.id))?.price||0)*x.qty,0);$("#bagCount").textContent=count;$("#drawerCount").textContent="("+count+")";$("#subtotal").textContent=money(subtotal);const checkout=$("#checkoutButton");if(checkout)checkout.disabled=count===0;$("#bagItems").innerHTML=bag.length?bag.map((x,i)=>{const p=products.find(p=>String(p.id)===String(x.id));if(!p)return '';return `<div class="bag-line"><img src="${p.image}" alt=""><div><h3>${p.name}</h3><p>${x.color} · Size ${x.size}</p><p>${money(p.price)}</p><div class="qty-controls"><button data-qty="${i}" data-delta="-1" aria-label="Decrease quantity">−</button><span>${x.qty}</span><button data-qty="${i}" data-delta="1" aria-label="Increase quantity">+</button></div></div><button class="remove-item" data-remove="${i}" aria-label="Remove item">×</button></div>`}).join(""):'<div class="empty-bag">Your bag is waiting for something special.</div>';$$("[data-qty]").forEach(b=>b.onclick=()=>{const i=+b.dataset.qty;bag[i].qty+=+b.dataset.delta;if(bag[i].qty<1)bag.splice(i,1);saveBag()});$$("[data-remove]").forEach(b=>b.onclick=()=>{bag.splice(+b.dataset.remove,1);saveBag()})}
+function renderBag(){const count=bag.reduce((n,x)=>n+x.qty,0);const subtotal=bag.reduce((n,x)=>n+(products.find(p=>String(p.id)===String(x.id))?.price||0)*x.qty,0);$("#bagCount").textContent=count;$("#drawerCount").textContent="("+count+")";$("#subtotal").textContent=money(subtotal);const checkout=$("#checkoutButton");if(checkout)checkout.disabled=count===0;$("#bagItems").innerHTML=bag.length?bag.map((x,i)=>{const p=products.find(p=>String(p.id)===String(x.id));if(!p)return '';return `<div class="bag-line"><img src="${escapeTestHtml(p.image)}" alt=""><div><h3>${escapeTestHtml(p.name)}</h3><p>${escapeTestHtml(x.color)} · Size ${escapeTestHtml(x.size)}</p><p>${money(p.price)}</p><div class="qty-controls"><button data-qty="${i}" data-delta="-1" aria-label="Decrease quantity">−</button><span>${x.qty}</span><button data-qty="${i}" data-delta="1" aria-label="Increase quantity">+</button></div></div><button class="remove-item" data-remove="${i}" aria-label="Remove item">×</button></div>`}).join(""):'<div class="empty-bag">Your bag is waiting for something special.</div>';$$("[data-qty]").forEach(b=>b.onclick=()=>{const i=+b.dataset.qty;bag[i].qty+=+b.dataset.delta;if(bag[i].qty<1)bag.splice(i,1);saveBag()});$$("[data-remove]").forEach(b=>b.onclick=()=>{bag.splice(+b.dataset.remove,1);saveBag()})}
 /* Customer checkout: server-authoritative prices and stock; PKR / Pakistan only. */
 let activeCheckoutOrder=null;
+let previewCheckoutAttempt=null;
 function currentBagSubtotal(){return bag.reduce((sum,item)=>sum+(products.find(p=>String(p.id)===String(item.id))?.price||0)*item.qty,0);}
 function openCheckoutPreview(){
  if(!bag.length){toast("Your bag is empty.");return;}
- if(!WA_TEST_MODE&&!WA_COMMERCE_LAUNCH_READY){toast("Online ordering opens once final retail prices and inventory are confirmed.");return;}
  $("#checkoutPreviewSubtotal").textContent=money(currentBagSubtotal());
  $("#waCheckoutTotal").textContent=money(currentBagSubtotal());
  $("#waCheckoutError").textContent="";
@@ -164,11 +164,12 @@ function renderTestOrders(){
  const orders=readTestOrders();
  target.innerHTML=orders.length?orders.map(order=>'<article class="wa-test-order-card"><div><strong>'+escapeTestHtml(order.orderNumber)+'</strong><small>'+new Date(order.createdAt).toLocaleString()+'</small></div><p>'+escapeTestHtml(order.customer.fullName)+' · '+escapeTestHtml(order.customer.city)+'</p><p>'+order.items.map(item=>escapeTestHtml(item.productName)+' — '+escapeTestHtml(item.colour)+' / '+escapeTestHtml(item.size)+' × '+item.quantity).join('<br>')+'</p><b>'+money(order.total)+'</b><small>TEST ONLY · PAYMENT NOT COLLECTED</small></article>').join(""):'<p class="wa-test-empty">No test orders have been placed in this browser yet.</p>';
 }
-function showTestCheckoutResult(order){
+function showTestCheckoutResult(order, databaseBacked=false){
  const form=$("#waCheckoutForm"),result=$("#waCheckoutResult");
  form.hidden=true;result.hidden=false;
- result.innerHTML='<p class="eyebrow">TEST ORDER / NOT REAL</p><h3>Test order<br><em>recorded.</em></h3><p class="wa-order-number">TEST ORDER NUMBER <strong>'+escapeTestHtml(order.orderNumber)+'</strong></p><div class="wa-order-summary"><div><span>Merchandise subtotal</span><strong>'+money(order.subtotal)+'</strong></div><div><span>Shipping simulation</span><strong>FREE</strong></div><div class="wa-order-total"><span>Payment</span><strong>NOT COLLECTED</strong></div></div><p class="wa-test-mode-warning">This is a local test only. No real order was sent to WA, no payment was taken, and no fulfilment will occur.</p><button type="button" class="button button-burgundy" id="waFinishCheckout">Continue exploring</button>';
+ result.innerHTML='<p class="eyebrow">TEST ORDER / NOT REAL</p><h3>Test order<br><em>recorded.</em></h3><p class="wa-order-number">TEST ORDER NUMBER <strong>'+escapeTestHtml(order.orderNumber)+'</strong></p><div class="wa-order-summary"><div><span>Merchandise subtotal</span><strong>'+money(order.subtotal)+'</strong></div><div><span>Shipping simulation</span><strong>FREE</strong></div><div class="wa-order-total"><span>Payment</span><strong>NOT COLLECTED</strong></div></div><p class="wa-test-mode-warning">'+(databaseBacked?"This test order was saved to the preview database. No payment or delivery will occur.":"This order was saved in this browser. No payment or delivery will occur.")+'</p><button type="button" class="button button-burgundy" id="waFinishCheckout">Continue exploring</button>';
  activeCheckoutOrder=null;
+ bag=[];saveBag();
  $("#waFinishCheckout").onclick=()=>{bag=[];saveBag();closeCheckoutPreview();closeBag();};
  renderTestOrders();
 }
@@ -206,7 +207,7 @@ $("#waCheckoutForm").addEventListener("submit",async event=>{
  event.preventDefault();const form=event.currentTarget,button=$("#waPlaceOrder"),error=$("#waCheckoutError"),data=new FormData(form);
  button.disabled=true;button.textContent="Placing order…";error.textContent="";
  try{
-  if(WA_TEST_MODE){
+  if(!WA_DATABASE_PREVIEW){
    const customer={fullName:String(data.get("fullName")).trim(),email:String(data.get("email")).trim(),phone:String(data.get("phone")).trim(),addressLine1:String(data.get("addressLine1")).trim(),addressLine2:String(data.get("addressLine2")).trim(),city:String(data.get("city")).trim(),region:String(data.get("region")).trim(),postalCode:String(data.get("postalCode")).trim(),countryCode:"PK"};
    const stock=readTestStock();
    const items=bag.map(item=>{const product=products.find(p=>String(p.id)===String(item.id));if(!product)throw new Error("A product in your bag is no longer available. Refresh and try again.");const key=testStockKey(item);const available=stock[key]===undefined?10:Number(stock[key]);if(item.qty>available)throw new Error(product.name+" ("+item.color+", "+item.size+") has only "+available+" test units remaining.");return {productId:String(product.id),productName:product.name,colour:item.color,size:item.size,quantity:item.qty,unitPrice:product.price,lineTotal:product.price*item.qty,stockKey:key};});
@@ -218,11 +219,18 @@ $("#waCheckoutForm").addEventListener("submit",async event=>{
    showTestCheckoutResult(order);
   }else{
    const items=checkoutVariantItems();
-   const body={fullName:String(data.get("fullName")).trim(),email:String(data.get("email")).trim(),phone:String(data.get("phone")).trim(),addressLine1:String(data.get("addressLine1")).trim(),addressLine2:String(data.get("addressLine2")).trim(),city:String(data.get("city")).trim(),region:String(data.get("region")).trim(),postalCode:String(data.get("postalCode")).trim(),countryCode:"PK",paymentMethod:String(data.get("paymentMethod")),idempotencyKey:crypto.randomUUID(),items};
+   const body={fullName:String(data.get("fullName")).trim(),email:String(data.get("email")).trim(),phone:String(data.get("phone")).trim(),addressLine1:String(data.get("addressLine1")).trim(),addressLine2:String(data.get("addressLine2")).trim(),city:String(data.get("city")).trim(),region:String(data.get("region")).trim(),postalCode:String(data.get("postalCode")).trim(),countryCode:"PK",paymentMethod:"cod",items};
+   const fingerprint=JSON.stringify(body);
+   if(previewCheckoutAttempt?.fingerprint!==fingerprint){
+    previewCheckoutAttempt={fingerprint,key:crypto.randomUUID()};
+   }
+   body.idempotencyKey=previewCheckoutAttempt.key;
    const response=await fetch(WA_API_BASE+"/checkout/orders",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(body)});
    const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error(payload.message||payload.error||"We could not place your order. Please check your details and try again.");
-   if(!payload.order?.orderNumber||!payload.accessToken)throw new Error("The order response was incomplete. Please contact WA before retrying.");
-   showCheckoutResult(payload.order,payload.payment,payload.accessToken);
+   if(!payload.order?.orderNumber?.startsWith("WAT-"))throw new Error("The preview order response was incomplete. Please retry the same checkout.");
+   const total=Number(payload.order.totalMinor)/100;
+   previewCheckoutAttempt=null;
+   showTestCheckoutResult({orderNumber:payload.order.orderNumber,subtotal:total},true);
   }
  }catch(err){error.textContent=err.message||"Checkout is temporarily unavailable."; }
  finally{button.disabled=false;button.innerHTML='Place order <span>↗</span>';}
@@ -270,29 +278,47 @@ window.addEventListener("scroll",syncHeaderDepth,{passive:true});syncHeaderDepth
 
 
 /* Database-backed catalogue with a safe editorial fallback. */
-const WA_TEST_MODE=true;
+let WA_DATABASE_PREVIEW=false;
 const WA_TEST_ORDERS_KEY="wa-test-orders-v1";
 const WA_TEST_STOCK_KEY="wa-test-stock-v1";
-const WA_COMMERCE_LAUNCH_READY=false;
 const WA_API_BASE=window.WA_API_BASE||((location.hostname==="localhost"||location.hostname==="127.0.0.1")?"http://127.0.0.1:4000":"/api");
 const colourHex={"Black":"#111111","Burgundy":"#741F2B","White":"#F7F7F2","Beige":"#DCC9A8","Cream":"#F1E6D2","Chocolate Brown":"#4A2C20","Chocolate":"#4A2C20","Taupe":"#A89A88","Charcoal":"#55514E","Brown":"#49352C","Olive Green":"#4B5135"};
 async function connectLiveCatalogue(){
- if(WA_TEST_MODE){console.info("WA test mode: using the seven local preview products; no live catalogue or order API is called.");return;}
  try{
+  const config=await fetch(WA_API_BASE+"/checkout/config",{cache:"no-store"});
+  if(!config.ok||!(await config.json()).previewOrdersEnabled)return;
   const response=await fetch(WA_API_BASE+"/catalog",{headers:{"Accept":"application/json"}});
   if(!response.ok)throw new Error("Catalogue API returned "+response.status);
   const payload=await response.json();
   if(!Array.isArray(payload.products)||payload.products.length===0){console.info("WA catalogue is empty; keeping editorial preview products.");return;}
+  if(optionProduct||$("#checkoutPreviewModal").classList.contains("open"))return;
+  const previousProducts=products;
   const previousBag=bag;
   products=payload.products.map(item=>{
    const variants=Array.isArray(item.variants)?item.variants:[];
    const colours=[...new Set(variants.map(v=>v.colour))],sizes=[...new Set(variants.map(v=>v.size))];
    const reference=products.find(p=>p.name.toLowerCase()===String(item.name).toLowerCase());
-   const galleryImages=Array.isArray(item.image_urls)&&item.image_urls.length?item.image_urls:(item.image_url?[item.image_url]:[]);
+   const galleryImages=(Array.isArray(item.image_urls)&&item.image_urls.length?item.image_urls:[item.image_url])
+    .filter(url=>typeof url==="string"&&/^https:\/\//i.test(url));
    const image=galleryImages[0]||reference?.image||"https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=82";
    return {id:String(item.id),name:item.name,category:item.category,price:Number(item.price_minor)/100,description:item.description||"",image,galleryImages,badge:"WA EDIT",colors:(colours.length?colours:["Black"]).map(name=>[name,colourHex[name]||"#B8A99A"]),sizes:sizes.length?sizes:["S","M","L","XL"],variants};
   });
-  bag=previousBag.filter(item=>products.some(p=>String(p.id)===String(item.id)));
+  bag=previousBag.flatMap(item=>{
+   const previous=previousProducts.find(p=>String(p.id)===String(item.id));
+   const current=products.find(p=>String(p.id)===String(item.id)||p.name===previous?.name);
+   return current?.variants.some(v=>v.colour===item.color&&v.size===item.size&&v.available)
+    ? [{...item,id:current.id}] : [];
+  });
+  WA_DATABASE_PREVIEW=true;
+  $("#bagDrawer .wa-test-mode-warning").textContent="TEST MODE · Preview orders are saved for testing. No payment is collected.";
+  $("#checkoutPreviewModal .wa-test-mode-banner").textContent="TEST MODE ACTIVE · Use an example.test or example.invalid email. Orders are saved to the preview database.";
+  $("#waCheckoutForm .wa-checkout-legal").textContent="TEST ONLY · No payment will be collected and no delivery will occur.";
+  $("#waCheckoutForm input[name=email]").placeholder="customer@example.test";
+  $("#waCheckoutForm input[value=cod]").checked=true;
+  const bankOption=$("#waCheckoutForm input[value=bank_transfer]");
+  bankOption.disabled=true;
+  bankOption.closest("label").hidden=true;
+  $("#waTestOrdersPanel").hidden=true;
   saveBag();renderProducts();
   console.info("WA live catalogue loaded:",products.length,"products");
  }catch(error){console.warn("WA live catalogue unavailable; using preview catalogue.",error);}
