@@ -1,11 +1,15 @@
 /**
  * Same-origin proxy for the preview API.
- * Configure the Cloudflare Pages environment variable API_ORIGIN to the
- * HTTPS origin of the Render web service (for example https://wa-api.onrender.com).
+ * The separate Pages preview project has a default Render service.
+ * Other deployments require an explicit API_ORIGIN environment variable.
  * The /api prefix is stripped before forwarding to Fastify.
  */
 export async function onRequest(context) {
-  const configuredOrigin = context.env.API_ORIGIN;
+  const incoming = new URL(context.request.url);
+  const previewOrigin = incoming.hostname === "waqar-al-anabi-preview.pages.dev"
+    ? "https://waqar-al-anabi-preview-api.onrender.com"
+    : undefined;
+  const configuredOrigin = context.env.API_ORIGIN || previewOrigin;
   if (!configuredOrigin) {
     return Response.json(
       { error: "API_NOT_CONFIGURED", message: "The preview API has not been connected yet." },
@@ -24,7 +28,6 @@ export async function onRequest(context) {
     );
   }
 
-  const incoming = new URL(context.request.url);
   const suffix = incoming.pathname.replace(/^\/api(?=\/|$)/, "") || "/";
   upstream.pathname = suffix;
   upstream.search = incoming.search;
