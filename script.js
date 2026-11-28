@@ -10,23 +10,45 @@ let products=[
 ];
 const editorialReferences=p=>p.galleryImages?.length?p.galleryImages:[p.image,"https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=82","https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?auto=format&fit=crop&w=900&q=82","https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=900&q=82"];
 const productDetails={1:{intro:"A clean everyday polo with a considered silhouette.",design:"Collared neckline · Half sleeves · Small WA monogram on the left chest",brand:"Monogram colour: white on black; black on burgundy and white."},2:{intro:"Relaxed tailoring with pleats for a considered everyday shape.",design:"Relaxed fit · Pleated front · Four launch colour options",brand:"Designed for the WA everyday wardrobe."},3:{intro:"A coordinated two-piece look built around ease and proportion.",design:"Matching top and bottom · Extended shirt length · Four launch colours",brand:"No visible logo or monogram on the co-ord set."},4:{intro:"A wide-leg silhouette for ease and structure in everyday dressing.",design:"Wide-leg cut · Four launch colour options",brand:"A versatile separate for a considered rotation."},5:{intro:"A winter layer with a clean, collarless silhouette.",design:"Full sleeves · Collarless neckline · Black, burgundy and beige",brand:"No logo on the front; large WA logo on the back."},6:{intro:"A relaxed boxy-fit shirt with a distinctive back statement.",design:"Boxy silhouette · Black, burgundy, olive green and beige",brand:"People not trends on the back in a vertical layout."},7:{intro:"An everyday boxy tee with the WA point of view built into the details.",design:"Boxy fit · Black, burgundy, olive green and beige",brand:"WA monogram on the front; People not trends on the back."}};
-let activeFilter="All",query="",bag=JSON.parse(localStorage.getItem("wa-preview-bag")||"[]");
+const memoryStorage=new Map();
+const storage={
+ getItem(key){
+  if(memoryStorage.has(key))return memoryStorage.get(key);
+  try{return window.localStorage.getItem(key);}catch{return null;}
+ },
+ setItem(key,value){
+  memoryStorage.set(key,value);
+  try{window.localStorage.setItem(key,value);}catch{}
+ },
+ removeItem(key){
+  memoryStorage.set(key,null);
+  try{window.localStorage.removeItem(key);}catch{}
+ }
+};
+function readBag(){
+ try{
+  const saved=JSON.parse(storage.getItem("wa-preview-bag")||"[]");
+  return Array.isArray(saved)?saved.filter(item=>item&&(typeof item.id==="number"||typeof item.id==="string")&&typeof item.size==="string"&&typeof item.color==="string"&&Number.isSafeInteger(item.qty)&&item.qty>0):[];
+ }catch{return [];}
+}
+let activeFilter="All",query="",bag=readBag();
 const countries={PK:{name:"Pakistan",currency:"PKR",flag:"🇵🇰",available:true},US:{name:"United States",currency:"USD",flag:"🇺🇸",available:false},AU:{name:"Australia",currency:"AUD",flag:"🇦🇺",available:false},GB:{name:"United Kingdom",currency:"GBP",flag:"🇬🇧",available:false},AE:{name:"United Arab Emirates",currency:"AED",flag:"🇦🇪",available:false}};
-let selectedCountry=localStorage.getItem("wa-country")||"PK";
+const previousCountry=storage.getItem("wa-country");
+let selectedCountry="PK";
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const themeToggle=$("#themeToggle");
-const savedTheme=localStorage.getItem("wa-theme")==="dark"?"dark":"light";
-function applyTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem("wa-theme",theme);themeToggle.innerHTML='<span class="theme-icon" aria-hidden="true">'+(theme==="dark"?"☀":"☾")+'</span>';themeToggle.setAttribute("aria-label",theme==="dark"?"Switch to light mode":"Switch to dark mode");themeToggle.setAttribute("title",theme==="dark"?"Switch to light mode":"Switch to dark mode");}
+const savedTheme=storage.getItem("wa-theme")==="dark"?"dark":"light";
+function applyTheme(theme){document.documentElement.dataset.theme=theme;storage.setItem("wa-theme",theme);themeToggle.innerHTML='<span class="theme-icon" aria-hidden="true">'+(theme==="dark"?"☀":"☾")+'</span>';themeToggle.setAttribute("aria-label",theme==="dark"?"Switch to light mode":"Switch to dark mode");themeToggle.setAttribute("title",theme==="dark"?"Switch to light mode":"Switch to dark mode");}
 applyTheme(savedTheme);
 themeToggle.addEventListener("click",()=>applyTheme(document.documentElement.dataset.theme==="dark"?"light":"dark"));
 
 const money=n=>new Intl.NumberFormat(selectedCountry==="PK"?"en-PK":"en-US",{style:"currency",currency:countries[selectedCountry].currency,maximumFractionDigits:0}).format(n);
-function openCountryGate(){$("#countryGate").classList.remove("is-hidden");document.body.classList.add("country-gate-open");}
+function openCountryGate(){setMobileMenu(false);$("#countryGate").classList.remove("is-hidden");document.body.classList.add("country-gate-open");}
 function closeCountryGate(){if(selectedCountry!=="PK")return;$("#countryGate").classList.add("is-hidden");document.body.classList.remove("country-gate-open");}
 function syncCountryUI(){$("#countrySwitch").innerHTML=countries[selectedCountry].flag+" <span>"+countries[selectedCountry].currency+"</span>⌄";$("#countryContinue").innerHTML="Enter "+countries[selectedCountry].name+" store <span>↗</span>";$$(".country-option").forEach(b=>{const chosen=b.dataset.country===selectedCountry;b.classList.toggle("selected",chosen);b.setAttribute("aria-pressed",String(chosen));});}
-$$(".country-option").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.country!=="PK"){toast("This market is coming soon. Pakistan is currently available.");return;}selectedCountry=b.dataset.country;localStorage.setItem("wa-country",selectedCountry);syncCountryUI();}));
-$("#countryContinue").addEventListener("click",()=>{selectedCountry="PK";localStorage.setItem("wa-country","PK");syncCountryUI();$("#countryGate").classList.add("is-hidden");document.body.classList.remove("country-gate-open");});
+$$(".country-option").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.country!=="PK"){toast("This market is coming soon. Pakistan is currently available.");return;}selectedCountry=b.dataset.country;storage.setItem("wa-country",selectedCountry);syncCountryUI();}));
+$("#countryContinue").addEventListener("click",()=>{selectedCountry="PK";storage.setItem("wa-country","PK");syncCountryUI();closeCountryGate();});
 syncCountryUI();
 /* WA Frequency: turn the brand attitude into a real product-discovery interaction */
 const frequencyChoices={
@@ -100,7 +122,7 @@ function renderProducts(){
  $$("#productGrid [data-add]").forEach(button=>button.addEventListener("click",()=>openProductOptions(button.dataset.add)));
  $$("#productGrid [data-swatch-product]").forEach(button=>button.addEventListener("click",()=>openProductOptions(button.dataset.swatchProduct,button.dataset.swatchColor)));
 }
-function saveBag(){localStorage.setItem("wa-preview-bag",JSON.stringify(bag));renderBag()}
+function saveBag(){storage.setItem("wa-preview-bag",JSON.stringify(bag));renderBag()}
 let optionProduct=null,optionColor="",optionSize="M";
 function openProductOptions(id, initialColor=null){
  const p=products.find(x=>String(x.id)===String(id));if(!p)return;
@@ -130,6 +152,14 @@ function renderBag(){const count=bag.reduce((n,x)=>n+x.qty,0);const subtotal=bag
 /* Customer checkout: server-authoritative prices and stock; PKR / Pakistan only. */
 let activeCheckoutOrder=null;
 let previewCheckoutAttempt=null;
+function createCheckoutKey(){
+ if(typeof crypto.randomUUID==="function")return crypto.randomUUID();
+ const bytes=crypto.getRandomValues(new Uint8Array(16));
+ bytes[6]=(bytes[6]&15)|64;
+ bytes[8]=(bytes[8]&63)|128;
+ const hex=Array.from(bytes,byte=>byte.toString(16).padStart(2,"0")).join("");
+ return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join("-");
+}
 function currentBagSubtotal(){return bag.reduce((sum,item)=>sum+(products.find(p=>String(p.id)===String(item.id))?.price||0)*item.qty,0);}
 function openCheckoutPreview(){
  if(!bag.length){toast("Your bag is empty.");return;}
@@ -155,8 +185,8 @@ function checkoutVariantItems(){
   return {variantId:variant.id,quantity:item.qty};
  });
 }
-function readTestOrders(){try{const value=JSON.parse(localStorage.getItem(WA_TEST_ORDERS_KEY)||"[]");return Array.isArray(value)?value:[];}catch{return [];}}
-function readTestStock(){try{const value=JSON.parse(localStorage.getItem(WA_TEST_STOCK_KEY)||"{}");return value&&typeof value==="object"&&!Array.isArray(value)?value:{};}catch{return {};}}
+function readTestOrders(){try{const value=JSON.parse(storage.getItem(WA_TEST_ORDERS_KEY)||"[]");return Array.isArray(value)?value:[];}catch{return [];}}
+function readTestStock(){try{const value=JSON.parse(storage.getItem(WA_TEST_STOCK_KEY)||"{}");return value&&typeof value==="object"&&!Array.isArray(value)?value:{};}catch{return {};}}
 function testStockKey(item){return String(item.id)+"|"+String(item.color)+"|"+String(item.size);}
 function escapeTestHtml(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));}
 function renderTestOrders(){
@@ -185,7 +215,7 @@ function showTestCheckoutResult(order, databaseBacked=false, claim=null){
  renderTestOrders();
 }
 $("#waTestOrdersRefresh")?.addEventListener("click",renderTestOrders);
-$("#waClearTestOrders")?.addEventListener("click",()=>{if(!window.confirm("Clear all test orders and reset simulated test stock in this browser?"))return;localStorage.removeItem(WA_TEST_ORDERS_KEY);localStorage.removeItem(WA_TEST_STOCK_KEY);renderTestOrders();toast("Local test orders and test stock cleared.");});
+$("#waClearTestOrders")?.addEventListener("click",()=>{if(!window.confirm("Clear all test orders and reset simulated test stock in this browser?"))return;storage.removeItem(WA_TEST_ORDERS_KEY);storage.removeItem(WA_TEST_STOCK_KEY);renderTestOrders();toast("Local test orders and test stock cleared.");});
 $("#waTestOrdersPanel")?.addEventListener("toggle",event=>{if(event.target.open)renderTestOrders();});
 function showCheckoutResult(order,payment,accessToken){
  const form=$("#waCheckoutForm"),result=$("#waCheckoutResult");
@@ -225,15 +255,15 @@ $("#waCheckoutForm").addEventListener("submit",async event=>{
    if(!items.length)throw new Error("Your bag is empty.");
    const total=items.reduce((sum,item)=>sum+item.lineTotal,0);
    const order={orderNumber:"WAT-"+new Date().toISOString().slice(0,10).replaceAll("-","")+"-"+Math.random().toString(36).slice(2,8).toUpperCase(),createdAt:new Date().toISOString(),status:"TEST_ORDER",paymentStatus:"NOT_COLLECTED",paymentMethod:String(data.get("paymentMethod"))==="bank_transfer"?"TEST_BANK_TRANSFER":"TEST_CASH_ON_DELIVERY",customer,items:items.map(({stockKey,...item})=>item),subtotal:total,shipping:0,total,currency:"PKR",testOnly:true};
-   const orders=readTestOrders();orders.unshift(order);localStorage.setItem(WA_TEST_ORDERS_KEY,JSON.stringify(orders));
-   items.forEach(item=>{stock[item.stockKey]=(stock[item.stockKey]===undefined?10:Number(stock[item.stockKey]))-item.quantity;});localStorage.setItem(WA_TEST_STOCK_KEY,JSON.stringify(stock));
+   const orders=readTestOrders();orders.unshift(order);storage.setItem(WA_TEST_ORDERS_KEY,JSON.stringify(orders));
+   items.forEach(item=>{stock[item.stockKey]=(stock[item.stockKey]===undefined?10:Number(stock[item.stockKey]))-item.quantity;});storage.setItem(WA_TEST_STOCK_KEY,JSON.stringify(stock));
    showTestCheckoutResult(order);
   }else{
    const items=checkoutVariantItems();
    const body={fullName:String(data.get("fullName")).trim(),email:String(data.get("email")).trim(),phone:String(data.get("phone")).trim(),addressLine1:String(data.get("addressLine1")).trim(),addressLine2:String(data.get("addressLine2")).trim(),city:String(data.get("city")).trim(),region:String(data.get("region")).trim(),postalCode:String(data.get("postalCode")).trim(),countryCode:"PK",paymentMethod:String(data.get("paymentMethod")),items};
    const fingerprint=JSON.stringify(body);
    if(previewCheckoutAttempt?.fingerprint!==fingerprint){
-    previewCheckoutAttempt={fingerprint,key:crypto.randomUUID()};
+    previewCheckoutAttempt={fingerprint,key:createCheckoutKey()};
    }
    body.idempotencyKey=previewCheckoutAttempt.key;
    const response=await fetch(WA_API_BASE+"/checkout/orders",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(body)});
@@ -248,13 +278,26 @@ $("#waCheckoutForm").addEventListener("submit",async event=>{
  }catch(err){error.textContent=err.message||"Checkout is temporarily unavailable."; }
  finally{button.disabled=false;button.innerHTML='Place order <span>↗</span>';}
 });
-function openBag(){$("#searchBar").classList.remove("open");$("#bagDrawer").classList.add("open");$("#drawerBackdrop").classList.add("open");$("#bagDrawer").setAttribute("aria-hidden","false");document.body.style.overflow="hidden"}function closeBag(){$("#bagDrawer").classList.remove("open");$("#drawerBackdrop").classList.remove("open");$("#bagDrawer").setAttribute("aria-hidden","true");document.body.style.overflow="";}
+function setMobileMenu(open){
+ const menu=$("#mobileMenu"),toggle=$("#menuToggle");
+ menu.classList.toggle("open",open);
+ toggle.setAttribute("aria-expanded",String(open));
+ toggle.setAttribute("aria-label",open?"Close menu":"Open menu");
+}
+function openBag(){setMobileMenu(false);$("#searchBar").classList.remove("open");$("#bagDrawer").classList.add("open");$("#drawerBackdrop").classList.add("open");$("#bagDrawer").setAttribute("aria-hidden","false");document.body.style.overflow="hidden"}function closeBag(){$("#bagDrawer").classList.remove("open");$("#drawerBackdrop").classList.remove("open");$("#bagDrawer").setAttribute("aria-hidden","true");document.body.style.overflow="";}
 let toastTimer;function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),2600)}
-$("#filters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;activeFilter=b.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts()});$$(".desktop-nav [data-filter],.mobile-menu [data-filter],.category-tile[data-filter],.footer-column [data-filter]").forEach(a=>a.addEventListener("click",()=>{activeFilter=a.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts();$("#mobileMenu").classList.remove("open")}));$("#sortSelect").onchange=renderProducts;$("#bagOpen").onclick=openBag;$("#bagContinue").onclick=closeBag;$("#bagClose").onclick=closeBag;$("#drawerBackdrop").onclick=closeBag;$("#checkoutButton").onclick=openCheckoutPreview;$("#checkoutPreviewClose").onclick=closeCheckoutPreview;$("#checkoutPreviewBackdrop").onclick=closeCheckoutPreview;$("#menuToggle").onclick=()=>$("#mobileMenu").classList.toggle("open");$("#searchToggle").onclick=()=>{$("#searchBar").classList.toggle("open");if($("#searchBar").classList.contains("open"))$("#searchInput").focus()};$("#searchClose").onclick=()=>{$("#searchBar").classList.remove("open");query="";$("#searchInput").value="";renderProducts()};$("#searchInput").oninput=e=>{query=e.target.value;renderProducts()};$("#newsletterForm").onsubmit=async e=>{e.preventDefault();const form=e.currentTarget,email=form.elements.email.value.trim(),consent=form.elements.consent.checked,website=form.elements.website.value,button=form.querySelector("button[type=submit]"),message=$("#newsletterMessage");if(!consent){message.textContent="Please confirm consent to receive updates.";return;}button.disabled=true;button.textContent="Joining…";message.textContent="Adding you to the WA list…";try{const response=await fetch((window.WA_API_BASE||"http://127.0.0.1:4000")+"/newsletter",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({email,consent,website})});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.message||"We could not save your signup. Please try again.");message.textContent="You’re on the list. Thank you for joining the WA world.";form.reset();toast("You’re on the WA list.");}catch(error){message.textContent=error.message||"Signup is temporarily unavailable. Please try again.";toast("We couldn’t complete your signup.");}finally{button.disabled=false;button.textContent="Join us ↗";}};$("#backTop").onclick=e=>{e.preventDefault();window.scrollTo({top:0,behavior:"smooth"})};document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBag()});renderProducts();renderBag();
+$("#filters").addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;activeFilter=b.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts()});$$(".desktop-nav [data-filter],.mobile-menu [data-filter],.category-tile[data-filter],.footer-column [data-filter]").forEach(a=>a.addEventListener("click",()=>{activeFilter=a.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts();setMobileMenu(false)}));$("#sortSelect").onchange=renderProducts;$("#bagOpen").onclick=openBag;$("#bagContinue").onclick=closeBag;$("#bagClose").onclick=closeBag;$("#drawerBackdrop").onclick=closeBag;$("#checkoutButton").onclick=openCheckoutPreview;$("#checkoutPreviewClose").onclick=closeCheckoutPreview;$("#checkoutPreviewBackdrop").onclick=closeCheckoutPreview;$("#menuToggle").onclick=()=>{
+ $("#searchBar").classList.remove("open");
+ setMobileMenu(!$("#mobileMenu").classList.contains("open"));
+};
+$("#mobileMenu").addEventListener("click",event=>{if(event.target.closest("a"))setMobileMenu(false);});
+document.addEventListener("pointerdown",event=>{
+ if(!event.target.closest("#mobileMenu,#menuToggle"))setMobileMenu(false);
+});$("#searchToggle").onclick=()=>{$("#searchBar").classList.toggle("open");if($("#searchBar").classList.contains("open"))$("#searchInput").focus()};$("#searchClose").onclick=()=>{$("#searchBar").classList.remove("open");query="";$("#searchInput").value="";renderProducts()};$("#searchInput").oninput=e=>{query=e.target.value;renderProducts()};$("#newsletterForm").onsubmit=async e=>{e.preventDefault();const form=e.currentTarget,email=form.elements.email.value.trim(),consent=form.elements.consent.checked,website=form.elements.website.value,button=form.querySelector("button[type=submit]"),message=$("#newsletterMessage");if(!consent){message.textContent="Please confirm consent to receive updates.";return;}button.disabled=true;button.textContent="Joining…";message.textContent="Adding you to the WA list…";try{const response=await fetch((window.WA_API_BASE||"http://127.0.0.1:4000")+"/newsletter",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({email,consent,website})});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.message||"We could not save your signup. Please try again.");message.textContent="You’re on the list. Thank you for joining the WA world.";form.reset();toast("You’re on the WA list.");}catch(error){message.textContent=error.message||"Signup is temporarily unavailable. Please try again.";toast("We couldn’t complete your signup.");}finally{button.disabled=false;button.textContent="Join us ↗";}};$("#backTop").onclick=e=>{e.preventDefault();window.scrollTo({top:0,behavior:"smooth"})};document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBag()});renderProducts();renderBag();
 
 /* Mobile app navigation actions and active destination state */
 const mobileSearchAction=$("#mobileSearchAction"),mobileBagAction=$("#mobileBagAction"),mobileBagCount=$("#mobileBagCount");
-if(mobileSearchAction)mobileSearchAction.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();closeBag();const bar=$("#searchBar");bar.classList.toggle("open");if(bar.classList.contains("open"))$("#searchInput").focus({preventScroll:true});});
+if(mobileSearchAction)mobileSearchAction.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();closeBag();setMobileMenu(false);const bar=$("#searchBar");bar.classList.toggle("open");if(bar.classList.contains("open"))$("#searchInput").focus({preventScroll:true});});
 if(mobileBagAction)mobileBagAction.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openBag();});
 const syncMobileBagCount=()=>{if(mobileBagCount)mobileBagCount.textContent=String(bag.reduce((n,x)=>n+x.qty,0));};
 const originalRenderBag=renderBag;
@@ -335,6 +378,7 @@ async function connectLiveCatalogue(){
   console.info("WA live catalogue loaded:",products.length,"products");
  }catch(error){console.warn("WA live catalogue unavailable; using preview catalogue.",error);}
 }
+if(previousCountry!=="PK")openCountryGate();
 connectLiveCatalogue();
 /* Footer navigation: open the selected policy panel before scrolling to it */
 $$('.footer-column a[href^="#footer-policy-"]').forEach(link=>link.addEventListener("click",()=>{
