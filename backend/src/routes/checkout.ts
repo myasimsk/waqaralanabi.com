@@ -35,18 +35,29 @@ const reviewSchema = z.object({
   reason: z.string().trim().min(5).max(500),
 });
 
-const orderNumber = () => "WAA-" + new Date().toISOString().slice(0,10).replaceAll("-","") + "-" + randomBytes(5).toString("hex").toUpperCase();
+const orderNumber = (preview: boolean) => (preview ? "WAT-" : "WAA-") + new Date().toISOString().slice(0,10).replaceAll("-","") + "-" + randomBytes(5).toString("hex").toUpperCase();
 const hash = (value: string) => createHash("sha256").update(value,"utf8").digest("hex");
 const safeFileName = (value: string) => value.replace(/[^a-zA-Z0-9._-]/g,"_").slice(0,120) || "payment-proof";
 
 export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
+  app.get("/checkout/config", async () => ({
+    previewOrdersEnabled: env.PREVIEW_CHECKOUT_ENABLED,
+  }));
+
   app.post("/checkout/orders", { config: { rateLimit: { max: 8, timeWindow: "15 minutes" } } }, async (request, reply) => {
-    if (!env.COMMERCE_LAUNCH_READY) {
+    const preview = env.PREVIEW_CHECKOUT_ENABLED;
+    if (!env.COMMERCE_LAUNCH_READY && !preview) {
       return reply.code(503).send({ error: "COMMERCE_NOT_OPEN", message: "Online ordering is not open yet. Please check back soon." });
     }
     const parsed = checkoutSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error:"INVALID_CHECKOUT", message:"Check your contact, delivery and product details.", details:parsed.error.flatten() });
     const input = parsed.data;
+    if (preview && (input.paymentMethod !== "cod" || !/^[^@]+@example\.(?:test|invalid)$/i.test(input.email))) {
+      return reply.code(400).send({
+        error: "PREVIEW_CHECKOUT_ONLY",
+        message: "Use a synthetic example.test or example.invalid email and select simulated cash on delivery.",
+      });
+    }
     if (input.paymentMethod === "card") return reply.code(503).send({ error:"CARD_GATEWAY_NOT_CONFIGURED", message:"Card payments are coming soon. Please choose cash on delivery or bank transfer." });
     if (input.paymentMethod === "bank_transfer" && [env.BANK_TRANSFER_ACCOUNT_TITLE, env.BANK_TRANSFER_BANK_NAME, env.BANK_TRANSFER_IBAN, env.BANK_TRANSFER_ACCOUNT_NUMBER, env.BANK_TRANSFER_BRANCH, env.BANK_TRANSFER_CITY].some((value) => !value.trim())) {
       return reply.code(503).send({ error:"BANK_TRANSFER_NOT_CONFIGURED", message:"Bank transfer checkout is temporarily unavailable. Please choose another available payment method." });
@@ -56,8 +67,9 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
     if (customerToken) {
       const customer = await db.query<{customer_id:string}>(
         `SELECT s.customer_id FROM customer_sessions s JOIN customers c ON c.id=s.customer_id
-          WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND c.status='active' LIMIT 1`,
-        [hash(customerToken)],
+          WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND c.status='active'
+            AND ($2::text IS NULL OR lower(c.email)=$2) LIMIT 1`,
+        [hash(customerToken), preview ? input.email.toLowerCase() : null],
       );
       customerId = customer.rows[0]?.customer_id ?? null;
     }
@@ -122,10 +134,14 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
         subtotal += line;
       }
 
-      const number = orderNumber();
+      const number = orderNumber(preview);
       const method = input.paymentMethod;
       const status = method === "cod" ? "confirmed" : "pending_payment";
-      const address = {
+      const address = preview ? {
+        recipientName: "Preview Test Customer", phone: "03000000000",
+        addressLine1: "123 Example Test Street", addressLine2: "",
+        city: "Test City", region: "Test Region", postalCode: "", countryCode: "PK",
+      } : {
         recipientName:input.fullName, phone:input.phone, addressLine1:input.addressLine1,
         addressLine2:input.addressLine2, city:input.city, region:input.region,
         postalCode:input.postalCode, countryCode:"PK",
@@ -156,9 +172,10 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
       );
       await client.query("COMMIT");
       return reply.code(201).send({
+        testOnly: preview,
         order:{orderNumber:order.order_number,status:order.status,paymentStatus:order.payment_status,totalMinor:order.total_minor,currency:"PKR",paymentMethod:method},
         accessToken,
-        shipping:{quoteRequired:false,chargeMinor:0,message:"Free shipping within Pakistan. No delivery fee will be added to this order."},
+        shipping:{quoteRequired:false,chargeMinor:0,message:preview ? "Test order only. No delivery or payment will occur." : "Free shipping within Pakistan. No delivery fee will be added to this order."},
         payment:{
           status:"pending",
           bankInstructionsAvailable:method==="bank_transfer",
@@ -200,6 +217,9 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
   });
 
   app.post<{Params:{orderNumber:string}}>("/checkout/orders/:orderNumber/bank-transfer-proof", {config:{rateLimit:{max:5,timeWindow:"1 hour"}}}, async (request,reply) => {
+    if (env.PREVIEW_CHECKOUT_ENABLED) {
+      return reply.code(503).send({ error: "PREVIEW_PAYMENT_DISABLED", message: "Payment proof is disabled in the preview." });
+    }
     const parsed=proofSchema.safeParse(request.body);
     if(!parsed.success) return reply.code(400).send({error:"INVALID_PROOF",message:"Upload a JPG, PNG, WebP or PDF payment receipt under 5 MB."});
     const orderNo=request.params.orderNumber.trim().toUpperCase();
