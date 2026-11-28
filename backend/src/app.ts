@@ -107,12 +107,13 @@ export async function buildApp() {
         : 500;
 
     const status = errorStatus >= 400 ? errorStatus : 500;
-    const message =
-      error instanceof Error ? error.message : "A request error occurred.";
 
     return reply.code(status).send({
       error: status >= 500 ? "INTERNAL_SERVER_ERROR" : "REQUEST_ERROR",
-      message: status >= 500 ? "An unexpected error occurred." : message,
+      message:
+        status >= 500
+          ? "An unexpected error occurred."
+          : "The request could not be processed.",
     });
   });
 
