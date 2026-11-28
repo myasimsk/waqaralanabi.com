@@ -87,3 +87,55 @@
     font-size: 8px;
   }
 }
+
+.country-mobile-logo { display: none; }
+
+.country-panel .country-store-link {
+  display: grid;
+  text-decoration: none;
+}
+
+.country-panel .country-upcoming {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.country-panel .country-upcoming .country-option {
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  cursor: default;
+}
+
+.country-panel .country-upcoming .country-name {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .country-gate .country-visual {
+    min-height: 78px !important;
+    height: 78px !important;
+    flex: none;
+  }
+
+  .country-visual .country-visual-mark {
+    display: none;
+  }
+
+  .country-visual .country-mobile-logo {
+    display: block;
+    width: 54px;
+    height: 54px;
+    object-fit: contain;
+  }
+
+  .country-panel .country-upcoming .country-option {
+    grid-template-columns: auto minmax(0, 1fr) !important;
+    gap: 7px !important;
+  }
+
+  .country-panel .country-upcoming .country-currency {
+    display: none;
+  }
+}

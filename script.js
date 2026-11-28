@@ -33,10 +33,6 @@ function readBag(){
 }
 let activeFilter="All",query="",bag=readBag();
 let pendingCatalogue=null;
-const countries={PK:{name:"Pakistan",currency:"PKR",flag:"🇵🇰",available:true},US:{name:"United States",currency:"USD",flag:"🇺🇸",available:false},AU:{name:"Australia",currency:"AUD",flag:"🇦🇺",available:false},GB:{name:"United Kingdom",currency:"GBP",flag:"🇬🇧",available:false},AE:{name:"United Arab Emirates",currency:"AED",flag:"🇦🇪",available:false}};
-const previousCountry=storage.getItem("wa-country");
-let selectedCountry="PK";
-
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const themeToggle=$("#themeToggle");
 const savedTheme=storage.getItem("wa-theme")==="dark"?"dark":"light";
@@ -44,13 +40,18 @@ function applyTheme(theme){document.documentElement.dataset.theme=theme;storage.
 applyTheme(savedTheme);
 themeToggle.addEventListener("click",()=>applyTheme(document.documentElement.dataset.theme==="dark"?"light":"dark"));
 
-const money=n=>new Intl.NumberFormat(selectedCountry==="PK"?"en-PK":"en-US",{style:"currency",currency:countries[selectedCountry].currency,maximumFractionDigits:0}).format(n);
-function openCountryGate(){setMobileMenu(false);$("#countryGate").classList.remove("is-hidden");document.body.classList.add("country-gate-open");}
-function closeCountryGate(){if(selectedCountry!=="PK")return;$("#countryGate").classList.add("is-hidden");document.body.classList.remove("country-gate-open");}
-function syncCountryUI(){$("#countrySwitch").innerHTML=countries[selectedCountry].flag+" <span>"+countries[selectedCountry].currency+"</span>⌄";$("#countryContinue").innerHTML="Enter "+countries[selectedCountry].name+" store <span>↗</span>";$$(".country-option").forEach(b=>{const chosen=b.dataset.country===selectedCountry;b.classList.toggle("selected",chosen);b.setAttribute("aria-pressed",String(chosen));});}
-$$(".country-option").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.country!=="PK"){toast("This market is coming soon. Pakistan is currently available.");return;}selectedCountry=b.dataset.country;storage.setItem("wa-country",selectedCountry);syncCountryUI();}));
-$("#countryContinue").addEventListener("click",()=>{selectedCountry="PK";storage.setItem("wa-country","PK");syncCountryUI();closeCountryGate();});
-syncCountryUI();
+const currency=new Intl.NumberFormat("en-PK",{style:"currency",currency:"PKR",maximumFractionDigits:0});
+const money=n=>currency.format(n);
+function openCountryGate(){
+ setMobileMenu(false);
+ const gate=$("#countryGate");
+ gate.classList.remove("is-hidden");
+ document.body.classList.add("country-gate-open");
+ for(const element of document.body.children){
+  if(element!==gate)element.inert=true;
+ }
+ $("#countryContinue").focus({preventScroll:true});
+}
 /* WA Frequency: turn the brand attitude into a real product-discovery interaction */
 const frequencyChoices={
  quiet:{query:"sweatshirt",title:"LOWKEY MODE: ON.",copy:"Easy layers. Relaxed energy. Start with the pieces that do the most without saying too much.",link:"SHOW ME THE OFF-DUTY FITS"},
@@ -414,7 +415,7 @@ function applyPendingCatalogue(){
  saveBag();renderProducts();
  console.info("WA live catalogue loaded:",products.length,"products");
 }
-if(previousCountry!=="PK")openCountryGate();
+if(new URLSearchParams(location.search).get("store")!=="pk")openCountryGate();
 connectLiveCatalogue();
 /* Footer navigation: open the selected policy panel before scrolling to it */
 $$('.footer-column a[href^="#footer-policy-"]').forEach(link=>link.addEventListener("click",()=>{
