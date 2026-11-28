@@ -188,10 +188,11 @@ test("preview checkout advertises test mode and rejects real contact and payment
       assert.equal(original.items.length, 2);
       const exchangeItem = original.items[0], refundItem = original.items[1];
       const replacementVariant = products.at(-1).variants[0];
+      const pair = { front: { mime: "image/png", data: image }, back: { mime: "image/png", data: image } };
       const request = {
         requestId: randomUUID(), orderId: original.id, kind: "exchange",
         reason: "Trying another fit", eligibleCondition: true,
-        items: [{ id: exchangeItem.id, quantity: 1 }],
+        items: [{ id: exchangeItem.id, quantity: 1, photos: [pair] }],
         replacement: [{ id: replacementVariant.id, quantity: 1 }],
       };
       const createRequest = (payload, cookies = customerCookies) => app.inject({
@@ -202,13 +203,14 @@ test("preview checkout advertises test mode and rejects real contact and payment
       assert.equal((await createRequest(request)).statusCode, 409);
       await db.query("UPDATE orders SET delivered_at=now() WHERE id=$1", [original.id]);
 
+      assert.equal((await createRequest({...request,items:[{id:exchangeItem.id,quantity:1,photos:[]}]})).statusCode,400);
       const exchange = await createRequest(request);
       assert.equal(exchange.statusCode, 201);
       assert.equal(exchange.json().creditMinor, exchangeItem.remainingMinor);
       assert.equal((await createRequest(request)).statusCode, 200);
       assert.equal((await createRequest({ ...request, requestId: randomUUID() })).statusCode, 409);
 
-      const refund = { ...request, requestId: randomUUID(), kind: "refund", items: [{ id: refundItem.id, quantity: 1 }], replacement: [] };
+      const refund = { ...request, requestId: randomUUID(), kind: "refund", items: [{ id: refundItem.id, quantity: 1, photos: [pair] }], replacement: [] };
       const filed = await createRequest(refund);
       assert.equal(filed.statusCode, 201);
       assert.equal(filed.json().creditMinor, refundItem.remainingMinor);
@@ -217,6 +219,14 @@ test("preview checkout advertises test mode and rejects real contact and payment
         payload: { action, shippingMinor, note: "Synthetic return review" },
       });
       assert.equal((await operate(refund.requestId, "approve", undefined, customerCookies)).statusCode, 401);
+      const reviewList=await app.inject({url:"/admin/returns",cookies:adminCookies});
+      const uploaded=reviewList.json().requests.find(item=>item.id===request.requestId);
+      assert.deepEqual(uploaded.photos.map(photo=>photo.side),["front","back"]);
+      const photoUrl="/admin/returns/"+request.requestId+"/photos/"+uploaded.photos[0].id;
+      assert.equal((await app.inject(photoUrl)).statusCode,401);
+      const imageResponse=await app.inject({url:photoUrl,cookies:adminCookies});
+      assert.equal(imageResponse.statusCode,200);
+      assert.equal(imageResponse.rawPayload.toString("base64"),image);
       const replacementOrder = await operate(request.requestId, "approve", 25000);
       assert.equal(replacementOrder.statusCode, 200);
       assert.equal((await operate(request.requestId, "approve", 25000)).statusCode, 409);

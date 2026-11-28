@@ -158,7 +158,13 @@ async function loadReturns(){
       const labels={approve:exchange?"Approve and create replacement":"Approve return",decline:"Decline request",receive:"Mark item received",complete:exchange?"Complete exchange":"Record simulated refund"};
       const products=item.items.map(line=>'<li>'+escapeHtml(line.name+' · '+(line.colour||"")+' '+(line.size||"")+' × '+line.quantity)+' · '+money(line.creditMinor)+'</li>').join("");
       const replacements=item.replacement_items.map(line=>'<li>'+escapeHtml(line.name+' · '+line.colour+' '+line.size+' × '+line.quantity)+' · '+money(Number(line.price_minor)*line.quantity)+'</li>').join("");
+      const photos=(item.photos||[]).map(photo=>{
+        const url=API+"/admin/returns/"+encodeURIComponent(item.id)+"/photos/"+encodeURIComponent(photo.id);
+        const label=escapeHtml(photo.name+" · Item "+photo.unit+" · "+(photo.side==="front"?"Front":"Back"));
+        return '<a href="'+escapeHtml(url)+'" target="_blank" rel="noopener"><img loading="lazy" src="'+escapeHtml(url)+'" alt="'+label+'"><span>'+label+'</span></a>';
+      }).join("");
       return '<article class="return-request"><h3>'+escapeHtml(exchange?"Exchange":"Refund")+' · '+escapeHtml(item.order_number)+'</h3><p>'+status(item.status)+' · Item credit '+money(item.credit_minor)+'</p><ul>'+products+'</ul><p>'+escapeHtml(item.reason)+'</p>'+
+        (photos?'<h4>Item photos</h4><div class="return-photo-grid">'+photos+'</div>':'<p>No item photos submitted.</p>')+
         (replacements?'<h4>Replacement items</h4><ul>'+replacements+'</ul>':"")+
         (item.replacement_order_number?'<p>Replacement '+escapeHtml(item.replacement_order_number)+' · '+money(item.replacement_total_minor)+' due including '+money(item.shipping_minor)+' shipping.</p>':"")+
         (Number(item.refund_minor)>0?'<p>Refund amount: '+money(item.refund_minor)+'</p>':"")+

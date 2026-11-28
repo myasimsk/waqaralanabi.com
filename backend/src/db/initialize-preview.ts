@@ -20,13 +20,15 @@ export async function initializePreviewDatabase() {
   try {
     await client.query("BEGIN");
     await client.query("SELECT pg_advisory_xact_lock(hashtext('wa-preview-initialization'))");
-    const { rows: [state] } = await client.query<{ initialized: boolean; returnsReady: boolean; hasTables: boolean }>(`
+    const { rows: [state] } = await client.query<{ initialized: boolean; returnsReady: boolean; returnPhotosReady: boolean; hasTables: boolean }>(`
       SELECT to_regclass('wa_preview_initialization') IS NOT NULL AS initialized,
         to_regclass('order_return_requests') IS NOT NULL AS "returnsReady",
+        to_regclass('order_return_photos') IS NOT NULL AS "returnPhotosReady",
         EXISTS(SELECT FROM pg_tables WHERE schemaname = current_schema()) AS "hasTables"
     `);
     if (state?.initialized) {
       if (!state.returnsReady) await client.query(await readFile(new URL("migrations/010_order_returns.sql", directory), "utf8"));
+      if (!state.returnPhotosReady) await client.query(await readFile(new URL("migrations/011_return_photos.sql", directory), "utf8"));
       await client.query("COMMIT");
       return;
     }

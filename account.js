@@ -175,9 +175,53 @@
         const requestId=crypto.randomUUID?.()??Array.from(crypto.getRandomValues(new Uint8Array(16)),(byte,index)=>
           ((index===6?(byte&15)|64:index===8?(byte&63)|128:byte).toString(16).padStart(2,"0"))
         ).join("").replace(/^(........)(....)(....)(....)/,"$1-$2-$3-$4-");
-        editor.innerHTML='<form class="wa-account-form" id="waReturnForm"><fieldset><legend>Items to send back</legend>'+order.items.map(item=>'<label>'+safe(item.name)+' · '+safe(item.colour||"")+' '+safe(item.size||"")+'<select data-return-item="'+safe(item.id)+'" aria-label="'+safe(item.name+' '+(item.colour||"")+' '+(item.size||"")+' quantity')+'">'+Array.from({length:Math.min(item.remainingQuantity,10)+1},(_,i)=>'<option value="'+i+'">'+(i===0?"Keep this item":"Return "+i)+'</option>').join("")+'</select></label>').join("")+'</fieldset><label>Request type<select name="kind"><option value="refund">Return for a refund</option><option value="exchange">Exchange for another product</option></select></label><div id="waReplacement" hidden></div><label>Reason<textarea name="reason" minlength="3" maxlength="500" required></textarea></label><label class="wa-account-check"><input type="checkbox" name="condition" required> The selected items are unused and unwashed, with all original tags attached.</label><div id="waReturnEstimate" aria-live="polite"></div><button class="wa-account-primary" type="submit">Submit request ↗</button><p id="waAccountFeedback" role="status"></p></form>';
+        editor.innerHTML='<form class="wa-account-form" id="waReturnForm"><fieldset><legend>Items to send back</legend>'+order.items.map(item=>'<label>'+safe(item.name)+' · '+safe(item.colour||"")+' '+safe(item.size||"")+'<select data-return-item="'+safe(item.id)+'" aria-label="'+safe(item.name+' '+(item.colour||"")+' '+(item.size||"")+' quantity')+'">'+Array.from({length:Math.min(item.remainingQuantity,10)+1},(_,i)=>'<option value="'+i+'">'+(i===0?"Keep this item":"Return "+i)+'</option>').join("")+'</select></label>').join("")+'</fieldset><fieldset id="waReturnPhotos" hidden><legend>Item photos</legend><p>Upload a clear front and back photo for each selected item. Show the original tags in the photos. Use JPG, PNG or WebP, up to 2 MB each and 5 MB total.</p><div data-photo-fields></div></fieldset><label>Request type<select name="kind"><option value="refund">Return for a refund</option><option value="exchange">Exchange for another product</option></select></label><div id="waReplacement" hidden></div><label>Reason<textarea name="reason" minlength="3" maxlength="500" required></textarea></label><label class="wa-account-check"><input type="checkbox" name="condition" required> The selected items are unused and unwashed, with all original tags attached.</label><div id="waReturnEstimate" aria-live="polite"></div><button class="wa-account-primary" type="submit">Submit request ↗</button><p id="waAccountFeedback" role="status"></p></form>';
         const form=$("#waReturnForm",editor), replacement=$("#waReplacement",form);
         const selectedItems=()=>Array.from(form.querySelectorAll("[data-return-item]")).map(field=>({id:field.dataset.returnItem,quantity:Number(field.value)})).filter(item=>item.quantity>0);
+        const photoSection=$("#waReturnPhotos",form), photoFields=photoSection.querySelector("[data-photo-fields]");
+        function syncPhotos(){
+          const active=new Set();
+          for(const line of selectedItems()){
+            const item=order.items.find(item=>item.id===line.id);
+            for(let unit=1;unit<=line.quantity;unit++){
+              const key=line.id+"-"+unit;
+              active.add(key);
+              if(photoFields.querySelector('[data-photo-key="'+key+'"]'))continue;
+              const row=document.createElement("div");
+              row.dataset.photoKey=key;
+              row.className="wa-return-replacement";
+              row.innerHTML='<b>'+safe([item.name,item.colour,item.size].filter(Boolean).join(" · "))+' · Item '+unit+'</b>'+["front","back"].map(side=>'<label>'+ (side==="front"?"Front photo":"Back photo")+'<input type="file" data-side="'+side+'" accept="image/jpeg,image/png,image/webp" required></label>').join("");
+              photoFields.append(row);
+            }
+          }
+          for(const row of photoFields.children.length?[...photoFields.children]:[]){
+            if(!active.has(row.dataset.photoKey))row.remove();
+          }
+          photoSection.hidden=active.size===0;
+        }
+        async function itemsWithPhotos(){
+          const items=selectedItems();
+          if(!items.length)throw new Error("Select at least one item.");
+          const inputs=[...photoFields.querySelectorAll("input")];
+          const files=inputs.map(input=>input.files[0]);
+          if(files.some(file=>!file||!["image/jpeg","image/png","image/webp"].includes(file.type)||!file.size||file.size>2*1024*1024)){
+            throw new Error("Choose a JPG, PNG or WebP file up to 2 MB for every front and back photo.");
+          }
+          if(files.reduce((total,file)=>total+file.size,0)>5*1024*1024)throw new Error("Your photos must be 5 MB or less in total.");
+          const read=file=>new Promise((resolve,reject)=>{
+            const reader=new FileReader();
+            reader.onload=()=>resolve({mime:file.type,data:String(reader.result).split(",")[1]});
+            reader.onerror=()=>reject(new Error("Could not read a photo. Please choose it again."));
+            reader.readAsDataURL(file);
+          });
+          return Promise.all(items.map(async item=>({...item,photos:await Promise.all(
+            Array.from({length:item.quantity},async (_,index)=>{
+              const row=photoFields.querySelector('[data-photo-key="'+item.id+'-'+(index+1)+'"]');
+              const [front,back]=await Promise.all(["front","back"].map(side=>read(row.querySelector('[data-side="'+side+'"]').files[0])));
+              return {front,back};
+            })
+          )})));
+        }
         const chosenReplacement=()=>Array.from(replacement.querySelectorAll("[data-replacement-row]")).map(row=>({
           id:row.querySelector("select").value,quantity:Number(row.querySelector("input").value)
         })).filter(row=>row.id);
@@ -223,7 +267,10 @@
             addReplacement();
           }
         }
-        form.addEventListener("input",estimate);
+        form.addEventListener("input",event=>{
+          if(event.target.matches("[data-return-item]"))syncPhotos();
+          estimate();
+        });
         form.elements.kind.addEventListener("change",()=>void showReplacement());
         form.addEventListener("submit",async event=>{
           event.preventDefault();
@@ -231,7 +278,7 @@
           await run(async()=>{
             await api("/account/returns",{method:"POST",body:JSON.stringify({
               requestId,orderId:order.id,kind:fields.get("kind"),reason:fields.get("reason"),
-              eligibleCondition:fields.get("condition")==="on",items:selectedItems(),
+              eligibleCondition:fields.get("condition")==="on",items:await itemsWithPhotos(),
               replacement:fields.get("kind")==="exchange"?chosenReplacement():[],
             })});
             await renderReturns();

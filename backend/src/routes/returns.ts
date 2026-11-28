@@ -7,13 +7,20 @@ import { requireCustomer } from "./account.js";
 import { requireAdmin } from "./admin.js";
 
 const selection = z.object({ id: z.string().uuid(), quantity: z.number().int().min(1).max(10) });
+const photoSchema = z.object({
+  mime: z.enum(["image/jpeg", "image/png", "image/webp"]),
+  data: z.base64().min(4).max(2_800_000),
+});
+const photoPair = z.object({ front: photoSchema, back: photoSchema });
+const returnLine = selection.extend({ photos: z.array(photoPair).min(1).max(10) })
+  .refine(({quantity, photos}) => photos.length === quantity);
 const requestSchema = z.object({
   requestId: z.string().uuid(),
   orderId: z.string().uuid(),
   kind: z.enum(["refund", "exchange"]),
   reason: z.string().trim().min(3).max(500),
   eligibleCondition: z.literal(true),
-  items: z.array(selection).min(1).max(20),
+  items: z.array(returnLine).min(1).max(20),
   replacement: z.array(selection).max(20).default([]),
 }).refine(({ kind, items, replacement }) =>
   new Set(items.map((item) => item.id)).size === items.length &&
@@ -89,6 +96,14 @@ const returnableItems = `
   ORDER BY i.id
 `;
 
+function decodePhoto(photo: z.infer<typeof photoSchema>) {
+  const bytes = Buffer.from(photo.data, "base64");
+  const valid = photo.mime === "image/png" ? bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])) :
+    photo.mime === "image/jpeg" ? bytes.subarray(0, 3).equals(Buffer.from([255,216,255])) :
+      bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP";
+  return valid && bytes.length <= 2 * 1024 * 1024 ? bytes : null;
+}
+
 const requestsQuery = `
   SELECT r.id, r.kind, r.status, r.reason, r.credit_minor, r.shipping_minor, r.refund_minor,
     r.created_at, r.updated_at, r.admin_note, o.order_number, replacement.order_number AS replacement_order_number,
@@ -98,6 +113,11 @@ const requestsQuery = `
         'colour', i.color_snapshot, 'quantity', l.quantity, 'creditMinor', l.credit_minor::text))
       FROM order_return_items l JOIN order_items i ON i.id=l.order_item_id WHERE l.request_id=r.id
     ), '[]'::jsonb) AS items
+  , CASE WHEN $1::uuid IS NULL THEN COALESCE((
+    SELECT jsonb_agg(jsonb_build_object('id', p.id, 'unit', p.unit, 'side', p.side, 'name', i.product_name_snapshot)
+      ORDER BY p.order_item_id, p.unit, CASE p.side WHEN 'front' THEN 0 ELSE 1 END)
+    FROM order_return_photos p JOIN order_items i ON i.id=p.order_item_id WHERE p.request_id=r.id
+  ), '[]'::jsonb) ELSE '[]'::jsonb END AS photos
   FROM order_return_requests r JOIN orders o ON o.id=r.order_id
   LEFT JOIN orders replacement ON replacement.id=r.replacement_order_id
   WHERE ($1::uuid IS NULL OR r.customer_id=$1)
@@ -131,8 +151,16 @@ export async function customerReturnRoutes(app: FastifyInstance) {
     const customer = await requireCustomer(request, reply);
     if (!customer) return;
     const parsed = requestSchema.safeParse(request.body);
-    if (!parsed.success) return reply.code(400).send({ message: "Choose the items and confirm that they are unused, unwashed and still have the original tags." });
+    if (!parsed.success) return reply.code(400).send({ message: "Choose the items, attach front and back photos for each unit, and confirm the item condition." });
     const input = parsed.data;
+    const photos = input.items.flatMap(line => line.photos.flatMap((pair, index) =>
+      (["front", "back"] as const).map(side => ({
+        item: line.id, unit: index + 1, side, mime: pair[side].mime, bytes: decodePhoto(pair[side]),
+      })),
+    ));
+    if (photos.some(photo => !photo.bytes) || photos.reduce((sum, photo) => sum + (photo.bytes?.length ?? 0), 0) > 5 * 1024 * 1024) {
+      return reply.code(400).send({ message: "Upload JPG, PNG or WebP photos up to 2 MB each and 5 MB total." });
+    }
     const client = await db.connect();
     try {
       await client.query("BEGIN");
@@ -183,6 +211,12 @@ export async function customerReturnRoutes(app: FastifyInstance) {
       for (const claim of claims) {
         await client.query("INSERT INTO order_return_items (request_id,order_item_id,quantity,credit_minor) VALUES ($1,$2,$3,$4)",
           [input.requestId, claim.id, claim.quantity, claim.credit.toString()]);
+      }
+      for (const photo of photos) {
+        await client.query(
+          "INSERT INTO order_return_photos (request_id,order_item_id,unit,side,mime_type,file_bytes) VALUES ($1,$2,$3,$4,$5,$6)",
+          [input.requestId, photo.item, photo.unit, photo.side, photo.mime, photo.bytes],
+        );
       }
       await client.query("COMMIT");
       return reply.code(201).send({ id: input.requestId, creditMinor: creditMinor.toString() });
@@ -239,6 +273,20 @@ export async function adminReturnRoutes(app: FastifyInstance) {
     return { requests: (await db.query(requestsQuery, [null])).rows };
   });
 
+  app.get<{ Params: { id: string; photoId: string } }>("/:id/photos/:photoId", async (request, reply) => {
+    const admin = await requireAdmin(request, reply);
+    if (!admin) return;
+    if (!["owner", "manager", "support"].includes(admin.role)) return reply.code(403).send({ message: "Returns access is restricted." });
+    const ids = z.object({id: z.string().uuid(), photoId: z.string().uuid()}).safeParse(request.params);
+    if (!ids.success) return reply.code(404).send({ message: "Photo not found." });
+    const { rows: [photo] } = await db.query<{mime_type: string; file_bytes: Buffer}>(
+      "SELECT mime_type, file_bytes FROM order_return_photos WHERE request_id=$1 AND id=$2", [ids.data.id, ids.data.photoId],
+    );
+    if (!photo) return reply.code(404).send({ message: "Photo not found." });
+    return reply.type(photo.mime_type).header("Cache-Control","private, no-store")
+      .header("X-Content-Type-Options","nosniff").send(photo.file_bytes);
+  });
+
   app.patch<{ Params: { id: string } }>("/:id", async (request, reply) => {
     const admin = await requireAdmin(request, reply);
     if (!admin) return;
@@ -263,6 +311,16 @@ export async function adminReturnRoutes(app: FastifyInstance) {
       if (!status) {
         await rollback(client);
         return reply.code(409).send({ message: "This action is unavailable at the current request stage." });
+      }
+      if (action === "approve") {
+        const { rows: [evidence] } = await client.query<{ complete: boolean }>(
+          "SELECT NOT EXISTS (SELECT 1 FROM order_return_items i WHERE i.request_id=$1 AND i.quantity*2 <> (SELECT count(*) FROM order_return_photos p WHERE p.request_id=i.request_id AND p.order_item_id=i.order_item_id)) AS complete",
+          [record.id],
+        );
+        if (!evidence?.complete) {
+          await rollback(client);
+          return reply.code(409).send({ message: "Front and back photos are required before approval." });
+        }
       }
       let replacement = null;
       if (action === "approve" && record.kind === "exchange") {
