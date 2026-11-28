@@ -27,7 +27,7 @@ const proofSchema = z.object({
   fileName: z.string().trim().min(1).max(180),
   mimeType: z.enum(["image/jpeg","image/png","image/webp","application/pdf"]),
   dataBase64: z.string().min(1).max(7_000_000),
-  accessToken: z.string().min(32).max(128),
+  accessToken: z.string().min(32).max(128).optional(),
 });
 
 const reviewSchema = z.object({
@@ -170,17 +170,6 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
         "INSERT INTO payments (order_id,provider,amount_minor,currency,status,idempotency_key) VALUES ($1,$2,$3,'PKR','pending',$4)",
         [order.id,provider,subtotal,input.idempotencyKey],
       );
-      if (preview && method === "bank_transfer") {
-        const receipt = Buffer.from(
-          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lLsAAAAASUVORK5CYII=",
-          "base64",
-        );
-        await client.query(
-          `INSERT INTO bank_transfer_proofs(order_id,file_name,mime_type,file_bytes)
-           VALUES ($1,'simulated-transfer.png','image/png',$2)`,
-          [order.id, receipt],
-        );
-      }
       await client.query("COMMIT");
       return reply.code(201).send({
         testOnly: preview,
@@ -228,12 +217,12 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
   });
 
   app.post<{Params:{orderNumber:string}}>("/checkout/orders/:orderNumber/bank-transfer-proof", {config:{rateLimit:{max:5,timeWindow:"1 hour"}}}, async (request,reply) => {
-    if (env.PREVIEW_CHECKOUT_ENABLED) {
-      return reply.code(503).send({ error: "PREVIEW_PAYMENT_DISABLED", message: "Payment proof is disabled in the preview." });
-    }
     const parsed=proofSchema.safeParse(request.body);
     if(!parsed.success) return reply.code(400).send({error:"INVALID_PROOF",message:"Upload a JPG, PNG, WebP or PDF payment receipt under 5 MB."});
     const orderNo=request.params.orderNumber.trim().toUpperCase();
+    if (env.PREVIEW_CHECKOUT_ENABLED && !orderNo.startsWith("WAT-")) {
+      return reply.code(404).send({error:"ORDER_NOT_FOUND"});
+    }
     const buffer=Buffer.from(parsed.data.dataBase64.replace(/^data:[^,]+,/,""),"base64");
     if(buffer.length<1||buffer.length>5*1024*1024) return reply.code(413).send({error:"PROOF_TOO_LARGE",message:"The receipt must be smaller than 5 MB."});
     const signatureOk =
@@ -245,11 +234,20 @@ export async function checkoutRoutes(app: FastifyInstance): Promise<void> {
     const client=await db.connect();
     try {
       await client.query("BEGIN");
-      const order=await client.query<{id:string;payment_method:string;status:string;payment_status:string;checkout_token_hash:string|null}>(
-        "SELECT id,payment_method,status,payment_status,checkout_token_hash FROM orders WHERE order_number=$1 FOR UPDATE",[orderNo],
+      const order=await client.query<{id:string;payment_method:string;status:string;payment_status:string;checkout_token_hash:string|null;customer_id:string|null}>(
+        "SELECT id,payment_method,status,payment_status,checkout_token_hash,customer_id FROM orders WHERE order_number=$1 FOR UPDATE",[orderNo],
       );
       const record=order.rows[0];
-      if(!record||record.payment_method!=="bank_transfer"||record.status!=="pending_payment"||record.payment_status!=="pending"||!record.checkout_token_hash||hash(parsed.data.accessToken)!==record.checkout_token_hash) {
+      const accessToken = parsed.data.accessToken;
+      const session = request.cookies.wa_customer_session;
+      const authorizedToken = accessToken && record?.checkout_token_hash === hash(accessToken);
+      const ownedOrder = !authorizedToken && record?.customer_id && session && (await client.query(
+        `SELECT 1 FROM customer_sessions s JOIN customers c ON c.id=s.customer_id
+          WHERE s.customer_id=$1 AND s.token_hash=$2 AND s.revoked_at IS NULL
+            AND s.expires_at>now() AND c.status='active' LIMIT 1`,
+        [record.customer_id,hash(session)],
+      )).rowCount === 1;
+      if(!record||record.payment_method!=="bank_transfer"||record.status!=="pending_payment"||record.payment_status!=="pending"||(!authorizedToken&&!ownedOrder)) {
         await client.query("ROLLBACK");
         return reply.code(404).send({error:"ORDER_NOT_FOUND",message:"The order or secure upload link could not be verified."});
       }

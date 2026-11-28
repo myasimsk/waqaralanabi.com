@@ -57,8 +57,8 @@ test("preview checkout advertises test mode and rejects real contact and payment
       url: "/checkout/orders/WAT-TEST/bank-transfer-proof",
       payload: {},
     });
-    assert.equal(proof.statusCode, 503);
-    assert.equal(proof.json().error, "PREVIEW_PAYMENT_DISABLED");
+    assert.equal(proof.statusCode, 400);
+    assert.equal(proof.json().error, "INVALID_PROOF");
 
     if (setup) {
       const { initializePreviewAdmin, initializePreviewDatabase } = await import("../src/db/initialize-preview.ts");
@@ -128,17 +128,44 @@ test("preview checkout advertises test mode and rejects real contact and payment
       assert.equal(payment.rows[0].payment_status, "paid");
 
       const bankOrder = await app.inject({
-        method: "POST", url: "/checkout/orders", payload: { ...payload, paymentMethod: "bank_transfer", idempotencyKey: randomUUID() },
+        method: "POST", url: "/checkout/orders", cookies: customerCookies, payload: { ...payload, paymentMethod: "bank_transfer", idempotencyKey: randomUUID() },
       });
       assert.equal(bankOrder.statusCode, 201);
       assert.equal(bankOrder.json().payment.bankInstructionsAvailable, false);
       assert.equal(bankOrder.json().payment.bankTransfer, undefined);
       const bankNumber = bankOrder.json().order.orderNumber;
-      const approve = await app.inject({
+      const review = (decision) => app.inject({
         method: "PATCH", url: "/admin/orders/" + bankNumber + "/bank-transfer-review", cookies: adminCookies,
-        payload: { decision: "approve", reason: "Synthetic transfer review" },
+        payload: { decision, reason: "Synthetic transfer review" },
       });
-      assert.equal(approve.statusCode, 200);
+      const unsubmitted = await review("approve");
+      assert.equal(unsubmitted.statusCode, 409);
+      assert.equal(unsubmitted.json().error, "PENDING_PROOF_NOT_FOUND");
+
+      const image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lLsAAAAASUVORK5CYII=";
+      const proofPayload = { fileName: "test-receipt.png", mimeType: "image/png", dataBase64: image };
+      const upload = (payload, cookies) => app.inject({
+        method: "POST", url: "/checkout/orders/" + bankNumber + "/bank-transfer-proof", payload, cookies,
+      });
+      assert.equal((await upload(proofPayload)).statusCode, 404);
+      const withToken = { ...proofPayload, accessToken: bankOrder.json().accessToken };
+      assert.equal((await upload(withToken)).statusCode, 201);
+      assert.equal((await upload(withToken)).statusCode, 409);
+
+      const receiptPath = "/admin/orders/" + bankNumber + "/bank-transfer-proof";
+      assert.equal((await app.inject(receiptPath)).statusCode, 401);
+      const receipt = await app.inject({ url: receiptPath, cookies: adminCookies });
+      assert.equal(receipt.statusCode, 200);
+      assert.equal(receipt.headers["content-type"], "image/png");
+      assert.equal(receipt.rawPayload.toString("base64"), image);
+      assert.equal((await review("reject")).statusCode, 200);
+
+      const rejected = await app.inject({ url: "/account/orders", cookies: customerCookies });
+      assert.equal(rejected.json().orders.find((item) => item.order_number === bankNumber).receipt_status, "rejected");
+      assert.equal((await upload(proofPayload, customerCookies)).statusCode, 201);
+      assert.equal((await review("approve")).statusCode, 200);
+      const approved = await db.query("SELECT status, payment_status FROM orders WHERE order_number=$1", [bankNumber]);
+      assert.deepEqual(approved.rows[0], { status: "confirmed", payment_status: "paid" });
     }
   } finally {
     await app.close();

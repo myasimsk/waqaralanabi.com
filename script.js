@@ -151,7 +151,6 @@ $("#productOptionsContent").addEventListener("click",e=>{
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeCheckoutPreview();closeProductOptions();closeBag()}});
 function renderBag(){const count=bag.reduce((n,x)=>n+x.qty,0);const subtotal=bag.reduce((n,x)=>n+(products.find(p=>String(p.id)===String(x.id))?.price||0)*x.qty,0);$("#bagCount").textContent=count;$("#drawerCount").textContent="("+count+")";$("#subtotal").textContent=money(subtotal);const checkout=$("#checkoutButton");if(checkout)checkout.disabled=count===0;$("#bagItems").innerHTML=bag.length?bag.map((x,i)=>{const p=products.find(p=>String(p.id)===String(x.id));if(!p)return '';return `<div class="bag-line"><img src="${escapeTestHtml(p.image)}" alt=""><div><h3>${escapeTestHtml(p.name)}</h3><p>${escapeTestHtml(x.color)} · Size ${escapeTestHtml(x.size)}</p><p>${money(p.price)}</p><div class="qty-controls"><button data-qty="${i}" data-delta="-1" aria-label="Decrease quantity">−</button><span>${x.qty}</span><button data-qty="${i}" data-delta="1" aria-label="Increase quantity">+</button></div></div><button class="remove-item" data-remove="${i}" aria-label="Remove item">×</button></div>`}).join(""):'<div class="empty-bag">Your bag is waiting for something special.</div>';$$("[data-qty]").forEach(b=>b.onclick=()=>{const i=+b.dataset.qty;bag[i].qty+=+b.dataset.delta;if(bag[i].qty<1)bag.splice(i,1);saveBag()});$$("[data-remove]").forEach(b=>b.onclick=()=>{bag.splice(+b.dataset.remove,1);saveBag()})}
 /* Customer checkout: server-authoritative prices and stock; PKR / Pakistan only. */
-let activeCheckoutOrder=null;
 let previewCheckoutAttempt=null;
 function createCheckoutKey(){
  if(typeof crypto.randomUUID==="function")return crypto.randomUUID();
@@ -167,6 +166,7 @@ function openCheckoutPreview(){
  $("#checkoutPreviewSubtotal").textContent=money(currentBagSubtotal());
  $("#waCheckoutTotal").textContent=money(currentBagSubtotal());
  $("#waCheckoutError").textContent="";
+ syncCheckoutReceipt();
  $("#waCheckoutForm").hidden=false;
  $("#waCheckoutResult").hidden=true;
  $("#checkoutPreviewModal").classList.add("open");
@@ -196,10 +196,33 @@ function renderTestOrders(){
  const orders=readTestOrders();
  target.innerHTML=orders.length?orders.map(order=>'<article class="wa-test-order-card"><div><strong>'+escapeTestHtml(order.orderNumber)+'</strong><small>'+new Date(order.createdAt).toLocaleString()+'</small></div><p>'+escapeTestHtml(order.customer.fullName)+' · '+escapeTestHtml(order.customer.city)+'</p><p>'+order.items.map(item=>escapeTestHtml(item.productName)+' — '+escapeTestHtml(item.colour)+' / '+escapeTestHtml(item.size)+' × '+item.quantity).join('<br>')+'</p><b>'+money(order.total)+'</b><small>TEST ONLY · PAYMENT NOT COLLECTED</small></article>').join(""):'<p class="wa-test-empty">No test orders have been placed in this browser yet.</p>';
 }
-function showTestCheckoutResult(order, databaseBacked=false, claim=null){
+function showTestCheckoutResult(order, databaseBacked=false, claim=null, receiptFile=null){
  const form=$("#waCheckoutForm"),result=$("#waCheckoutResult");
  form.hidden=true;result.hidden=false;
  result.innerHTML='<p class="eyebrow">TEST ORDER / NOT REAL</p><h3>Test order<br><em>recorded.</em></h3><p class="wa-order-number">TEST ORDER NUMBER <strong>'+escapeTestHtml(order.orderNumber)+'</strong></p><div class="wa-order-summary"><div><span>Merchandise subtotal</span><strong>'+money(order.subtotal)+'</strong></div><div><span>Shipping simulation</span><strong>FREE</strong></div><div class="wa-order-total"><span>Payment</span><strong>NOT COLLECTED</strong></div></div><p class="wa-test-mode-warning">'+(databaseBacked?"This test order was saved to the preview database. No payment or delivery will occur.":"This order was saved in this browser. No payment or delivery will occur.")+'</p><button type="button" class="button button-burgundy" id="waFinishCheckout">Continue exploring</button>';
+ if(order.paymentMethod==="bank_transfer"){
+  const upload=document.createElement("div");
+  upload.className="wa-bank-instructions";
+  upload.innerHTML='<h4>Payment screenshot</h4><p>Upload a sample receipt for admin review. This is a test order.</p><label class="wa-receipt-label">Choose screenshot<input type="file" accept="image/png,image/jpeg,image/webp,application/pdf"></label><button type="button" class="button button-burgundy">Upload receipt</button><p role="status" aria-live="polite"></p>';
+  result.insertBefore(upload,$("#waFinishCheckout"));
+  const input=upload.querySelector("input"),button=upload.querySelector("button"),message=upload.querySelector("[role=status]");
+  const submit=async file=>{
+   button.disabled=true;
+   input.disabled=true;
+   message.textContent="Uploading receipt…";
+   try{
+    await window.WAUploadTransferReceipt(order.orderNumber,file,claim?.accessToken);
+    message.textContent="Receipt uploaded. Awaiting admin review.";
+   }catch(error){
+    message.textContent=error.message;
+    button.disabled=false;
+    input.disabled=false;
+   }
+  };
+  button.onclick=()=>submit(input.files?.[0]||receiptFile);
+  if(receiptFile)void submit(receiptFile);
+ }
+ $("#waCheckoutReceiptFile").value="";
  if(claim){
   const claimButton=document.createElement("button");
   claimButton.type="button";
@@ -211,7 +234,6 @@ function showTestCheckoutResult(order, databaseBacked=false, claim=null){
    document.dispatchEvent(new CustomEvent("wa-preview-account",{detail:claim}));
   };
  }
- activeCheckoutOrder=null;
  bag=[];saveBag();
  $("#waFinishCheckout").onclick=()=>{bag=[];saveBag();closeCheckoutPreview();closeBag();};
  renderTestOrders();
@@ -219,37 +241,44 @@ function showTestCheckoutResult(order, databaseBacked=false, claim=null){
 $("#waTestOrdersRefresh")?.addEventListener("click",renderTestOrders);
 $("#waClearTestOrders")?.addEventListener("click",()=>{if(!window.confirm("Clear all test orders and reset simulated test stock in this browser?"))return;storage.removeItem(WA_TEST_ORDERS_KEY);storage.removeItem(WA_TEST_STOCK_KEY);renderTestOrders();toast("Local test orders and test stock cleared.");});
 $("#waTestOrdersPanel")?.addEventListener("toggle",event=>{if(event.target.open)renderTestOrders();});
-function showCheckoutResult(order,payment,accessToken){
- const form=$("#waCheckoutForm"),result=$("#waCheckoutResult");
- form.hidden=true;result.hidden=false;
- const bank=payment?.bankTransfer;
- result.innerHTML=`<p class="eyebrow">ORDER RECEIVED / WA</p><h3>Thank you.<br><em>Your order is in.</em></h3><p class="wa-order-number">ORDER NUMBER <strong>${order.orderNumber}</strong></p><div class="wa-order-summary"><div><span>Merchandise subtotal</span><strong>${money(Number(order.totalMinor)/100)}</strong></div><div><span>Shipping across Pakistan</span><strong>FREE</strong></div><div class="wa-order-total"><span>Order status</span><strong>${order.status==="confirmed"?"Confirmed":"Awaiting payment"}</strong></div></div>
- ${order.paymentMethod==="bank_transfer"&&bank?`<div class="wa-bank-instructions"><h4>Bank transfer details</h4><p><b>${bank.accountTitle}</b><br>${bank.bankName}<br>IBAN: <strong>${bank.iban}</strong><br>Account number: ${bank.accountNumber}<br>${bank.branch}, ${bank.city}</p><p>${bank.instructions}</p><label class="wa-receipt-label">Upload transfer receipt<input id="waReceiptFile" type="file" accept="image/png,image/jpeg,image/webp,application/pdf"></label><button type="button" class="button button-burgundy" id="waUploadReceipt">Submit receipt</button><p id="waReceiptMessage" role="status" aria-live="polite"></p></div>`:''}
- <p class="wa-checkout-legal">We have received your order. Keep your order number for reference. WA will contact you regarding fulfilment.</p><button type="button" class="button button-burgundy" id="waFinishCheckout">Continue exploring</button>`;
- activeCheckoutOrder={orderNumber:order.orderNumber,accessToken,paymentMethod:order.paymentMethod};
- $("#waFinishCheckout").onclick=()=>{bag=[];saveBag();closeCheckoutPreview();closeBag();};
- const upload=$("#waUploadReceipt");
- if(upload)upload.onclick=uploadBankReceipt;
+function validateTransferReceipt(file){
+ if(!file)throw new Error("Choose a payment screenshot first.");
+ if(file.size===0||file.size>5*1024*1024)throw new Error("Choose a receipt no larger than 5 MB.");
+ if(!["image/png","image/jpeg","image/webp","application/pdf"].includes(file.type))throw new Error("Upload a JPG, PNG, WebP or PDF receipt.");
 }
-async function uploadBankReceipt(){
- const file=$("#waReceiptFile")?.files?.[0],message=$("#waReceiptMessage"),button=$("#waUploadReceipt");
- if(!file){message.textContent="Choose your transfer receipt first.";return;}
- if(file.size>5*1024*1024){message.textContent="The receipt must be 5 MB or smaller.";return;}
- const allowed=["image/png","image/jpeg","image/webp","application/pdf"];
- if(!allowed.includes(file.type)){message.textContent="Upload a PNG, JPG, WebP or PDF receipt.";return;}
- button.disabled=true;message.textContent="Uploading receipt…";
- try{
-  const dataBase64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(",")[1]);reader.onerror=()=>reject(new Error("Could not read this file."));reader.readAsDataURL(file);});
-  const response=await fetch(WA_API_BASE+`/checkout/orders/${encodeURIComponent(activeCheckoutOrder.orderNumber)}/bank-transfer-proof`,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({fileName:file.name,mimeType:file.type,dataBase64,accessToken:activeCheckoutOrder.accessToken})});
-  const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||"Receipt upload failed. Please try again.");
-  message.textContent="Receipt received. Your payment will remain pending until WA verifies it.";
- }catch(error){message.textContent=error.message||"Receipt upload failed.";}
- finally{button.disabled=false;}
+
+window.WAUploadTransferReceipt=async function(orderNumber,file,accessToken){
+ validateTransferReceipt(file);
+ const dataBase64=await new Promise((resolve,reject)=>{
+  const reader=new FileReader();
+  reader.onload=()=>resolve(String(reader.result).split(",")[1]);
+  reader.onerror=()=>reject(new Error("Could not read this file."));
+  reader.readAsDataURL(file);
+ });
+ const response=await fetch(WA_API_BASE+"/checkout/orders/"+encodeURIComponent(orderNumber)+"/bank-transfer-proof",{
+  method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},
+  body:JSON.stringify({fileName:file.name,mimeType:file.type,dataBase64,accessToken}),
+ });
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok&&data.error!=="PROOF_ALREADY_RECEIVED")throw new Error(data.message||"Receipt upload failed. Please try again.");
+};
+
+function syncCheckoutReceipt(){
+ const bank=$("#waCheckoutForm input[value=bank_transfer]").checked;
+ $("#waCheckoutReceipt").hidden=!bank;
+ $("#waCheckoutReceiptFile").disabled=!bank;
 }
+$("#waCheckoutForm").addEventListener("change",event=>{
+ if(event.target.name==="paymentMethod")syncCheckoutReceipt();
+});
 $("#waCheckoutForm").addEventListener("submit",async event=>{
  event.preventDefault();const form=event.currentTarget,button=$("#waPlaceOrder"),error=$("#waCheckoutError"),data=new FormData(form);
  button.disabled=true;button.textContent="Placing order…";error.textContent="";
  try{
+  const bankTransfer=data.get("paymentMethod")==="bank_transfer";
+  const receiptFile=bankTransfer?$("#waCheckoutReceiptFile").files?.[0]:null;
+  if(receiptFile)validateTransferReceipt(receiptFile);
+  if(bankTransfer&&!WA_DATABASE_PREVIEW)throw new Error("Bank transfer testing requires the preview API. Try again after the catalogue connects.");
   if(!WA_DATABASE_PREVIEW){
    const customer={fullName:String(data.get("fullName")).trim(),email:String(data.get("email")).trim(),phone:String(data.get("phone")).trim(),addressLine1:String(data.get("addressLine1")).trim(),addressLine2:String(data.get("addressLine2")).trim(),city:String(data.get("city")).trim(),region:String(data.get("region")).trim(),postalCode:String(data.get("postalCode")).trim(),countryCode:"PK"};
    const stock=readTestStock();
@@ -275,7 +304,7 @@ $("#waCheckoutForm").addEventListener("submit",async event=>{
    previewCheckoutAttempt=null;
    const claim=payload.accessToken?{orderNumber:payload.order.orderNumber,email:body.email,accessToken:payload.accessToken}:null;
    if(claim)document.dispatchEvent(new CustomEvent("wa-preview-order",{detail:claim}));
-   showTestCheckoutResult({orderNumber:payload.order.orderNumber,subtotal:total},true,claim);
+   showTestCheckoutResult({orderNumber:payload.order.orderNumber,subtotal:total,paymentMethod:body.paymentMethod},true,claim,receiptFile);
   }
  }catch(err){error.textContent=err.message||"Checkout is temporarily unavailable."; }
  finally{button.disabled=false;button.innerHTML='Place order <span>↗</span>';}
@@ -380,8 +409,7 @@ function applyPendingCatalogue(){
  $("#waCheckoutForm .wa-checkout-legal").textContent="TEST ONLY · No payment will be collected and no delivery will occur.";
  $("#waCheckoutForm input[name=email]").placeholder="customer@example.test";
  $("#waCheckoutForm input[value=cod]").checked=true;
- const bankOption=$("#waCheckoutForm input[value=bank_transfer]");
- bankOption.closest("label").querySelector("small").textContent="Test simulation only · an example receipt is sent for admin review.";
+ syncCheckoutReceipt();
  $("#waTestOrdersPanel").hidden=true;
  saveBag();renderProducts();
  console.info("WA live catalogue loaded:",products.length,"products");

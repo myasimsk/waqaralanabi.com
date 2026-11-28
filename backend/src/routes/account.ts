@@ -96,7 +96,9 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
       db.query(
         `SELECT o.id, o.order_number, o.currency, o.subtotal_minor,
                 o.discount_minor, o.shipping_minor, o.tax_minor, o.total_minor,
-                o.status, o.payment_status, o.placed_at,
+                o.status, o.payment_status, o.payment_method, o.placed_at,
+                (SELECT p.review_status FROM bank_transfer_proofs p
+                 WHERE p.order_id=o.id ORDER BY p.uploaded_at DESC, p.id DESC LIMIT 1) AS receipt_status,
                 COALESCE(jsonb_agg(jsonb_build_object(
                   'productName', oi.product_name_snapshot, 'sku', oi.sku_snapshot,
                   'size', oi.size_snapshot, 'color', oi.color_snapshot,

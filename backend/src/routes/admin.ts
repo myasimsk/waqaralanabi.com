@@ -297,7 +297,9 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     const orderNumber = z.string().trim().min(3).max(64).safeParse(request.params.orderNumber);
     if (!orderNumber.success) return reply.code(400).send({ error: "INVALID_ORDER_NUMBER" });
     const order = await db.query(
-      `SELECT o.*, c.email AS customer_email, c.full_name AS customer_name
+      `SELECT o.*, c.email AS customer_email, c.full_name AS customer_name,
+              (SELECT p.review_status FROM bank_transfer_proofs p
+               WHERE p.order_id=o.id ORDER BY p.uploaded_at DESC, p.id DESC LIMIT 1) AS receipt_status
          FROM orders o LEFT JOIN customers c ON c.id = o.customer_id
         WHERE o.order_number = $1 LIMIT 1`, [orderNumber.data]);
     if (order.rowCount !== 1) return reply.code(404).send({ error: "ORDER_NOT_FOUND" });

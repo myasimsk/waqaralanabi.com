@@ -104,9 +104,28 @@
         '<ol class="wa-order-progress" aria-label="Order progress">'+steps.map((step,index)=>'<li class="'+(current>=index?"is-complete":current===index-1?"is-current":"")+'"><span class="wa-order-step-dot" aria-hidden="true"></span><span>'+step[1]+'</span></li>').join("")+'</ol>'+
         (o.status==="pending_payment"?'<p class="wa-order-pending">Awaiting payment confirmation. Your order will move into fulfilment once payment is confirmed.</p>':"");
       const subject=encodeURIComponent("Help with order "+o.order_number);
-      return '<article class="wa-account-order"><div class="wa-account-order-head"><div><b>'+safe(o.order_number)+'</b><small>'+safe(date(o.placed_at))+'</small></div><span class="wa-account-status">'+safe(String(o.status).replace(/_/g," "))+'</span></div>'+progress+'<div class="wa-account-order-lines">'+(o.items||[]).map(i=>'<div><span>'+safe(i.productName)+' · '+safe(i.color||"")+' / '+safe(i.size||"")+' × '+safe(i.quantity)+'</span><b>'+money(i.lineTotalMinor,o.currency)+'</b></div>').join("")+'</div><div class="wa-account-order-total"><span>'+safe(String(o.payment_status||"pending").replace(/_/g," "))+'</span><b>'+money(o.total_minor,o.currency)+'</b></div><a class="wa-order-help" href="mailto:info@waqaralanabi.com?subject='+subject+'">NEED HELP WITH THIS ORDER? ↗</a></article>';
+      let receipt="";
+      if(o.payment_method==="bank_transfer"&&o.status==="pending_payment"){
+        if(o.receipt_status==="pending")receipt='<p class="wa-order-pending">Receipt uploaded. Awaiting admin review.</p>';
+        else receipt='<form class="wa-account-form" data-transfer-order="'+safe(o.order_number)+'"><p class="wa-order-pending">'+(o.receipt_status==="rejected"?"The receipt was rejected. You can upload a replacement.":"Upload a payment screenshot for admin review.")+'</p><label>Payment screenshot<input type="file" name="receipt" accept="image/png,image/jpeg,image/webp,application/pdf" required></label><button class="wa-account-primary" type="submit">Upload receipt</button><p role="status" aria-live="polite"></p></form>';
+      }
+      return '<article class="wa-account-order"><div class="wa-account-order-head"><div><b>'+safe(o.order_number)+'</b><small>'+safe(date(o.placed_at))+'</small></div><span class="wa-account-status">'+safe(String(o.status).replace(/_/g," "))+'</span></div>'+progress+receipt+'<div class="wa-account-order-lines">'+(o.items||[]).map(i=>'<div><span>'+safe(i.productName)+' · '+safe(i.color||"")+' / '+safe(i.size||"")+' × '+safe(i.quantity)+'</span><b>'+money(i.lineTotalMinor,o.currency)+'</b></div>').join("")+'</div><div class="wa-account-order-total"><span>'+safe(String(o.payment_status||"pending").replace(/_/g," "))+'</span><b>'+money(o.total_minor,o.currency)+'</b></div><a class="wa-order-help" href="mailto:info@waqaralanabi.com?subject='+subject+'">NEED HELP WITH THIS ORDER? ↗</a></article>';
     }).join(""):'<div class="wa-account-empty"><span>WA / 00</span><h4>Your first order is waiting.</h4><p>Once you place an order, its details and updates will appear here.</p></div>';
     content.innerHTML='<p class="eyebrow">YOUR PURCHASES</p><h3>Order history.</h3><p class="wa-account-muted">Follow each order from confirmation to delivery. Status updates appear here when WA processes your order.</p><div class="wa-account-orders">'+html+'</div>';
+    content.querySelectorAll("[data-transfer-order]").forEach(form=>form.addEventListener("submit",async event=>{
+      event.preventDefault();
+      const button=form.querySelector("button"), message=form.querySelector("[role=status]");
+      button.disabled=true;
+      message.textContent="Uploading receipt…";
+      try{
+        await window.WAUploadTransferReceipt(form.dataset.transferOrder,form.elements.receipt.files[0]);
+        state.orders=(await api("/account/orders?limit=50&offset=0")).orders;
+        if(state.active==="orders")renderOrders();
+      }catch(error){
+        message.textContent=error.message;
+        button.disabled=false;
+      }
+    }));
   }
   function renderAddresses() {
     const list=state.addresses.length?state.addresses.map(a=>'<article class="wa-address-card"><div><b>'+safe(a.label||"Delivery address")+(a.is_default?' <span class="wa-address-default">DEFAULT</span>':'')+'</b><p>'+safe(a.recipient_name)+' · '+safe(a.phone||"")+'<br>'+safe(a.address_line_1)+' '+safe(a.address_line_2||"")+'<br>'+safe(a.city)+' '+safe(a.region||"")+' '+safe(a.postal_code||"")+' · '+safe(a.country_code)+'</p><div class="wa-address-actions">'+(!a.is_default?'<button type="button" data-default-address="'+safe(a.id)+'">Make default</button>':'')+'<button type="button" data-delete-address="'+safe(a.id)+'">Remove</button></div></div></article>').join(""):'<p class="wa-account-empty-note">No saved addresses yet.</p>';
